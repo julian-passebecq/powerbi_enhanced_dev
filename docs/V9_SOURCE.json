@@ -1,0 +1,8 @@
+{
+  "source": "C:\\Users\\julia\\Downloads\\pbibench_codex_v9_te3_like_semantic_ide.zip",
+  "sha256": "761BA09FE3BEFF878B28A4BAC91E31831F040D88526839523EFF19D08C1713F0",
+  "verifiedFiles": 30,
+  "extractedTo": "contracts/V9",
+  "status": "Staged; user-confirmed separate UX pass pending",
+  "implementationStarted": false
+}

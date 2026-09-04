@@ -1,0 +1,30 @@
+{
+  "now": [
+    "DAX IDE Core",
+    "Data Preview",
+    "UDF Workbench",
+    "Calendar Editor",
+    "Script Preview",
+    "Built-in BPA",
+    "Background Tasks"
+  ],
+  "next": [
+    "Pivot Lab",
+    "DAX Scripts",
+    "Perspective Editor",
+    "Translation Editor",
+    "Table Groups",
+    "VertiPaq",
+    "Advanced Refresh",
+    "Fabric Import / Direct Lake",
+    "Dual-State Workspace"
+  ],
+  "later": [
+    "PbiBench CLI",
+    "AI Agent",
+    "DAX Package Manager",
+    "Semantic Compiler",
+    "Localization",
+    "DAX Explain / Debugger"
+  ]
+}

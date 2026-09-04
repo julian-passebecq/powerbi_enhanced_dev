@@ -1,0 +1,16 @@
+After the current PbiBench V7 UX pass is green, apply this V8 TE2 Boost pack.
+
+Do not redesign the architecture. PbiBench remains the app, TE2++ remains the integrated semantic editor, and DAX Studio remains standalone for deep performance work.
+
+Use the pack to:
+- evaluate and selectively port/cherry-pick current TE2 open PR fixes/features;
+- harden PbiBench against current TE2/TMDL/UDF issues;
+- turn the MIT TabularEditor Scripts patterns into typed PbiBench actions/views;
+- add Data Preview + DAX Query tabs + Code Actions + UDF tooling as the next semantic-IDE features;
+- add background task execution for long-running scripts/actions;
+- add CI validation templates based on TE2 DevOps patterns;
+- improve BPA rule management and safe-fix classification.
+
+Do NOT copy/decompile proprietary Tabular Editor 3 code. The supplied TE3 GitHub archive is a support/docs repository, not product source. Use public TE3 documentation as a behavior/feature specification only.
+
+Stop at `ACCEPTANCE_GATE_V8.md`.

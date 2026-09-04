@@ -1,0 +1,20 @@
+{
+  "name": "PbiBench V8 TE2 Boost Pack",
+  "date": "2026-09-04",
+  "type": "delta",
+  "apply_after": "V7 Pass 1.5 acceptance gate",
+  "files": [
+    "ACCEPTANCE_GATE_V8.md",
+    "BPA_STRATEGY.md",
+    "DATA_PROFILING_LAB.md",
+    "DEVOPS_PIPELINE.md",
+    "ISSUE_DRIVEN_HARDENING.md",
+    "MASTER_PROMPT_V8.md",
+    "PASTE_THIS_TO_CODEX.txt",
+    "README_FIRST.md",
+    "SCRIPTS_TO_TYPED_ACTIONS.md",
+    "TE3_CAPABILITY_BOOST.md",
+    "UPSTREAM_TE2_PATCHES.md",
+    "priority_backlog.json"
+  ]
+}

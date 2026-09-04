@@ -1,0 +1,29 @@
+{
+  "P0": [
+    "TE2 PR 1343 UDF per-file serialization",
+    "TE2 PR 1341 DAX Formatter endpoint",
+    "TE2 PR 1334 Selected API symmetry",
+    "TMDL round-trip regression suite",
+    "background task queue"
+  ],
+  "P1": [
+    "Data Preview",
+    "DAX Query tabs/results",
+    "UDF workbench",
+    "Data Profiling Lab"
+  ],
+  "P2": [
+    "Code Actions",
+    "DAX Script multi-object editor",
+    "Calendar editor",
+    "Perspective editor",
+    "Translation editor",
+    "Advanced Refresh"
+  ],
+  "defer": [
+    "full DAX debugger parity",
+    "DAX Optimizer clone",
+    "full PivotGrid clone",
+    "TE3 proprietary implementation reuse"
+  ]
+}

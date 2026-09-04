@@ -1,0 +1,25 @@
+After the current PbiBench UX pass is green, use the attached V9 pack as the next implementation contract.
+
+Goal: make the integrated TE2++ Model experience feel like a modern professional semantic-model IDE, with most practical TE3-class capability categories implemented independently inside PbiBench.
+
+Do NOT redesign the architecture. Keep:
+- PbiBench as the main C#/.NET app;
+- TE2 MIT code as the semantic foundation;
+- DAX Studio standalone for deep performance analysis;
+- Power BI Desktop as renderer where needed.
+
+Prioritize in this order:
+1. DAX IDE: IntelliSense, syntax diagnostics, Go/Peek definition, query tabs, partial execution, result grids, safe code actions, multi-object DAX scripts.
+2. Data: multi-table preview, virtualized paging, Profile Data, Pivot Lab.
+3. UDF + Calendar + Perspective + Translation + Table Group editors.
+4. C# Script Preview/Sandbox + action recorder + built-in PbiBench BPA packs.
+5. VertiPaq integration + optimization cockpit.
+6. Background refresh/task queue + advanced refresh.
+7. Fabric import/preview + Direct Lake model workflows.
+8. Dual-state PBIP/TMDL live workspace sync.
+9. PbiBench CLI + agent-safe structured commands.
+10. Semantic compiler/bridge experiments only after the above.
+
+Use public TE3 docs as feature/behavior requirements only. Do not copy/decompile proprietary TE3 code, UI assets, icons, or internal implementation.
+
+Build incrementally and stop at `ACCEPTANCE_GATE_V9.md`.
