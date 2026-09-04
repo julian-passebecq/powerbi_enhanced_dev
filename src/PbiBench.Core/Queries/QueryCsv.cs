@@ -24,7 +24,7 @@ public static class QueryCsv
             {
                 using (var writer = new StreamWriter(temporary, false, new UTF8Encoding(true))) Write(result, writer, cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
-                if (File.Exists(destination)) File.Replace(temporary, destination, null); else File.Move(temporary, destination);
+                AtomicQueryFile.Commit(temporary, destination, cancellationToken);
             }
             finally { if (File.Exists(temporary)) File.Delete(temporary); }
         }, cancellationToken);

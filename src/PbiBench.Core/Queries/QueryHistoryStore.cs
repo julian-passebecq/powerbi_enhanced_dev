@@ -109,7 +109,7 @@ public sealed class QueryHistoryStore
         try
         {
             File.WriteAllText(temporary, json, new UTF8Encoding(false)); token.ThrowIfCancellationRequested();
-            if (File.Exists(path)) File.Replace(temporary, path, null); else File.Move(temporary, path);
+            AtomicQueryFile.Commit(temporary, path, token);
         }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }

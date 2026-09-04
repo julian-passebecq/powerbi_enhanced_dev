@@ -85,6 +85,34 @@ public sealed class DaxScratchEditorBoundaryTests
         Assert.Equal("1 + 2", editor.LatestAnalysis!.Document.Text);
     });
 
+    [Fact]
+    public Task OccurrenceSelectionReplacesEveryMatchThroughNativeTypingAndOneUndo() => RunSta(() =>
+    {
+        using var editor = new DaxScratchEditor { Text = "VAR amount = 7\r\nRETURN amount + amount" };
+        var original = editor.Text;
+        editor.SelectSpan(original.IndexOf("amount", StringComparison.Ordinal), 6); editor.SelectAllOccurrences();
+        Assert.Equal(3, editor.SelectedOccurrences.Count);
+        var native = editor.View.Child.Controls.Cast<Control>().Single(control => control.GetType().Name == "FastColoredTextBox");
+        native.GetType().GetMethod("ProcessKey", new[] { typeof(char), typeof(Keys) })!.Invoke(native, new object[] { 'x', Keys.None });
+        Assert.Equal("VAR x = 7\r\nRETURN x + x", editor.Text);
+        Assert.Equal(3, editor.SelectedOccurrences.Count);
+        native.GetType().GetMethod("Undo", Type.EmptyTypes)!.Invoke(native, null);
+        Assert.Equal(original, editor.Text); Assert.Empty(editor.SelectedOccurrences);
+    });
+
+    [Fact]
+    public Task OccurrenceEditsHandleNewlinesAndAdjacentDeletionsWithoutStaleSpans() => RunSta(() =>
+    {
+        using var editor = new DaxScratchEditor { Text = "aaa" };
+        editor.SelectSpan(0, 1); editor.SelectNextOccurrence(); Assert.Equal(2, editor.SelectedOccurrences.Count);
+        editor.SelectAllOccurrences(); Assert.Equal(3, editor.SelectedOccurrences.Count);
+        editor.ReplaceSelectedOccurrences(""); Assert.Equal("", editor.Text); Assert.Single(editor.SelectedOccurrences);
+        editor.Text = "aa + aa"; Assert.Empty(editor.SelectedOccurrences);
+        editor.SelectSpan(0, 2); editor.SelectAllOccurrences(); editor.ReplaceSelectedOccurrences("b\nc");
+        Assert.Equal("b\r\nc + b\r\nc", editor.Text);
+        editor.ReplaceSelectedOccurrences("!"); Assert.Equal("b\r\nc! + b\r\nc!", editor.Text);
+    });
+
     private static T Await<T>(Task<T> task)
     {
         var timeout = Stopwatch.StartNew();

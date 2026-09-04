@@ -34,6 +34,10 @@ public sealed class DaxScratchEditor : IDisposable
     private readonly TextStyle identifier = new(Brushes.DarkSlateBlue, null, FontStyle.Regular);
     private readonly WavyLineStyle error = new(255, Color.Firebrick);
     private readonly WavyLineStyle warning = new(255, Color.DarkGoldenrod);
+    private readonly MarkerStyle occurrenceStyle = new(new SolidBrush(Color.FromArgb(90, 244, 203, 65)));
+    private readonly List<TextSpan> occurrences = new();
+    private string? occurrenceText;
+    private bool editingOccurrences;
     private readonly Stack<int> back = new();
     private readonly Stack<int> forward = new();
     private CancellationTokenSource? analysisCancellation;
@@ -56,6 +60,7 @@ public sealed class DaxScratchEditor : IDisposable
     public DaxDocument Document => new(documentId, Text, version, documentKind, currentTable);
     public DaxAnalysis? LatestAnalysis => analysis;
     public IReadOnlyList<DaxDiagnostic> Diagnostics => analysis?.Diagnostics ?? Array.Empty<DaxDiagnostic>();
+    public IReadOnlyList<TextSpan> SelectedOccurrences => occurrences.ToArray();
     public event EventHandler? TextChanged;
     public event EventHandler? DiagnosticsChanged;
     public event EventHandler<DaxDefinitionRequestEventArgs>? DefinitionRequested;
@@ -89,10 +94,17 @@ public sealed class DaxScratchEditor : IDisposable
         editor.TextChanged += (_, _) =>
         {
             if (applyingAnalysis) return;
+            if (!editingOccurrences) ClearOccurrences();
             version++; QueueAnalysis(); TextChanged?.Invoke(this, EventArgs.Empty);
         };
         editor.SelectionChanged += (_, _) => { if (!applyingAnalysis) UpdateSignature(); };
         editor.KeyDown += EditorKeyDown;
+        editor.KeyPressing += (_, e) =>
+        {
+            if (occurrences.Count < 2 || char.IsControl(e.KeyChar)) return;
+            e.Handled = true; ReplaceSelectedOccurrences(e.KeyChar.ToString());
+        };
+        editor.MouseDown += (_, _) => ClearOccurrences();
         editor.MouseMove += EditorMouseMove;
         debounce.Tick += async (_, _) =>
         {
@@ -107,6 +119,8 @@ public sealed class DaxScratchEditor : IDisposable
         menu.Items.Add("Find references   Shift+F12", null, (_, _) => FindReferences());
         menu.Items.Add("Preview code action   Ctrl+.", null, (_, _) => ShowCodeActions());
         menu.Items.Add("Rename local variable   F2", null, (_, _) => RenameLocalVariable());
+        menu.Items.Add("Select next occurrence   Ctrl+D", null, (_, _) => SelectNextOccurrence());
+        menu.Items.Add("Select all occurrences   Ctrl+Shift+L", null, (_, _) => SelectAllOccurrences());
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Complete   Ctrl+Space", null, (_, _) => ShowCompletion());
         menu.Items.Add("Back   Alt+Left", null, (_, _) => NavigateBack());
@@ -140,6 +154,75 @@ public sealed class DaxScratchEditor : IDisposable
     }
     public void ReplaceSelection(string text) => editor.InsertText(text ?? "");
 
+    public void SelectNextOccurrence()
+    {
+        if (!EnsureOccurrenceSeed()) return;
+        var text = Text; var start = occurrences.Max(s => s.End);
+        var next = text.IndexOf(occurrenceText!, Math.Min(start, text.Length), StringComparison.Ordinal);
+        if (next < 0) next = text.IndexOf(occurrenceText!, StringComparison.Ordinal);
+        if (next >= 0 && !occurrences.Any(s => s.Start == next)) occurrences.Add(new TextSpan(next, occurrenceText!.Length));
+        HighlightOccurrences();
+    }
+    public void SelectAllOccurrences()
+    {
+        if (!EnsureOccurrenceSeed()) return;
+        var matches = new List<TextSpan>(); var text = Text; var start = 0;
+        while (start <= text.Length - occurrenceText!.Length)
+        {
+            var match = text.IndexOf(occurrenceText, start, StringComparison.Ordinal); if (match < 0) break;
+            if (matches.Count == 10000) { status.Text = "Occurrence selection is limited to 10,000 matches. Narrow the document or selection."; return; }
+            matches.Add(new TextSpan(match, occurrenceText.Length)); start = match + occurrenceText.Length;
+        }
+        occurrences.Clear(); occurrences.AddRange(matches); HighlightOccurrences();
+    }
+    private bool EnsureOccurrenceSeed()
+    {
+        if (occurrences.Count > 0 && occurrenceText != null) return true;
+        ClearOccurrences(); completion.Close();
+        var start = SelectionStart; var length = SelectionLength; var text = Text;
+        if (length == 0)
+        {
+            start = Math.Min(CaretOffset, text.Length); var end = start;
+            while (start > 0 && (char.IsLetterOrDigit(text[start - 1]) || text[start - 1] == '_')) start--;
+            while (end < text.Length && (char.IsLetterOrDigit(text[end]) || text[end] == '_')) end++;
+            length = end - start;
+        }
+        if (length == 0) { status.Text = "Select text or place the caret on a word to choose its occurrences."; return false; }
+        occurrenceText = text.Substring(start, length); occurrences.Add(new TextSpan(start, length)); return true;
+    }
+    public void ReplaceSelectedOccurrences(string replacement)
+    {
+        if (occurrences.Count == 0) { ReplaceSelection(replacement); return; }
+        var selected = occurrences.OrderBy(s => s.Start).ToArray();
+        var action = new DaxCodeAction("Replace selected occurrences", "Text selection replacement", documentId, version, Text,
+            selected.Select(s => new DaxTextEdit(s, replacement ?? "")).ToArray());
+        editingOccurrences = true;
+        try
+        {
+            ApplyCodeAction(action);
+            var shift = 0; occurrences.Clear();
+            var length = (replacement ?? "").Replace("\r\n", "\n").Replace("\r", "\n").Replace("\n", Environment.NewLine).Length;
+            foreach (var span in selected) { var caret = span.Start + shift + length; if (!occurrences.Any(s => s.Start == caret)) occurrences.Add(new TextSpan(caret, 0)); shift += length - span.Length; }
+            occurrenceText = null;
+            if (occurrences.Count > 0) SelectSpan(occurrences[0].Start, 0);
+            HighlightOccurrences();
+        }
+        finally { editingOccurrences = false; }
+    }
+    private void ClearOccurrences()
+    {
+        if (occurrences.Count == 0) return;
+        occurrences.Clear(); occurrenceText = null; editor.Range.ClearStyle(occurrenceStyle);
+    }
+    private void HighlightOccurrences()
+    {
+        editor.Range.ClearStyle(occurrenceStyle);
+        foreach (var span in occurrences) editor.GetRange(Math.Min(span.Start, Text.Length), Math.Min(Text.Length, span.Start + Math.Max(1, span.Length))).SetStyle(occurrenceStyle);
+        if (occurrences.Count == 1 && occurrences[0].Length > 0) SelectSpan(occurrences[0].Start, occurrences[0].Length);
+        status.Text = occurrences.Count + " text occurrences selected · typing replaces each selection · Escape clears";
+        editor.Invalidate();
+    }
+
     public async Task<DaxAnalysis?> RefreshAnalysisAsync(CancellationToken cancellationToken = default)
     {
         if (disposed) return null;
@@ -161,6 +244,7 @@ public sealed class DaxScratchEditor : IDisposable
     }
     public void ShowCompletion()
     {
+        if (occurrences.Count > 1) { status.Text = "Press Escape to leave occurrence selection before using completion."; return; }
         if (analysis?.Document.Version == version) { completion.Items.SetAutocompleteItems(CurrentCompletionItems()); completion.Show(true); }
         else { explicitCompletion = true; QueueAnalysis(); }
     }
@@ -278,7 +362,7 @@ public sealed class DaxScratchEditor : IDisposable
         analysisCancellation?.Cancel(); analysisCancellation?.Dispose();
         completion.Dispose(); tooltip.Dispose();
         View.Child = null; panel.Dispose(); View.Dispose();
-        keyword.Dispose(); literal.Dispose(); comment.Dispose(); identifier.Dispose(); error.Dispose(); warning.Dispose();
+        keyword.Dispose(); literal.Dispose(); comment.Dispose(); identifier.Dispose(); error.Dispose(); warning.Dispose(); occurrenceStyle.Dispose();
     }
     private void QueueAnalysis()
     {
@@ -297,6 +381,7 @@ public sealed class DaxScratchEditor : IDisposable
     }
     private bool ShouldOfferCompletion()
     {
+        if (occurrences.Count > 1) return false;
         var text = Text; var caret = CaretOffset;
         if (caret <= 0 || caret > text.Length) return false;
         var previous = text[caret - 1];
@@ -332,6 +417,7 @@ public sealed class DaxScratchEditor : IDisposable
     }
     private void UpdateSignature()
     {
+        if (occurrences.Count > 0) { status.Text = occurrences.Count + " text occurrences selected · typing replaces each selection · Escape clears"; return; }
         if (analysis?.Document.Version != version) return;
         var signature = language.GetSignatureHelp(analysis, CaretOffset);
         var errors = analysis.Diagnostics.Count(diagnostic => diagnostic.Severity == DaxDiagnosticSeverity.Error);
@@ -362,7 +448,19 @@ public sealed class DaxScratchEditor : IDisposable
     }
     private void EditorKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Control && e.KeyCode == Keys.Space) ShowCompletion();
+        if (e.Control && e.KeyCode == Keys.D) SelectNextOccurrence();
+        else if (e.Control && e.Shift && e.KeyCode == Keys.L) SelectAllOccurrences();
+        else if (occurrences.Count > 1 && ((e.Control && e.KeyCode == Keys.V) || (e.Shift && e.KeyCode == Keys.Insert))) ReplaceSelectedOccurrences(Clipboard.GetText());
+        else if (occurrences.Count > 1 && e.Control && e.KeyCode is Keys.C or Keys.X)
+        {
+            var selected = string.Join(Environment.NewLine, occurrences.Select(s => Text.Substring(s.Start, s.Length)));
+            if (selected.Length > 0) Clipboard.SetText(selected);
+            if (e.KeyCode == Keys.X) ReplaceSelectedOccurrences("");
+        }
+        else if (occurrences.Count > 1 && e.KeyCode is Keys.Delete or Keys.Back) DeleteOccurrences(e.KeyCode == Keys.Back);
+        else if (occurrences.Count > 1 && !e.Control && e.KeyCode == Keys.Enter) ReplaceSelectedOccurrences(Environment.NewLine);
+        else if (occurrences.Count > 0 && e.KeyCode == Keys.Escape) ClearOccurrences();
+        else if (e.Control && e.KeyCode == Keys.Space) ShowCompletion();
         else if (e.Control && e.KeyCode == Keys.OemPeriod) ShowCodeActions();
         else if (e.KeyCode == Keys.F2) RenameLocalVariable();
         else if (e.KeyCode == Keys.F12 && e.Shift) FindReferences();
@@ -372,8 +470,35 @@ public sealed class DaxScratchEditor : IDisposable
         else if (e.KeyCode == Keys.F5) RequestRun(DaxRunScope.All);
         else if (e.Alt && e.KeyCode == Keys.Enter) RequestRun(DaxRunScope.CurrentStatement);
         else if (e.Control && e.KeyCode == Keys.Enter) RequestRun(SelectionLength > 0 ? DaxRunScope.Selection : DaxRunScope.CurrentStatement);
-        else return;
+        else
+        {
+            if (e.KeyCode is Keys.Left or Keys.Right or Keys.Up or Keys.Down or Keys.Home or Keys.End || (e.Control && e.KeyCode is Keys.Z or Keys.Y or Keys.R)) ClearOccurrences();
+            return;
+        }
         e.Handled = true; e.SuppressKeyPress = true;
+    }
+    private void DeleteOccurrences(bool backward)
+    {
+        var text = Text;
+        var expanded = occurrences.Select(s =>
+        {
+            if (s.Length > 0) return s;
+            var start = backward ? s.Start - 1 : s.Start;
+            if (start < 0 || start >= text.Length) return s;
+            if (backward && start > 0 && ((text[start] == '\n' && text[start - 1] == '\r') || (char.IsLowSurrogate(text[start]) && char.IsHighSurrogate(text[start - 1])))) return new TextSpan(start - 1, 2);
+            if (!backward && start + 1 < text.Length && ((text[start] == '\r' && text[start + 1] == '\n') || (char.IsHighSurrogate(text[start]) && char.IsLowSurrogate(text[start + 1])))) return new TextSpan(start, 2);
+            return new TextSpan(start, 1);
+        }).OrderBy(s => s.Start).ToArray();
+        occurrences.Clear();
+        foreach (var span in expanded)
+        {
+            if (occurrences.Count > 0 && occurrences[occurrences.Count - 1].End > span.Start)
+            {
+                var last = occurrences[occurrences.Count - 1]; occurrences[occurrences.Count - 1] = new TextSpan(last.Start, Math.Max(last.End, span.End) - last.Start);
+            }
+            else if (!occurrences.Any(s => s.Start == span.Start && s.Length == span.Length)) occurrences.Add(span);
+        }
+        ReplaceSelectedOccurrences("");
     }
     private void RequestRun(DaxRunScope scope) => RunRequested?.Invoke(this, new(scope));
     private sealed class LanguageCompletionItem : AutocompleteItem

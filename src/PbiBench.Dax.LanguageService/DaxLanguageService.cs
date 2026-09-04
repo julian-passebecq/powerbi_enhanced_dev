@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 namespace PbiBench.Dax.LanguageService;
 
 /// <summary>Original offline editor assistance. Engine execution remains authoritative for complete DAX semantics.</summary>
-public sealed class DaxLanguageService
+public sealed partial class DaxLanguageService
 {
     public DaxAnalysis Analyze(DaxDocument document, DaxMetadataSnapshot metadata, CancellationToken ct = default)
     {
@@ -120,9 +120,11 @@ public sealed class DaxLanguageService
 
     public IReadOnlyList<DaxCodeAction> GetCodeActions(DaxAnalysis analysis, TextSpan selection)
     {
-        var reference = ReferenceAt(analysis, selection.Start);
-        if (reference == null) return Array.Empty<DaxCodeAction>();
         var result = new List<DaxCodeAction>();
+        if (selection.Start < 0 || selection.Length < 0 || (long)selection.Start + selection.Length > analysis.Document.Text.Length) return result;
+        AddSafeExpressionActions(analysis, selection, result);
+        var reference = ReferenceAt(analysis, selection.Start);
+        if (reference == null) return result;
         if (!reference.IsDefinition && reference.Symbol.Kind is DaxSymbolKind.Column or DaxSymbolKind.Measure && reference.Symbol.Table != null)
         {
             var token = analysis.Tokens.FirstOrDefault(item => item.Span == reference.Span);
@@ -144,6 +146,8 @@ public sealed class DaxLanguageService
             var hasDefine = first != null && Is(first, "DEFINE");
             result.Add(Action(analysis, "Define UDF in query", "Preview a query-local function definition. The model is unchanged.", new[]
             { new DaxTextEdit(new TextSpan(hasDefine ? first!.Span.End : 0, 0), (hasDefine ? "" : "DEFINE") + "\n    FUNCTION " + reference.Symbol.Name + " = " + reference.Symbol.Expression + "\n") }));
+            var dependencies = DefineFunctionWithDependencies(analysis, reference.Symbol);
+            if (dependencies != null) result.Add(dependencies);
         }
         return result;
     }

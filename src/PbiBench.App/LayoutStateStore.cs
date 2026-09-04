@@ -57,7 +57,7 @@ public sealed class AppLayoutState
     }
 
     private static readonly HashSet<string> Pages = new(StringComparer.Ordinal)
-        { "Home", "Model", "DAX", "Automate", "Model diagram", "Diagram", "PBIP / Git", "QA", "Report", "Fabric", "Deploy", "Knowledge", "Agent" };
+        { "Home", "Model", "Model tools", "DAX", "Data", "Automate", "Model diagram", "Diagram", "PBIP / Git", "QA", "Report", "Fabric", "Deploy", "Knowledge", "Agent" };
 
     private static double Limit(double value, double minimum, double maximum, double fallback) =>
         double.IsNaN(value) || double.IsInfinity(value) ? fallback : Math.Max(minimum, Math.Min(maximum, value));

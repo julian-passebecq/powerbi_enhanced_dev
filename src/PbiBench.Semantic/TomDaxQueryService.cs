@@ -55,8 +55,8 @@ internal sealed class TomQuerySession : IQuerySession
         foreach (var key in connection.Keys.Cast<string>().ToArray())
         {
             var normalized = key.Replace(" ", "").ToLowerInvariant();
-            if (normalized == "datasource" || normalized == "server" || normalized == "address" || normalized == "networkaddress" ||
-                normalized == "catalog" || normalized == "initialcatalog" || normalized == "sessionid" || normalized == "session" ||
+            if (QueryConnectionTarget.IsServerKey(key) ||
+                normalized == "database" || normalized == "catalog" || normalized == "initialcatalog" || normalized == "sessionid" || normalized == "session" ||
                 normalized == "applicationname" || normalized == "connecttimeout" || normalized == "timeout") connection.Remove(key);
         }
         connection["Data Source"] = request.Server; connection["Initial Catalog"] = request.Database;

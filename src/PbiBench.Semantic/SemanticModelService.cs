@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using TabularEditor.TOMWrapper;
+using PbiBench.Semantic.ModelAuthoring;
 
 namespace PbiBench.Semantic;
 
@@ -22,11 +23,13 @@ public sealed class SemanticModelService
             .Where(r => r.FromColumn != null && r.ToColumn != null)
             .Select(r => new GraphRelationship(r.Name, r.FromColumn.Table.Name, r.FromColumn.Name,
                 r.ToColumn.Table.Name, r.ToColumn.Name, r.FromCardinality.ToString(), r.ToCardinality.ToString(),
-                r.IsActive, r.CrossFilteringBehavior.ToString())).ToArray();
+                r.IsActive, r.CrossFilteringBehavior.ToString(), r, r.ID, r.SecurityFilteringBehavior.ToString())).ToArray();
         var tables = handler.Model.Tables.Select(t => new GraphTable(t.Name, t,
             relationships.Any(r => (r.FromTable == t.Name && r.FromCardinality == "Many") || (r.ToTable == t.Name && r.ToCardinality == "Many")) ? "Fact" :
             relationships.Any(r => (r.ToTable == t.Name && r.ToCardinality == "One") || (r.FromTable == t.Name && r.FromCardinality == "One")) ? "Dimension" : "Table",
-            t.Columns.Select(c => c.Name).ToArray(), t.Measures.Count)).ToArray();
+            t.Columns.Select(c => c.Name).ToArray(), t.Measures.Count, TableGroupService.Read(t).Group,
+            t.Columns.Select(c => new GraphColumn(c.Name, c.DataType.ToString(), c.IsKey,
+                relationships.Any(r => (r.FromTable == t.Name && r.FromColumn == c.Name) || (r.ToTable == t.Name && r.ToColumn == c.Name)), c.IsHidden)).ToArray())).ToArray();
         return new ModelGraph(tables, relationships);
     }
 
@@ -43,7 +46,18 @@ public sealed class SemanticModelService
         : "'" + obj.Name.Replace("'", "''") + "'";
 }
 
-public sealed record ModelGraph(IReadOnlyList<GraphTable> Tables, IReadOnlyList<GraphRelationship> Relationships);
-public sealed record GraphTable(string Name, Table Object, string Role, IReadOnlyList<string> Columns, int MeasureCount);
+public sealed record ModelGraph(IReadOnlyList<GraphTable> Tables, IReadOnlyList<GraphRelationship> Relationships)
+{
+    /// <summary>One-hop neighbours, optionally restricted to active tables that filter this table.</summary>
+    public IReadOnlyList<string> RelatedTables(string table, bool filteringOnly = false) => Relationships
+        .Where(r => !filteringOnly || r.IsActive)
+        .SelectMany(r => r.FromTable == table && (!filteringOnly || r.FilterDirection == "OneDirection" || r.FilterDirection == "BothDirections") ? new[] { r.ToTable } :
+            r.ToTable == table && (!filteringOnly || r.FilterDirection == "BothDirections") ? new[] { r.FromTable } : Array.Empty<string>())
+        .Distinct(StringComparer.Ordinal).OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray();
+}
+public sealed record GraphColumn(string Name, string DataType, bool IsKey, bool IsRelationshipKey, bool IsHidden);
+public sealed record GraphTable(string Name, Table Object, string Role, IReadOnlyList<string> Columns, int MeasureCount,
+    string? Group = null, IReadOnlyList<GraphColumn>? ColumnMetadata = null);
 public sealed record GraphRelationship(string Name, string FromTable, string FromColumn, string ToTable, string ToColumn,
-    string FromCardinality, string ToCardinality, bool IsActive, string FilterDirection);
+    string FromCardinality, string ToCardinality, bool IsActive, string FilterDirection,
+    SingleColumnRelationship? Object = null, string? Id = null, string? SecurityFilterDirection = null);

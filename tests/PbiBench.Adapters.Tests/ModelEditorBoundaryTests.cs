@@ -60,6 +60,17 @@ public sealed class ModelEditorBoundaryTests
         Assert.True(analyze.Available);
         analyze.PerformClick();
         Assert.Equal(1, calls[WorkbenchCommandId.DaxStudio]);
+        string? previewedTable = null;
+        editor.RequestPreviewData = tableName => previewedTable = tableName;
+        editor.Select(editor.Handler.Model.Tables["Sales"]);
+        typeof(ToolStripDropDown).GetMethod("OnOpening", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .Invoke(context, new object[] { new System.ComponentModel.CancelEventArgs() });
+        Assert.False(analyze.Available);
+        var previewData = context.Items["pbibenchPreviewData"];
+        Assert.True(previewData.Available);
+        previewData.PerformClick();
+        Assert.Equal("Sales", previewedTable);
+        editor.Select(measure);
 
         editor.ShowScriptEditor();
         Assert.Equal("pgCSharpScript", NativeField<TabControl>(editor, "tabCodeEditors").SelectedTab.Name);

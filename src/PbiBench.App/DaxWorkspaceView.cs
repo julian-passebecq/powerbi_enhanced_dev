@@ -86,7 +86,13 @@ public sealed class DaxWorkspaceView : UserControl, IDisposable
         documents.SelectionChanged += (_, _) => { if (documents.SelectedItem != null) { RefreshDiagnostics(); Active.Editor.Focus(); } };
         diagnostics.MouseDoubleClick += (_, _) => NavigateDiagnostic();
         history.MouseDoubleClick += (_, _) => { if (history.SelectedItem is QueryHistoryEntry entry) OpenQuery(entry.Query, "History query"); };
-        Loaded += async (_, _) => { try { history.ItemsSource = await historyStore.LoadAsync(lifetime.Token); } catch (OperationCanceledException) { } catch (Exception ex) { ShowError(ex); } };
+        Loaded += async (_, _) =>
+        {
+            if (disposed) return;
+            try { var entries = await historyStore.LoadAsync(lifetime.Token); if (!disposed) history.ItemsSource = entries; }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { if (!disposed) ShowError(ex); }
+        };
         RestoreDocuments();
         status.Text = "Ctrl+Space · Complete   F12 · Definition   Alt+F12 · Peek   F5 · Run\nQueries use the connected engine. Offline model files have no data engine.";
     }
@@ -198,7 +204,12 @@ public sealed class DaxWorkspaceView : UserControl, IDisposable
             if (disposed) return;
             var historySaved = await TryRecordHistoryAsync(QueryHistoryEntry.FromResult(result));
             if (disposed) return;
-            if (doc.Revision != revision || connection() != target || !tabs.Contains(doc) || !ReferenceEquals(doc, Active)) { status.Text = "Query finished; document or connection changed. Results were kept out of the current view. The exact query is in history."; return; }
+            if (doc.Revision != revision || connection() != target || !tabs.Contains(doc) || !ReferenceEquals(doc, Active))
+            {
+                status.Text = "Query finished; document or connection changed. Results were kept out of the current view. " +
+                    (historySaved ? "The exact query is in history." : "Local history could not be saved; the Executed DAX tab retains the query.");
+                return;
+            }
             DisplayResults(result);
             if (!historySaved) status.Text += "\nResults are available, but local history could not be saved.";
         }

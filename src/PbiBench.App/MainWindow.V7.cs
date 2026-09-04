@@ -127,6 +127,20 @@ public partial class MainWindow
             var button = new Button { Content = label, FontSize = 11 };
             button.Click += (_, _) => Run(() => InspectorCommand(action)); InspectorActions.Children.Add(button);
         }
+        if (editor.Selection.Count == 1 && editor.Selection[0] is SingleColumnRelationship relationship)
+        {
+            var edit = new Button { Content = "Edit relationship…", FontSize = 11 };
+            edit.Click += (_, _) => Run(() => { ConfigureDiagramAuthoring(); diagram.EditRelationship(relationship); }); InspectorActions.Children.Add(edit);
+        }
+        if (editor.Selection.Count == 1 && editor.Selection[0] is Table table)
+        {
+            var membership = PbiBench.Semantic.ModelAuthoring.TableGroupService.Read(table);
+            InspectorFields.ItemsSource = ((IEnumerable<InspectorField>)InspectorFields.ItemsSource).Concat(new[] { new InspectorField("Table group", membership.Issue ?? membership.Group ?? "Ungrouped") });
+            var group = new Button { Content = "Table group…", FontSize = 11 };
+            group.Click += (_, _) => Run(() => { ConfigureDiagramAuthoring(); diagram.EditTableGroups(table); }); InspectorActions.Children.Add(group);
+            var preview = new Button { Content = "Preview Data", FontSize = 11 };
+            preview.Click += (_, _) => Run(() => editor.RequestPreviewData?.Invoke(table.Name)); InspectorActions.Children.Add(preview);
+        }
     }
     private void InspectorCommand(InspectorAction action)
     {

@@ -195,6 +195,53 @@ public sealed class QueryServiceTests
     }
 
     [TestMethod]
+    public async Task HistoryAtomicReplaceRetriesWhileAReaderTemporarilyDeniesDeleteSharing()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PbiBench-query-lock-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var store = new QueryHistoryStore(directory); var path = Path.Combine(directory, "query-history.json");
+            await store.AddAsync(QueryHistoryEntry.FromFailure(Request("EVALUATE {1}"), "Failed"), CancellationToken.None);
+            Task adding;
+            using (var held = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                adding = store.AddAsync(QueryHistoryEntry.FromFailure(Request("EVALUATE {2}"), "Failed"), CancellationToken.None);
+                Assert.IsTrue(await Task.Run(() => SpinWait.SpinUntil(() => Directory.GetFiles(directory, "*.tmp").Length > 0 || adding.IsCompleted, 3000)));
+                Assert.IsFalse(adding.IsCompleted, "A transient lock should keep the atomic replacement pending.");
+                StringAssert.Contains(File.ReadAllText(path), "EVALUATE {1}");
+            }
+            await adding;
+            var entries = await store.LoadAsync(CancellationToken.None);
+            Assert.AreEqual(2, entries.Count); Assert.AreEqual("EVALUATE {2}", entries[0].Query);
+            Assert.AreEqual(0, Directory.GetFiles(directory, "*.tmp").Length);
+        }
+        finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+    }
+
+    [TestMethod]
+    public async Task CancellingAnAtomicHistoryRetryPreservesThePreviousFile()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "PbiBench-query-lock-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var store = new QueryHistoryStore(directory); var path = Path.Combine(directory, "query-history.json");
+            await store.AddAsync(QueryHistoryEntry.FromFailure(Request("EVALUATE {1}"), "Failed"), CancellationToken.None);
+            var before = File.ReadAllText(path);
+            using (var held = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (var cancellation = new CancellationTokenSource())
+            {
+                var adding = store.AddAsync(QueryHistoryEntry.FromFailure(Request("EVALUATE {2}"), "Failed"), cancellation.Token);
+                Assert.IsTrue(await Task.Run(() => SpinWait.SpinUntil(() => Directory.GetFiles(directory, "*.tmp").Length > 0 || adding.IsCompleted, 3000)));
+                Assert.IsFalse(adding.IsCompleted); cancellation.Cancel();
+                await Assert.ThrowsExactlyAsync<OperationCanceledException>(() => adding);
+                Assert.AreEqual(before, File.ReadAllText(path));
+            }
+            Assert.AreEqual(0, Directory.GetFiles(directory, "*.tmp").Length);
+        }
+        finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+    }
+
+    [TestMethod]
     public async Task CancelledCsvExportLeavesExistingFileUntouched()
     {
         var path = Path.Combine(Path.GetTempPath(), "PbiBench-query-" + Guid.NewGuid().ToString("N") + ".csv");

@@ -56,6 +56,8 @@ public partial class MainWindow : Window
         editor.SelectionChanged += (_, _) => UpdateSelection();
         InitializeV7();
         InitializeDaxWorkspace();
+        InitializeDataWorkspace();
+        InitializeModelAuthoring();
         ready = true;
         GoTo(layoutState.SelectedPage);
         RefreshDaxStudioStatus();
@@ -143,6 +145,9 @@ public partial class MainWindow : Window
         UpdateModelStatus();
         UpdateSelection();
         daxWorkspace?.RefreshMetadata();
+        dataWorkspace?.RefreshSchema();
+        metadataEditors?.RefreshModel(); daxAuthoring?.RefreshModel();
+        ConfigureDiagramAuthoring();
         if (handler == null) { await UpdateWorkspaceAsync(null); return; }
         await UpdateWorkspaceAsync(workspaceRoot ?? editor.FilePath);
     }
@@ -159,6 +164,9 @@ public partial class MainWindow : Window
     {
         if (!ready) return;
         var selection = editor.Selection;
+        if (selection.Count == 1 && selection[0] is SingleColumnRelationship selectedRelationship) diagram.SelectRelationship(selectedRelationship);
+        else if (selection.Count == 1 && selection[0] is Table selectedTable) diagram.SelectTable(selectedTable.Name);
+        else { diagram.SelectRelationship(null); diagram.SelectTable(null); }
         InspectorSelection.Text = selection.Count == 0 ? "Select objects in the model tree" : string.Join("\n", selection.Take(12).Select(SemanticModelService.ObjectPath)) + (selection.Count > 12 ? $"\n+ {selection.Count - 12} more" : "");
         UpdateInspector();
         SelectionSummary.Text = $"{selection.Count} selected object(s). " + string.Join(", ", selection.Take(6).Select(o => o.Name));
@@ -172,10 +180,11 @@ public partial class MainWindow : Window
         if (InspectorPane.Visibility == Visibility.Visible && InspectorColumn.ActualWidth >= 210) layoutState.InspectorWidth = InspectorColumn.ActualWidth;
         if (OutputTabs.Visibility == Visibility.Visible && OutputRow.ActualHeight >= 80) layoutState.OutputHeight = OutputRow.ActualHeight;
         activePage = page; ApplyPaneVisibility();
-        foreach (var surface in new FrameworkElement[] { ModelSurface, HomePage, DaxPage, AutomationPage, DiagramPage, WorkspacePage, QaPage, LaterPage }) surface.Visibility = Visibility.Collapsed;
+        foreach (var surface in new FrameworkElement[] { ModelSurface, HomePage, DaxPage, DataPage, AuthoringPage, AutomationPage, DiagramPage, WorkspacePage, QaPage, LaterPage }) surface.Visibility = Visibility.Collapsed;
         FrameworkElement selected = page switch
         {
-            "Home" => HomePage, "Model" => ModelSurface, "DAX" => DaxPage, "Automate" => AutomationPage,
+            "Home" => HomePage, "Model" => ModelSurface, "DAX" => DaxPage, "Data" => DataPage, "Automate" => AutomationPage,
+            "Model tools" => AuthoringPage,
             "Model diagram" => DiagramPage, "PBIP / Git" => WorkspacePage, "QA" => QaPage, _ => LaterPage
         };
         selected.Visibility = Visibility.Visible;
@@ -330,9 +339,12 @@ public partial class MainWindow : Window
     private void DrawDiagram()
     {
         DiagramCanvas.Children.Clear();
+        ConfigureDiagramAuthoring();
         if (editor.Handler == null) return;
         diagram.Render(new SemanticModelService(editor.Handler).GetGraph(), item => { editor.Select(item); GoTo("Model"); });
     }
+    private void ConfigureDiagramAuthoring() => diagram.ConfigureAuthoring(editor.Handler,
+        () => { Run(UpdateSessionAsync); if (activePage == "Model diagram") DrawDiagram(); }, relationship => editor.Select(relationship));
 
     private void WindowKeyDown(object sender, KeyEventArgs e)
     {
@@ -345,6 +357,7 @@ public partial class MainWindow : Window
     {
         var entries = Enum.GetValues(typeof(PbiBench.Core.Commands.WorkbenchCommandId)).Cast<PbiBench.Core.Commands.WorkbenchCommandId>().Where(commands.Contains).ToDictionary(id => id.ToString(), id => new Action(() => Run(() => commands.Execute(id))));
         foreach (var page in Navigation.Items.Cast<ListBoxItem>().Select(i => i.Content.ToString()!)) entries["Workspace · " + page] = () => GoTo(page);
+        AddAuthoringCommands(entries);
         var panel = new DockPanel { Margin = new Thickness(15) };
         var search = new TextBox { Padding = new Thickness(8), Margin = new Thickness(0, 0, 0, 10) };
         DockPanel.SetDock(search, Dock.Top); panel.Children.Add(search);
@@ -364,6 +377,6 @@ public partial class MainWindow : Window
         SaveLayout();
         lifetime.Cancel();
         try { File.WriteAllText(Path.Combine(settingsDirectory, "scratch.dax"), scratch.Text); } catch (IOException) { } catch (UnauthorizedAccessException) { }
-        editor.Dispose(); daxWorkspace?.Dispose(); lifetime.Dispose(); ready = false;
+        metadataEditors?.Dispose(); daxAuthoring?.Dispose(); dataWorkspace?.Dispose(); daxWorkspace?.Dispose(); editor.Dispose(); lifetime.Dispose(); ready = false;
     }
 }

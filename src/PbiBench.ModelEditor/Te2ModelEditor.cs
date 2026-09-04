@@ -18,7 +18,7 @@ public sealed class Te2ModelEditor : IDisposable
     public WindowsFormsHost View { get; }
     public TabularModelHandler? Handler => form.UI.Handler;
     public string? FilePath => Handler?.IsConnected == false ? form.UI.File_Current : null;
-    public string? Server => Handler?.IsConnected == true ? Handler.Database.Server.Name : null;
+    public string? Server => Handler?.IsConnected == true ? PbiBench.Core.Queries.QueryConnectionTarget.Server(Handler.Database.Server.ConnectionString, Handler.Database.Server.Name) : null;
     public string? Database => Handler?.Database.Name;
     public string ActiveExpression => form.UI.Elements.ExpressionEditor.Text;
     public IReadOnlyList<TabularNamedObject> Selection => form.UI.Selection.Direct.OfType<TabularNamedObject>().ToArray();
@@ -26,6 +26,7 @@ public sealed class Te2ModelEditor : IDisposable
     public event EventHandler? SelectionChanged;
     public Func<string, string, string, bool>? ReviewWrite { get; set; }
     public Action? RequestClose { get; set; }
+    public Action<string>? RequestPreviewData { get; set; }
     public bool LegacyCommandsVisible => legacyCommandsVisible;
 
     public Te2ModelEditor(string? isolatedProfileDirectory = null) : this(null, isolatedProfileDirectory) { }
@@ -269,10 +270,15 @@ public sealed class Te2ModelEditor : IDisposable
         var analyze = new ToolStripMenuItem("Analyze in DAX Studio") { Name = "pbibenchAnalyzeDax", Available = false };
         analyze.Click += (_, _) => Dispatch(WorkbenchCommandId.DaxStudio, () => { });
         menu.Items.Insert(0, analyze);
+        var preview = new ToolStripMenuItem("Preview Data") { Name = "pbibenchPreviewData", Available = false };
+        preview.Click += (_, _) => { if (Selection.Count == 1 && Selection[0] is Table table) RequestPreviewData?.Invoke(table.Name); };
+        menu.Items.Insert(0, preview);
         menu.Opening += (_, _) =>
         {
             analyze.Available = Selection.Count == 1 && Selection[0] is Measure;
             analyze.Enabled = commands?.CanExecute(WorkbenchCommandId.DaxStudio) == true;
+            preview.Available = Selection.Count == 1 && Selection[0] is Table;
+            preview.Enabled = RequestPreviewData != null;
         };
     }
 

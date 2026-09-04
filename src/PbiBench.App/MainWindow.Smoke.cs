@@ -69,6 +69,8 @@ public partial class MainWindow
             GoTo("Model"); editor.Save();
             Check(File.Exists(modelFile) && !h.HasUnsavedChanges, "Hosted TE2 local save completed", checks);
             await RunDaxWorkspaceSmokeAsync(outputRoot, checks);
+            await RunDataWorkspaceSmokeAsync(outputRoot, checks);
+            await RunAuthoringSmokeAsync(outputRoot, checks);
             File.AppendAllText(Path.Combine(outputRoot, "smoke-progress.txt"), "\nLocal save complete; serializing report");
             File.WriteAllText(Path.Combine(outputRoot, "smoke-result.json"), JsonSerializer.Serialize(new { success = true, checks, screenshots = Directory.GetFiles(outputRoot, "*.png") }, new JsonSerializerOptions { WriteIndented = true }));
             Environment.ExitCode = 0;
@@ -101,10 +103,15 @@ public partial class MainWindow
         {
             drawing.DrawRectangle((Brush)new BrushConverter().ConvertFromString("#F7F8F6")!, null, new Rect(0, 0, width, height));
             drawing.DrawImage(background, new Rect(0, 0, width, height));
-            if (ModelSurface.Visibility == Visibility.Visible || DaxPage.Visibility == Visibility.Visible)
+            var nativeSurfaces = new List<(FrameworkElement Surface, Func<System.Drawing.Bitmap> Capture)>();
+            if (ModelSurface.Visibility == Visibility.Visible) nativeSurfaces.Add((ModelSurface, editor.Capture));
+            if (DaxPage.Visibility == Visibility.Visible) nativeSurfaces.Add((ScratchSurface, scratch.Capture));
+            if (AuthoringPage.Visibility == Visibility.Visible && daxAuthoring != null)
+                foreach (var sourceEditor in daxAuthoring.VisibleEditors) nativeSurfaces.Add((sourceEditor.View, sourceEditor.Capture));
+            foreach (var native in nativeSurfaces)
             {
-                var surface = ModelSurface.Visibility == Visibility.Visible ? ModelSurface : ScratchSurface;
-                using var capture = ModelSurface.Visibility == Visibility.Visible ? editor.Capture() : scratch.Capture();
+                var surface = native.Surface;
+                using var capture = native.Capture();
                 var handle = capture.GetHbitmap();
                 try
                 {
