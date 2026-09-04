@@ -132,7 +132,7 @@ public partial class MainWindow
     {
         switch (action)
         {
-            case InspectorAction.EditDax: GoTo("Model"); editor.FocusExpressionEditor(); break;
+            case InspectorAction.EditDax: OpenRichExpression(); break;
             case InspectorAction.FormatDax: commands.Execute(WorkbenchCommandId.FormatDax); break;
             case InspectorAction.Dependencies: commands.Execute(WorkbenchCommandId.Dependencies); break;
             case InspectorAction.AnalyzeInDaxStudio: LaunchActiveExpression(this, new RoutedEventArgs()); break;

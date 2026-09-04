@@ -1,5 +1,7 @@
 # V9 prerequisite check — existing V6 baseline
 
+**Historical V6 check. Superseded for sequencing on 2026-09-05 by `V7_FUNCTIONAL_GATE.md`: V7 functional/structural checks now pass; taskbar appearance and 100/125/150% pixel-level DPI appearance remain manual visual QA pending and do not block V9.**
+
 Checked on 2026-09-04 against repository commit `1d0d3b1` (`v1`). The repository was clean before contract staging. Read `AGENTS.md`, `README_RUN.md`, and `docs/PASS1_DELIVERY_V6.md` before verification; no product code or build configuration was changed.
 
 **The existing V6 automated baseline passes. V9 implementation remains blocked on completion of the separate pending UX pass, as confirmed by the user.** This run does not establish that the pending UX work is green. No V7/V8 contract or corresponding completed UX delivery was present in the existing workspace when it was inspected; only the V6 baseline and earlier UX design documents were available. Do not substitute V6 test success for the user's UX prerequisite.

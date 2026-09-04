@@ -11,6 +11,9 @@
   <Project Path="src/PbiBench.DataForge/PbiBench.DataForge.csproj" />
   <Project Path="src/PbiBench.Cli/PbiBench.Cli.csproj" />
   <Project Path="src/PbiBench.App/PbiBench.App.csproj" />
+  <Project Path="tests/PbiBench.App.Tests/PbiBench.App.Tests.csproj" />
   <Project Path="tests/PbiBench.Adapters.Tests/PbiBench.Adapters.Tests.csproj" />
   <Project Path="tests/PbiBench.Semantic.Tests/PbiBench.Semantic.Tests.csproj" />
+  <Project Path="src/PbiBench.Dax.LanguageService/PbiBench.Dax.LanguageService.csproj" />
+  <Project Path="tests/PbiBench.Dax.LanguageService.Tests/PbiBench.Dax.LanguageService.Tests.csproj" />
 </Solution>

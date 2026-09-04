@@ -68,6 +68,7 @@ public partial class MainWindow
             File.WriteAllText(Path.Combine(outputRoot, "smoke-progress.txt"), "Before local save\n" + string.Join("\n", checks));
             GoTo("Model"); editor.Save();
             Check(File.Exists(modelFile) && !h.HasUnsavedChanges, "Hosted TE2 local save completed", checks);
+            await RunDaxWorkspaceSmokeAsync(outputRoot, checks);
             File.AppendAllText(Path.Combine(outputRoot, "smoke-progress.txt"), "\nLocal save complete; serializing report");
             File.WriteAllText(Path.Combine(outputRoot, "smoke-result.json"), JsonSerializer.Serialize(new { success = true, checks, screenshots = Directory.GetFiles(outputRoot, "*.png") }, new JsonSerializerOptions { WriteIndented = true }));
             Environment.ExitCode = 0;

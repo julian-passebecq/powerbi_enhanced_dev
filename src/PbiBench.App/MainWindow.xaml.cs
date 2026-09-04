@@ -19,7 +19,8 @@ namespace PbiBench.App;
 public partial class MainWindow : Window
 {
     private readonly Te2ModelEditor editor;
-    private readonly DaxScratchEditor scratch;
+    private readonly DaxScratchEditor initialScratch;
+    private DaxScratchEditor scratch => daxWorkspace?.ActiveEditor ?? initialScratch;
     private readonly PbipWorkspaceScanner scanner = new();
     private readonly GitClient git = new();
     private readonly CancellationTokenSource lifetime = new();
@@ -42,9 +43,8 @@ public partial class MainWindow : Window
         editor = new Te2ModelEditor(smokeMode ? Path.Combine(settingsDirectory, "TE2") : null);
         editor.ReviewWrite = ReviewRemoteWrite;
         editor.RequestClose = () => Dispatcher.BeginInvoke(new Action(Close));
-        scratch = new DaxScratchEditor();
+        initialScratch = new DaxScratchEditor();
         ModelSurface.Content = editor.View;
-        ScratchSurface.Content = scratch.View;
         ActionPicker.ItemsSource = AutomationService.Actions;
         ActionPicker.SelectedIndex = 0;
         Directory.CreateDirectory(settingsDirectory);
@@ -55,6 +55,7 @@ public partial class MainWindow : Window
         editor.ModelChanged += (_, _) => Run(UpdateSessionAsync);
         editor.SelectionChanged += (_, _) => UpdateSelection();
         InitializeV7();
+        InitializeDaxWorkspace();
         ready = true;
         GoTo(layoutState.SelectedPage);
         RefreshDaxStudioStatus();
@@ -141,6 +142,7 @@ public partial class MainWindow : Window
         RememberProject(editor.FilePath);
         UpdateModelStatus();
         UpdateSelection();
+        daxWorkspace?.RefreshMetadata();
         if (handler == null) { await UpdateWorkspaceAsync(null); return; }
         await UpdateWorkspaceAsync(workspaceRoot ?? editor.FilePath);
     }
@@ -268,11 +270,7 @@ public partial class MainWindow : Window
     private static string ToQuery(string expression, bool tableExpression = false) => System.Text.RegularExpressions.Regex.IsMatch(expression, @"\A(?:\s|//[^\r\n]*(?:\r?\n|$)|--[^\r\n]*(?:\r?\n|$)|/\*[\s\S]*?\*/)*(EVALUATE|DEFINE)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase)
         ? expression : tableExpression ? "EVALUATE\r\n" + expression + "\r\n" : "EVALUATE\r\n    ROW ( \"Value\",\r\n" + expression + "\r\n    )";
     private void FormatScratch(object sender, RoutedEventArgs e) => Run(() => { scratch.Text = new LocalDaxFormatter().Format(scratch.Text); Log("Formatted DAX locally; expression text stays on this computer."); });
-    private void SaveScratch(object sender, RoutedEventArgs e) => Run(() =>
-    {
-        var dialog = new SaveFileDialog { Filter = "DAX query|*.dax", FileName = "query.dax" };
-        if (dialog.ShowDialog(this) == true) { File.WriteAllText(dialog.FileName, scratch.Text); Log("Saved DAX query."); }
-    });
+    private void SaveScratch(object sender, RoutedEventArgs e) => Run(() => daxWorkspace!.SaveActive());
     private void LaunchDaxStudio(object sender, RoutedEventArgs e) => Run(async () =>
     {
         var path = await new DaxStudioBridge(daxStudioPath).OpenQueryAsync(scratch.Text, editor.Server, editor.Server == null ? null : editor.Database, Path.Combine(settingsDirectory, "queries"), lifetime.Token);
@@ -310,6 +308,7 @@ public partial class MainWindow : Window
         var revision = ++statusRevision;
         if (string.IsNullOrWhiteSpace(path))
         {
+            semanticWorkspaceRoot = null;
             workspaceRoot = null; GitHeader.Text = "Git · no project"; SourceStatus.Text = "No PBIP workspace";
             WorkspaceDetails.Text = "Open a model from a PBIP project or choose a .pbip file."; GitDetails.Text = ""; GitFiles.ItemsSource = null; return;
         }
@@ -319,6 +318,8 @@ public partial class MainWindow : Window
         var status = await git.GetStatusAsync(root!, inventory?.SemanticModelFolders, token);
         if (revision != statusRevision || token.IsCancellationRequested) return;
         workspaceRoot = root;
+        semanticWorkspaceRoot = inventory?.SemanticModelFolders.FirstOrDefault(folder => editor.FilePath?.StartsWith(folder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) == true)
+            ?? (inventory?.SemanticModelFolders.Count == 1 ? inventory.SemanticModelFolders[0] : null);
         GitHeader.Text = status.Summary;
         SourceStatus.Text = inventory == null ? "No PBIP project detected\n" + status.Summary : $"PBIP · {inventory.Root}\nTMDL · {(inventory.HasTmdl ? "present" : "absent")}\nPBIR · {(inventory.HasPbir ? "present" : "absent")}\n{status.ChangedSemanticFiles.Count} changed semantic files";
         WorkspaceDetails.Text = inventory == null ? "No PBIP project detected at " + root : $"PBIP root: {inventory.Root}\nSemantic folders: {string.Join(", ", inventory.SemanticModelFolders)}\nTMDL: {inventory.HasTmdl} · PBIR: {inventory.HasPbir} · enhanced PBIR: {inventory.HasEnhancedPbir}\n{status.Summary}\n{string.Join("\\n", inventory.Warnings.Concat(status.Warnings))}";
@@ -363,6 +364,6 @@ public partial class MainWindow : Window
         SaveLayout();
         lifetime.Cancel();
         try { File.WriteAllText(Path.Combine(settingsDirectory, "scratch.dax"), scratch.Text); } catch (IOException) { } catch (UnauthorizedAccessException) { }
-        editor.Dispose(); scratch.Dispose(); lifetime.Dispose(); ready = false;
+        editor.Dispose(); daxWorkspace?.Dispose(); lifetime.Dispose(); ready = false;
     }
 }

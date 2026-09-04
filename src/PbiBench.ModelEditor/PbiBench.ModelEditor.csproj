@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="../PbiBench.Core/PbiBench.Core.csproj" />
     <ProjectReference Include="../PbiBench.Semantic/PbiBench.Semantic.csproj" />
+    <ProjectReference Include="../PbiBench.Dax.LanguageService/PbiBench.Dax.LanguageService.csproj" />
     <Reference Include="TabularEditor"><HintPath>../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/TabularEditor.exe</HintPath></Reference>
     <Reference Include="TOMWrapper"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/TOMWrapper.dll</HintPath></Reference>
     <Reference Include="FastColoredTextBox"><HintPath>../../vendor/TabularEditor2-2.28.0/packages/FCTB.2.16.24/lib/FastColoredTextBox.dll</HintPath></Reference>

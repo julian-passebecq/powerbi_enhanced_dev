@@ -82,9 +82,26 @@ public sealed class Te2ModelEditor : IDisposable
     public void AcceptExpression() => form.UI.ExpressionEditor_AcceptEdit();
     // UIUndoRedoAction.OnExecute owns editor-text/property-grid/model focus handling.
     // Replacing its Execute event would run an additional undo AFTER the native undo.
-    // The shell instead calls the very same native implementation used by TE2 shortcuts.
-    public void Undo() { if (Handler != null) ExecuteNativeAction("actUndo"); ModelChanged?.Invoke(this, EventArgs.Empty); }
-    public void Redo() { if (Handler != null) ExecuteNativeAction("actRedo"); ModelChanged?.Invoke(this, EventArgs.Empty); }
+    // WPF shell buttons live outside that native focus tree. There the model undo manager
+    // is authoritative; TE2's cached ActiveControl may still point at an old text editor.
+    public void Undo()
+    {
+        if (Handler != null)
+        {
+            if (form.ContainsFocus) ExecuteNativeAction("actUndo");
+            else Handler.UndoManager.Undo();
+        }
+        ModelChanged?.Invoke(this, EventArgs.Empty);
+    }
+    public void Redo()
+    {
+        if (Handler != null)
+        {
+            if (form.ContainsFocus) ExecuteNativeAction("actRedo");
+            else Handler.UndoManager.Redo();
+        }
+        ModelChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     public void ConfigureCommands(WorkbenchCommandRegistry registry) => commands = registry ?? throw new ArgumentNullException(nameof(registry));
 

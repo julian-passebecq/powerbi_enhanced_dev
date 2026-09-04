@@ -1,4 +1,6 @@
-# V9 staged — awaiting the separate UX pass
+# V9 staged — V7 functional prerequisite complete
+
+**2026-09-05 update:** The user supplied and reviewed V7, then explicitly allowed taskbar appearance and pixel-level DPI appearance to remain manual visual QA pending. The V7 functional/structural gate is now complete: 390 test executions and all 15 original launch checks passed. See `V7_FUNCTIONAL_GATE.md`. Proceed sequentially with V9.1 onward; no screen-control access is required or requested. The text below records the original staging decision and is historical, not the current blocker state.
 
 ## User instruction and current status
 

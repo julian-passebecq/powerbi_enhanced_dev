@@ -41,7 +41,7 @@ internal static class DiagramRenderer
             var figure = new PathFigure { StartPoint = start, IsClosed = false };
             figure.Segments.Add(new BezierSegment(new Point(controlX, start.Y), new Point(controlX, end.Y), end, true));
             var brush = Color(r.IsActive ? "#637988" : "#9DAAB2");
-            var path = new Path
+            var path = new System.Windows.Shapes.Path
             {
                 Data = new PathGeometry(new[] { figure }), Stroke = brush, StrokeThickness = r.IsActive ? 2 : 1.5,
                 ToolTip = $"{r.Name}\n{r.FromTable}[{r.FromColumn}] ({Cardinality(r.FromCardinality)}) — {r.ToTable}[{r.ToColumn}] ({Cardinality(r.ToCardinality)})\n{(r.FilterDirection == "BothDirections" ? "Filters in both directions" : "Filters from " + r.ToTable + " to " + r.FromTable)} · {(r.IsActive ? "Active" : "Inactive")}",

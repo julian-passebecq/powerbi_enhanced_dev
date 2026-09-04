@@ -63,22 +63,39 @@ public sealed class ModelEditorBoundaryTests
 
         editor.ShowScriptEditor();
         Assert.Equal("pgCSharpScript", NativeField<TabControl>(editor, "tabCodeEditors").SelectedTab.Name);
+        // Native text undo remains independent from model undo. ActiveControl represents
+        // native editor focus in this unattached boundary fixture without desktop input.
+        var scriptEditor = NativeField<Control>(editor, "txtAdvanced");
+        scriptEditor.Text = "/* initial script */";
+        scriptEditor.GetType().GetMethod("ClearUndo", Type.EmptyTypes)!.Invoke(scriptEditor, null);
+        scriptEditor.GetType().GetMethod("SelectAll", Type.EmptyTypes)!.Invoke(scriptEditor, null);
+        scriptEditor.GetType().GetMethod("InsertText", new[] { typeof(string) })!.Invoke(scriptEditor, new object[] { "/* revised script */" });
+        var modelStepsBeforeTextUndo = editor.Handler.UndoManager.UndoSteps;
+        ((Form)form).ActiveControl = scriptEditor;
+        ExecuteNativeAction(editor, "actUndo");
+        Assert.Equal("/* initial script */", scriptEditor.Text);
+        ExecuteNativeAction(editor, "actRedo");
+        Assert.Equal("/* revised script */", scriptEditor.Text);
+        Assert.Equal(modelStepsBeforeTextUndo, editor.Handler.UndoManager.UndoSteps);
         editor.FocusExpressionEditor();
         Assert.Equal(0, NativeField<TabControl>(editor, "tabCodeEditors").SelectedIndex);
         editor.ShowDependencies();
-        var ui = form.GetType().BaseType!.GetProperty("UI")!.GetValue(form)!;
+        var ui = NativeField<object>(editor, "UI");
         var dependency = (Form)ui.GetType().GetField("DependencyForm", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)!.GetValue(ui)!;
         Assert.True(dependency.Visible);
         dependency.Close();
 
-        // Exactly one metadata undo/redo through both the shell route and native action.
-        NativeField<Control>(editor, "tvModel").Focus();
+        // A shell click is outside native focus. A stale expression ActiveControl must
+        // not make the model command silently undo an unrelated text editor buffer.
         measure.Description = "first edit";
         measure.Description = "second edit";
         routes.Register(WorkbenchCommandId.Undo, editor.Undo);
         routes.Register(WorkbenchCommandId.Redo, editor.Redo);
         routes.Execute(WorkbenchCommandId.Undo);
         Assert.Equal("first edit", measure.Description);
+        // The test host is unattached and cannot acquire OS focus; assign its native
+        // active control to exercise the same tree context used by native shortcuts.
+        ((Form)form).ActiveControl = NativeField<Control>(editor, "tvModel");
         ExecuteNativeAction(editor, "actRedo");
         Assert.Equal("second edit", measure.Description);
         ExecuteNativeAction(editor, "actUndo");
