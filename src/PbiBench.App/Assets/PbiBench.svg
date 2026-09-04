@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <title>PbiBench semantic model mark</title>
+  <desc>Original connected semantic model nodes, drawn for PbiBench.</desc>
+  <rect x="4" y="4" width="248" height="248" rx="44" fill="#173C52"/>
+  <path d="M76 70 L180 128 L76 186 Z" fill="none" stroke="#FFFFFF" stroke-width="15" stroke-linejoin="round"/>
+  <rect x="53" y="47" width="46" height="46" rx="9" fill="#E7BE24"/>
+  <rect x="157" y="105" width="46" height="46" rx="9" fill="#FFFFFF"/>
+  <rect x="53" y="163" width="46" height="46" rx="9" fill="#FFFFFF"/>
+</svg>

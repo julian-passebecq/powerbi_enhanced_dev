@@ -1,0 +1,21 @@
+Continue from the current working PbiBench baseline. Do NOT redesign the architecture and do NOT restart TE2 integration.
+
+Use this ZIP only as a **Pass 1.5 delta specification**.
+
+Goal: make the current working TE2-in-PbiBench application feel like one coherent, professional IDE.
+
+Priorities:
+1. preserve current working TE2 2.28 integration and launch reliability;
+2. add a proper PbiBench app/window/taskbar icon;
+3. reduce duplicated TE2/PbiBench chrome without removing any command before its replacement works;
+4. make object selection drive a useful right-side inspector;
+5. turn Automate and BPA into preview-first product workflows;
+6. polish DAX Studio handoff;
+7. improve Model Diagram;
+8. make PBIP/Git status useful;
+9. add Home workflow and recent/open/connect actions;
+10. test at 100%, 125%, and 150% scaling.
+
+Do not start Fabric/PBIR/AI/DataForge/VizForge/full-TE3-parity work yet.
+
+Build and test continuously. Stop at `ACCEPTANCE_GATE.md` and report screenshots + build/test results + remaining legacy TE2 UI.

@@ -40,4 +40,8 @@ internal sealed record PlannedEdit(ObjectChange Change, Action Apply, Func<bool>
 public sealed record ApplyResult(int ChangedObjects, string Message);
 public enum FindingSeverity { Information, Warning, Error }
 public sealed record BpaFinding(string RuleId, string Rule, FindingSeverity Severity, TabularNamedObject Object,
-    string ObjectPath, string Reason, string ProposedChange, string Before, string After, string Source, ChangePreview? FixPreview);
+    string ObjectPath, string Reason, string ProposedChange, string Before, string After, string Source, ChangePreview? FixPreview)
+{
+    public string Risk => RuleId == "PBIBENCH004" || RuleId == "PBIBENCH005" ? "REVIEW" : FixPreview != null ? "SAFE" : "MANUAL ONLY";
+    public string Category => RuleId switch { "PBIBENCH001" => "DAX", "PBIBENCH002" => "Documentation", "PBIBENCH003" => "Organization", _ => "Modeling" };
+}

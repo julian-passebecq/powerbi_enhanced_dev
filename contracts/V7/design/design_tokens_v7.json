@@ -1,0 +1,29 @@
+{
+  "name": "PbiBench Editorial Workbench",
+  "colors": {
+    "ink": "#15232D",
+    "navy": "#173C52",
+    "paper": "#FAFAF7",
+    "surface": "#FFFFFF",
+    "border": "#D8DFE3",
+    "accentYellow": "#E7BE24",
+    "accentRed": "#C54134",
+    "success": "#2F7D5C",
+    "warning": "#A86D16",
+    "error": "#A93434",
+    "mutedText": "#637988"
+  },
+  "typography": {
+    "ui": "Segoe UI",
+    "code": "Cascadia Code"
+  },
+  "principles": [
+    "compact professional IDE",
+    "strong information hierarchy",
+    "restrained color",
+    "thin separators",
+    "minimal shadows",
+    "no dashboard-card overload",
+    "high information density with clear focus"
+  ]
+}

@@ -54,8 +54,9 @@ public partial class MainWindow : Window
         scratch.Text = File.Exists(query) ? File.ReadAllText(query) : "// Draft query — use the active expression or write DAX here.\r\nEVALUATE\r\n    ROW ( \"Result\", 1 )";
         editor.ModelChanged += (_, _) => Run(UpdateSessionAsync);
         editor.SelectionChanged += (_, _) => UpdateSelection();
+        InitializeV7();
         ready = true;
-        ShowPage("Model");
+        GoTo(layoutState.SelectedPage);
         RefreshDaxStudioStatus();
         Log("PbiBench ready. TE2 2.28.0 is integrated in this process. Bulk actions use preview and TE2 undo.");
         Loaded += (_, _) => Run(async () =>
@@ -66,6 +67,9 @@ public partial class MainWindow : Window
             else if (args.Length == 2 && args[0] == "--demo") editor.Open(args[1]);
             else if (args.Length == 2 && !args[0].StartsWith("--", StringComparison.Ordinal)) editor.Connect(args[0], args[1]);
             await UpdateSessionAsync();
+            if (args.Length > 0) GoTo("Model");
+            else ApplyPaneVisibility();
+            editor.RestorePaneFractions(layoutState.NativePaneFractions);
         });
     }
 
@@ -129,14 +133,16 @@ public partial class MainWindow : Window
             {
                 handler.UndoManager.UndoStateChanged += (_, _) => Dispatcher.BeginInvoke(new Action(UpdateModelStatus));
             }
+            currentFindings = null; ignoredFindings.Clear(); scannedAction = null;
             BpaGrid.ItemsSource = null;
             FindingDetails.Text = "";
             ActionPreviewGrid.ItemsSource = null;
         }
+        RememberProject(editor.FilePath);
         UpdateModelStatus();
         UpdateSelection();
         if (handler == null) { await UpdateWorkspaceAsync(null); return; }
-        await UpdateWorkspaceAsync(editor.FilePath ?? workspaceRoot);
+        await UpdateWorkspaceAsync(workspaceRoot ?? editor.FilePath);
     }
     private void UpdateModelStatus()
     {
@@ -152,6 +158,7 @@ public partial class MainWindow : Window
         if (!ready) return;
         var selection = editor.Selection;
         InspectorSelection.Text = selection.Count == 0 ? "Select objects in the model tree" : string.Join("\n", selection.Take(12).Select(SemanticModelService.ObjectPath)) + (selection.Count > 12 ? $"\n+ {selection.Count - 12} more" : "");
+        UpdateInspector();
         SelectionSummary.Text = $"{selection.Count} selected object(s). " + string.Join(", ", selection.Take(6).Select(o => o.Name));
     }
     private void NavigationChanged(object sender, SelectionChangedEventArgs e)
@@ -160,6 +167,9 @@ public partial class MainWindow : Window
     }
     internal void ShowPage(string page)
     {
+        if (InspectorPane.Visibility == Visibility.Visible && InspectorColumn.ActualWidth >= 210) layoutState.InspectorWidth = InspectorColumn.ActualWidth;
+        if (OutputTabs.Visibility == Visibility.Visible && OutputRow.ActualHeight >= 80) layoutState.OutputHeight = OutputRow.ActualHeight;
+        activePage = page; ApplyPaneVisibility();
         foreach (var surface in new FrameworkElement[] { ModelSurface, HomePage, DaxPage, AutomationPage, DiagramPage, WorkspacePage, QaPage, LaterPage }) surface.Visibility = Visibility.Collapsed;
         FrameworkElement selected = page switch
         {
@@ -169,7 +179,7 @@ public partial class MainWindow : Window
         selected.Visibility = Visibility.Visible;
         if (page == "Model diagram") DrawDiagram();
         if (page == "Automate") UpdateSelection();
-        if (page == "PBIP / Git") Run(() => UpdateWorkspaceAsync(editor.FilePath ?? workspaceRoot));
+        if (page == "PBIP / Git") Run(() => UpdateWorkspaceAsync(workspaceRoot ?? editor.FilePath));
         if (selected == LaterPage)
         {
             LaterTitle.Text = page;
@@ -183,8 +193,9 @@ public partial class MainWindow : Window
     }
     private void GoTo(string page)
     {
-        Navigation.SelectedItem = Navigation.Items.Cast<ListBoxItem>().First(i => (string)i.Content == page);
-        ShowPage(page);
+        var item = Navigation.Items.Cast<ListBoxItem>().First(i => (string)i.Content == page);
+        if (ReferenceEquals(Navigation.SelectedItem, item)) ShowPage(page);
+        else Navigation.SelectedItem = item;
     }
     private void OpenModel(object sender, RoutedEventArgs e) => Run(() => { GoTo("Model"); editor.OpenDialog(); });
     private void ConnectModel(object sender, RoutedEventArgs e) => Run(() => { GoTo("Model"); editor.Connect(); });
@@ -202,15 +213,10 @@ public partial class MainWindow : Window
     private void PreviewAction(object sender, RoutedEventArgs e) => Run(() =>
     {
         RequireModel();
-        var action = (AutomationAction)ActionPicker.SelectedItem;
-        var selection = AllMeasures.IsChecked == true && (action.Id == AutomationActionId.FormatMeasures || action.Id == AutomationActionId.OrganizeMeasures || action.Id == AutomationActionId.AddDescriptions)
-            ? editor.Handler!.Model.AllMeasures.Cast<TabularNamedObject>().ToArray() : editor.Selection;
-        var preview = automation!.Preview(action.Id, selection, new AutomationOptions
-        {
-            MeasureTableName = MeasureTableName.Text.Trim(), DisplayFolder = DisplayFolderName.Text,
-            AllMeasuresWhenSelectionEmpty = false
-        });
-        ReviewPreview(preview);
+        // Recompute from current options before showing an approval, so editing a field after
+        // Scan cannot apply an old plan. Apply still validates ownership and fingerprint.
+        scannedAction = BuildActionPreview();
+        ReviewPreview(scannedAction);
     });
     private void ReviewPreview(ChangePreview preview)
     {
@@ -219,6 +225,7 @@ public partial class MainWindow : Window
             preview.Changes.Select(c => new PreviewRow(c.ObjectPath, c.Property, c.Before, c.After, c.Reason)).ToArray(), preview.CanApply, "Apply local changes"))
         {
             var result = automation!.Apply(preview);
+            RecordAction(preview, result);
             Log(result.Message + " Use Undo to restore the preceding local state.");
             ValidationStatus.Text = "Action applied and validated";
             UpdateModelStatus();
@@ -229,14 +236,17 @@ public partial class MainWindow : Window
     {
         RequireModel();
         var findings = new BpaService(editor.Handler!, automation!).Scan();
-        BpaGrid.ItemsSource = findings;
+        currentFindings = findings;
+        FilterBpa(sender, e);
+        UpdateInspector();
+        ValidationDetails.Text = $"BPA scan: {findings.Count} findings. SAFE fixes are metadata changes; REVIEW findings require checking model/report intent. Performance changes require separate benchmarks.";
         ValidationStatus.Text = $"BPA companion · {findings.Count} findings";
         Log($"BPA companion scanned model: {findings.Count} findings. Full upstream BPA is available alongside it.");
     });
     private void NativeBpa(object sender, RoutedEventArgs e) => Run(() => { RequireModel(); editor.ShowNativeBpa(); });
     private void BpaSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (BpaGrid.SelectedItem is BpaFinding f) FindingDetails.Text = $"{f.RuleId} · {f.Rule}\n{f.Reason}\n\nProposed: {f.ProposedChange}\nBefore: {f.Before}\nAfter: {f.After}\n\nSource: {f.Source}\n{(f.FixPreview == null ? "Requires author decision; no automatic fix." : "Safe metadata fix available for preview.")}\nDouble-click the finding to select its object.";
+        if (BpaGrid.SelectedItem is BpaFinding f) FindingDetails.Text = $"{f.RuleId} · {f.Rule}\n{f.Category} · {f.Risk}\n{f.Reason}\n\nProposed: {f.ProposedChange}\nBefore: {f.Before}\nAfter: {f.After}\n\nSource: {f.Source}\n{(f.FixPreview == null ? "Requires author decision; no automatic fix." : "Safe metadata fix available for preview.")}\nDouble-click the finding to select its object.";
     }
     private void NavigateBpa(object sender, MouseButtonEventArgs e) => Run(() => { if (BpaGrid.SelectedItem is BpaFinding f) { editor.Select(f.Object); GoTo("Model"); } });
     private void PreviewBpaFix(object sender, RoutedEventArgs e) => Run(() =>
@@ -266,15 +276,17 @@ public partial class MainWindow : Window
     private void LaunchDaxStudio(object sender, RoutedEventArgs e) => Run(async () =>
     {
         var path = await new DaxStudioBridge(daxStudioPath).OpenQueryAsync(scratch.Text, editor.Server, editor.Server == null ? null : editor.Database, Path.Combine(settingsDirectory, "queries"), lifetime.Token);
-        Log("Opened DAX Studio with the current connection and query file: " + Path.GetFileName(path));
+        DaxHandoffDetails.Text = $"Server: {editor.Server ?? "(offline)"} · Database: {(editor.Server == null ? "(none)" : editor.Database)}\nQuery file: {path}";
+        Log("Opened DAX Studio. " + DaxHandoffDetails.Text);
     });
     private void LaunchActiveExpression(object sender, RoutedEventArgs e) => Run(async () =>
     {
         RequireModel();
         if (string.IsNullOrWhiteSpace(editor.ActiveExpression)) throw new InvalidOperationException("Select a DAX expression in the Model editor first.");
         var query = ToQuery(editor.ActiveExpression, editor.Selection.FirstOrDefault() is CalculatedTable);
-        await new DaxStudioBridge(daxStudioPath).OpenQueryAsync(query, editor.Server, editor.Server == null ? null : editor.Database, Path.Combine(settingsDirectory, "queries"), lifetime.Token);
-        Log("Opened the selected expression in DAX Studio.");
+        var queryPath = await new DaxStudioBridge(daxStudioPath).OpenQueryAsync(query, editor.Server, editor.Server == null ? null : editor.Database, Path.Combine(settingsDirectory, "queries"), lifetime.Token);
+        DaxHandoffDetails.Text = $"DAX Studio · Server: {editor.Server ?? "(offline)"} · Database: {(editor.Server == null ? "(none)" : editor.Database)}\nQuery file: {queryPath}";
+        Log("Opened the selected expression in DAX Studio. " + DaxHandoffDetails.Text);
     });
     private void ConfigureDaxStudio(object sender, RoutedEventArgs e) => Run(() =>
     {
@@ -289,9 +301,9 @@ public partial class MainWindow : Window
     private void ChooseWorkspace(object sender, RoutedEventArgs e) => Run(async () =>
     {
         var dialog = new OpenFileDialog { Filter = "Power BI project|*.pbip|Semantic model|*.bim;*.tmdl" };
-        if (dialog.ShowDialog(this) == true) await UpdateWorkspaceAsync(dialog.FileName);
+        if (dialog.ShowDialog(this) == true) { GoTo("PBIP / Git"); await UpdateWorkspaceAsync(dialog.FileName); RememberProject(dialog.FileName); }
     });
-    private void RefreshWorkspace(object sender, RoutedEventArgs e) => Run(() => UpdateWorkspaceAsync(editor.FilePath ?? workspaceRoot));
+    private void RefreshWorkspace(object sender, RoutedEventArgs e) => Run(() => UpdateWorkspaceAsync(workspaceRoot ?? editor.FilePath));
     private async Task UpdateWorkspaceAsync(string? path)
     {
         var token = lifetime.Token;
@@ -299,7 +311,7 @@ public partial class MainWindow : Window
         if (string.IsNullOrWhiteSpace(path))
         {
             workspaceRoot = null; GitHeader.Text = "Git · no project"; SourceStatus.Text = "No PBIP workspace";
-            WorkspaceDetails.Text = "Open a model from a PBIP project or choose a .pbip file."; GitDetails.Text = ""; return;
+            WorkspaceDetails.Text = "Open a model from a PBIP project or choose a .pbip file."; GitDetails.Text = ""; GitFiles.ItemsSource = null; return;
         }
         var inventory = await scanner.DetectAsync(path!, token);
         if (revision != statusRevision || token.IsCancellationRequested) return;
@@ -309,7 +321,8 @@ public partial class MainWindow : Window
         workspaceRoot = root;
         GitHeader.Text = status.Summary;
         SourceStatus.Text = inventory == null ? "No PBIP project detected\n" + status.Summary : $"PBIP · {inventory.Root}\nTMDL · {(inventory.HasTmdl ? "present" : "absent")}\nPBIR · {(inventory.HasPbir ? "present" : "absent")}\n{status.ChangedSemanticFiles.Count} changed semantic files";
-        WorkspaceDetails.Text = inventory == null ? "No PBIP project detected at " + root : $"PBIP root: {inventory.Root}\nSemantic folders: {string.Join(", ", inventory.SemanticModelFolders)}\nTMDL: {inventory.HasTmdl} · PBIR: {inventory.HasPbir} · enhanced PBIR: {inventory.HasEnhancedPbir}\nPBIP and enhanced PBIR are preview workflows in the supplied V6 contract.";
+        WorkspaceDetails.Text = inventory == null ? "No PBIP project detected at " + root : $"PBIP root: {inventory.Root}\nSemantic folders: {string.Join(", ", inventory.SemanticModelFolders)}\nTMDL: {inventory.HasTmdl} · PBIR: {inventory.HasPbir} · enhanced PBIR: {inventory.HasEnhancedPbir}\n{status.Summary}\n{string.Join("\\n", inventory.Warnings.Concat(status.Warnings))}";
+        GitFiles.ItemsSource = status.Changes.OrderBy(c => c.IsSemantic ? 0 : c.Path.IndexOf(".Report/", StringComparison.OrdinalIgnoreCase) >= 0 ? 1 : 2).ThenBy(c => c.Path).Select(c => new { Area = c.IsSemantic ? "Model" : c.Path.IndexOf(".Report/", StringComparison.OrdinalIgnoreCase) >= 0 ? "Report" : "Project", c.Status, c.Path, c.OriginalPath }).ToArray();
         GitDetails.Text = status.Summary + "\n\n" + string.Join("\n", (inventory?.Warnings ?? Array.Empty<string>()).Concat(status.Warnings)) + "\n\nChanged files:\n" + string.Join("\n", status.Changes.Select(c => $"{c.Status}  {c.Path}{(c.OriginalPath == null ? "" : " ← " + c.OriginalPath)}{(c.IsSemantic ? "  [semantic]" : "")}"));
     }
     private void RefreshDiagram(object sender, RoutedEventArgs e) => Run(DrawDiagram);
@@ -317,29 +330,37 @@ public partial class MainWindow : Window
     {
         DiagramCanvas.Children.Clear();
         if (editor.Handler == null) return;
-        DiagramRenderer.Render(DiagramCanvas, new SemanticModelService(editor.Handler).GetGraph(), item => { editor.Select(item); GoTo("Model"); });
+        diagram.Render(new SemanticModelService(editor.Handler).GetGraph(), item => { editor.Select(item); GoTo("Model"); });
     }
 
     private void WindowKeyDown(object sender, KeyEventArgs e)
     {
         if (Keyboard.Modifiers != ModifierKeys.Control) return;
         if (e.Key == Key.K) { e.Handled = true; ShowCommands(); }
-        else if (e.Key == Key.O) { e.Handled = true; OpenModel(sender, e); }
-        else if (e.Key == Key.S) { e.Handled = true; if (DaxPage.Visibility == Visibility.Visible) SaveScratch(sender, e); else SaveModel(sender, e); }
+        else if (e.Key == Key.O) { e.Handled = true; commands.Execute(PbiBench.Core.Commands.WorkbenchCommandId.Open); }
+        else if (e.Key == Key.S) { e.Handled = true; commands.Execute(PbiBench.Core.Commands.WorkbenchCommandId.Save); }
     }
     private void ShowCommands()
     {
-        var list = new ListBox { ItemsSource = Navigation.Items.Cast<ListBoxItem>().Select(i => i.Content.ToString()).ToArray(), Margin = new Thickness(15), SelectedIndex = 0 };
-        var window = new Window { Title = "Commands · choose a workspace", Width = 380, Height = 490, Owner = this, WindowStartupLocation = WindowStartupLocation.CenterOwner, Content = list };
-        void Activate() { if (list.SelectedItem is string page) { window.Close(); GoTo(page); } }
+        var entries = Enum.GetValues(typeof(PbiBench.Core.Commands.WorkbenchCommandId)).Cast<PbiBench.Core.Commands.WorkbenchCommandId>().Where(commands.Contains).ToDictionary(id => id.ToString(), id => new Action(() => Run(() => commands.Execute(id))));
+        foreach (var page in Navigation.Items.Cast<ListBoxItem>().Select(i => i.Content.ToString()!)) entries["Workspace · " + page] = () => GoTo(page);
+        var panel = new DockPanel { Margin = new Thickness(15) };
+        var search = new TextBox { Padding = new Thickness(8), Margin = new Thickness(0, 0, 0, 10) };
+        DockPanel.SetDock(search, Dock.Top); panel.Children.Add(search);
+        var list = new ListBox { ItemsSource = entries.Keys.ToArray(), SelectedIndex = 0 }; panel.Children.Add(list);
+        var window = new Window { Title = "PbiBench commands", Icon = Icon, Width = 420, Height = 540, Owner = this, WindowStartupLocation = WindowStartupLocation.CenterOwner, Content = panel };
+        void Activate() { if (list.SelectedItem is string key) { window.Close(); entries[key](); } }
+        search.TextChanged += (_, _) => { list.ItemsSource = entries.Keys.Where(k => k.IndexOf(search.Text, StringComparison.OrdinalIgnoreCase) >= 0).ToArray(); list.SelectedIndex = 0; };
         list.MouseDoubleClick += (_, _) => Activate();
-        list.KeyDown += (_, e) => { if (e.Key == Key.Enter) Activate(); if (e.Key == Key.Escape) window.Close(); };
+        window.PreviewKeyDown += (_, e) => { if (e.Key == Key.Enter) { e.Handled = true; Activate(); } if (e.Key == Key.Escape) window.Close(); };
+        window.Loaded += (_, _) => search.Focus();
         window.ShowDialog();
     }
     private void WindowClosing(object? sender, CancelEventArgs e)
     {
         if (!ready) return;
         if (!smokeMode && !editor.CanClose()) { e.Cancel = true; return; }
+        SaveLayout();
         lifetime.Cancel();
         try { File.WriteAllText(Path.Combine(settingsDirectory, "scratch.dax"), scratch.Text); } catch (IOException) { } catch (UnauthorizedAccessException) { }
         editor.Dispose(); scratch.Dispose(); lifetime.Dispose(); ready = false;

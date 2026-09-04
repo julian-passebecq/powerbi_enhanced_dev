@@ -4,12 +4,14 @@
     <AssemblyName>PbiBench</AssemblyName><AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/PbiBench.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="TOMWrapper"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/TOMWrapper.dll</HintPath></Reference>
     <Reference Include="Microsoft.AnalysisServices.Tabular"><HintPath>../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/Microsoft.AnalysisServices.Tabular.dll</HintPath></Reference>
     <Reference Include="Microsoft.AnalysisServices.Core"><HintPath>../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/Microsoft.AnalysisServices.Core.dll</HintPath></Reference>
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="WindowsFormsIntegration" />
     <ProjectReference Include="../PbiBench.Core/PbiBench.Core.csproj" />
     <ProjectReference Include="../PbiBench.ModelEditor/PbiBench.ModelEditor.csproj" />
@@ -20,6 +22,7 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup><None Include="../../examples/pass1-demo.bim" Link="examples/pass1-demo.bim" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
+  <ItemGroup><Resource Include="Assets/PbiBench.ico" /></ItemGroup>
   <Target Name="CopyTe2Runtime" AfterTargets="Build">
     <ItemGroup><Te2Runtime Include="../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*" Exclude="../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*.pdb;../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*.config" /></ItemGroup>
     <Copy SourceFiles="@(Te2Runtime)" DestinationFiles="@(Te2Runtime->'$(TargetDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" Condition="!Exists('$(TargetDir)%(Te2Runtime.RecursiveDir)%(Te2Runtime.Filename)%(Te2Runtime.Extension)')" />

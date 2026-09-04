@@ -13,12 +13,15 @@
     <ProjectReference Include="../../src/PbiBench.DaxStudio/PbiBench.DaxStudio.csproj" />
     <ProjectReference Include="../../src/PbiBench.Workspace/PbiBench.Workspace.csproj" />
     <ProjectReference Include="../../src/PbiBench.Git/PbiBench.Git.csproj" />
+    <Compile Include="../../src/PbiBench.App/LayoutStateStore.cs" Link="App/LayoutStateStore.cs" />
+    <None Include="../../src/PbiBench.App/Assets/PbiBench.ico" Link="Assets/PbiBench.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
     <ProjectReference Include="../../src/PbiBench.ModelEditor/PbiBench.ModelEditor.csproj" />
     <Reference Include="TOMWrapper"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/TOMWrapper.dll</HintPath></Reference>
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="WindowsFormsIntegration" />
     <Reference Include="PresentationFramework" />
     <Reference Include="PresentationCore" />

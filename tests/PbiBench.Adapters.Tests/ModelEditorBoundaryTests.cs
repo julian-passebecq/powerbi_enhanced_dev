@@ -1,6 +1,7 @@
 #if NETFRAMEWORK
 using System.Reflection;
 using System.Windows.Forms;
+using PbiBench.Core.Commands;
 using PbiBench.ModelEditor;
 using Xunit;
 
@@ -8,6 +9,95 @@ namespace PbiBench.Adapters.Tests;
 
 public sealed class ModelEditorBoundaryTests
 {
+    [Fact]
+    public Task MigratedCommandsAndCompactChromePreserveNativeEditorOperations() => RunSta(() =>
+    {
+        using var temp = new TemporaryDirectory();
+        var path = Path.Combine(temp.Root, "model.bim");
+        File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "examples", "pass1-demo.bim"), path);
+        using var editor = new Te2ModelEditor(() => true, Path.Combine(temp.Root, "profile"));
+        Assert.Throws<InvalidOperationException>(() => editor.ShowLegacyCommands(false));
+        Assert.True(editor.LegacyCommandsVisible);
+        editor.Open(path);
+        var routes = new WorkbenchCommandRegistry();
+        var calls = new Dictionary<WorkbenchCommandId, int>();
+        foreach (WorkbenchCommandId id in Enum.GetValues(typeof(WorkbenchCommandId)))
+        {
+            var command = id;
+            routes.Register(command, () => calls[command] = calls.TryGetValue(command, out var count) ? count + 1 : 1);
+        }
+        editor.ConfigureCommands(routes);
+        var form = editor.View.Child;
+        var menu = NativeField<MenuStrip>(editor, "menuStrip1");
+        var toolbar = NativeField<ToolStrip>(editor, "toolStrip2");
+        var originalItemCount = toolbar.Items.Count;
+        editor.ShowLegacyCommands(false);
+        Assert.False(editor.LegacyCommandsVisible);
+        Assert.False(menu.Visible);
+        Assert.False(toolbar.Items["btnSave"].Available);
+        Assert.True(toolbar.Items["cmbPerspective"].Available);
+        Assert.True(toolbar.Items["cmbTranslation"].Available);
+        Assert.True(toolbar.Items["txtFilter"].Available);
+        foreach (var pair in new[] {
+            ("actOpenFile", WorkbenchCommandId.Open), ("actOpenDB", WorkbenchCommandId.Connect),
+            ("actSave", WorkbenchCommandId.Save), ("actOpenBPA", WorkbenchCommandId.RunBpa) })
+        {
+            ExecuteNativeAction(editor, pair.Item1);
+            Assert.Equal(1, calls[pair.Item2]);
+        }
+        NativeField<ToolStripMenuItem>(editor, "bestPracticeAnalyzerToolStripMenuItem").PerformClick();
+        Assert.Equal(2, calls[WorkbenchCommandId.RunBpa]);
+        Assert.False(NativeField<Form>(editor, "BPAForm").Visible);
+
+        var measure = editor.Handler!.Model.Tables["Sales"].Measures["Revenue"];
+        editor.Select(measure);
+        Assert.Same(measure, editor.Selection.Single());
+        Assert.Equal(measure.Expression, editor.ActiveExpression);
+        var context = NativeField<Control>(editor, "tvModel").ContextMenuStrip;
+        typeof(ToolStripDropDown).GetMethod("OnOpening", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .Invoke(context, new object[] { new System.ComponentModel.CancelEventArgs() });
+        var analyze = context.Items["pbibenchAnalyzeDax"];
+        Assert.True(analyze.Available);
+        analyze.PerformClick();
+        Assert.Equal(1, calls[WorkbenchCommandId.DaxStudio]);
+
+        editor.ShowScriptEditor();
+        Assert.Equal("pgCSharpScript", NativeField<TabControl>(editor, "tabCodeEditors").SelectedTab.Name);
+        editor.FocusExpressionEditor();
+        Assert.Equal(0, NativeField<TabControl>(editor, "tabCodeEditors").SelectedIndex);
+        editor.ShowDependencies();
+        var ui = form.GetType().BaseType!.GetProperty("UI")!.GetValue(form)!;
+        var dependency = (Form)ui.GetType().GetField("DependencyForm", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)!.GetValue(ui)!;
+        Assert.True(dependency.Visible);
+        dependency.Close();
+
+        // Exactly one metadata undo/redo through both the shell route and native action.
+        NativeField<Control>(editor, "tvModel").Focus();
+        measure.Description = "first edit";
+        measure.Description = "second edit";
+        routes.Register(WorkbenchCommandId.Undo, editor.Undo);
+        routes.Register(WorkbenchCommandId.Redo, editor.Redo);
+        routes.Execute(WorkbenchCommandId.Undo);
+        Assert.Equal("first edit", measure.Description);
+        ExecuteNativeAction(editor, "actRedo");
+        Assert.Equal("second edit", measure.Description);
+        ExecuteNativeAction(editor, "actUndo");
+        Assert.Equal("first edit", measure.Description);
+        routes.Execute(WorkbenchCommandId.Redo);
+        Assert.Equal("second edit", measure.Description);
+        routes.Register(WorkbenchCommandId.Save, editor.Save);
+        ExecuteNativeAction(editor, "actSave");
+        Assert.False(editor.Handler.HasUnsavedChanges);
+        Assert.Contains("second edit", File.ReadAllText(path));
+
+        editor.ShowLegacyCommands(true);
+        Assert.True(menu.Visible);
+        Assert.True(toolbar.Items["btnSave"].Available);
+        Assert.Equal(originalItemCount, toolbar.Items.Count);
+        Assert.False(form.IsDisposed);
+        NativeField<Form>(editor, "BPAForm").Dispose();
+    });
+
     [Fact]
     public Task NativeExitRequestsShellCloseAndCanceledReplacementKeepsDirtyModel() => RunSta(() =>
     {
@@ -76,9 +166,12 @@ public sealed class ModelEditorBoundaryTests
     private static void ExecuteNativeAction(Te2ModelEditor editor, string name)
     {
         var form = editor.View.Child;
-        var action = form.GetType().BaseType!.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(form)!;
+        var action = form.GetType().BaseType!.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)!.GetValue(form)!;
         action.GetType().GetMethod("DoExecute", Type.EmptyTypes)!.Invoke(action, null);
     }
+
+    private static T NativeField<T>(Te2ModelEditor editor, string name) where T : class =>
+        (T)editor.View.Child.GetType().BaseType!.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)!.GetValue(editor.View.Child)!;
 
     private static Task RunSta(Action body)
     {

@@ -1,0 +1,42 @@
+{
+  "name": "PbiBench Codex V7 Pass 1.5 UX Integration",
+  "date": "2026-09-04",
+  "type": "delta handoff",
+  "requires_existing_project": "PbiBench V6/current working repository",
+  "baseline": "TE2 2.28 integrated in-process and launching successfully",
+  "scope": [
+    "app identity",
+    "command consolidation",
+    "layout",
+    "selection-aware inspector",
+    "Automation UX",
+    "BPA UX",
+    "DAX Studio bridge polish",
+    "model diagram",
+    "PBIP/Git UX",
+    "Home workflow",
+    "DPI/testing"
+  ],
+  "explicitly_deferred": [
+    "full Fabric admin",
+    "full PBIR authoring",
+    "Agent/MCP",
+    "DataForge",
+    "VizForge Studio",
+    "full TE3 parity",
+    "DAX debugger"
+  ],
+  "files": [
+    "ACCEPTANCE_GATE.md",
+    "AUTOMATION_AND_BPA_UX.md",
+    "COMMAND_INTEGRATION_PLAN.md",
+    "CURRENT_UI_AUDIT.md",
+    "ICON_AND_BRANDING.md",
+    "MASTER_PROMPT_PASS1_5.md",
+    "PASTE_THIS_TO_CODEX.txt",
+    "README_FIRST.md",
+    "UX_TASKS.md",
+    "design/design_tokens_v7.json",
+    "reference/current_pbibench_working_baseline.png"
+  ]
+}
