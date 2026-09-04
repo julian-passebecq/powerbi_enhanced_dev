@@ -1,0 +1,19 @@
+Use the attached **PbiBench V6** handoff as the implementation contract.
+
+Read `README_FIRST.md`, `AGENTS.md`, and `docs/MASTER_CODEX_PROMPT_V6.md` before coding. Do not redesign the top-level architecture.
+
+The first checkpoint must be an **actually usable PbiBench with TE2++ integrated inside it**:
+- preserve working Tabular Editor 2 semantic-model editing,
+- host it as the PbiBench Model experience,
+- add the PbiBench shell/navigation,
+- add safe Automation actions + BPA preview/fix,
+- add DAX formatting and `Open in DAX Studio`,
+- add a basic relationship/model diagram,
+- show PBIP/TMDL/Git/connection status,
+- keep all writes behind preview + snapshot + approval.
+
+The bundled TE2 snapshot can be built offline. If internet is available, update/pin to TE2 2.28.0 first. Preserve all TE2/third-party licenses.
+
+Do NOT merge DAX Studio source into the core. DAX Studio remains a standalone specialist process launched from PbiBench.
+
+Build and test continuously. Fix the supplied scaffold before adding features. Stop after the Pass 1 acceptance gate is green and show the working app + test/build results before moving to later Fabric/PBIR/AI work.

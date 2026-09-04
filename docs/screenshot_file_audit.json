@@ -1,0 +1,112 @@
+[
+  {
+    "screenshot_name": "fabric_developer_hub-main.zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "Fabric-Demos-main.zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "semantic-link-labs-main.zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "pbi_fixer-main.zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "pbi-tools-main (2).zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "Fabric-Notebooks-main.zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "TabularEditor-master (1).zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "PowerBI-Developer-Samples-master.zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "PowerBI-visuals-tools-main (1).zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "highlight.js-main.zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "powerbi-macguyver-toolbox-main.zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "Power-BI-Design-Files-main (1).zip",
+    "present_exactly": false,
+    "note": "missing from current mounted files"
+  },
+  {
+    "screenshot_name": "fabric-toolbox-main.zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "Power-BI-Design-Files-main.zip",
+    "present_exactly": false,
+    "note": "missing from current mounted files"
+  },
+  {
+    "screenshot_name": "Customer-Churn-Analysis-using-Power-BI-main.zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "HR-Analytics-KPI-Dashboard-using-Power-BI-main.zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "Swiggy-Instamart-Metrics-Dashboard-Power-BI-main.zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "power-bi-design-vault-main.zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "Sales_report_using_PowerBi-main.zip",
+    "present_exactly": false,
+    "note": "missing from current mounted files"
+  },
+  {
+    "screenshot_name": "power-bi-pro-studio-main.zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "d3viz-generator-v7 (1).zip",
+    "present_exactly": true,
+    "note": "present"
+  },
+  {
+    "screenshot_name": "powerbi-modeling-mcp-main.zip",
+    "present_exactly": false,
+    "note": "missing from current mounted files"
+  }
+]

@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/packages/
+.tools/
+.vs/
+artifacts/
+TestResults/
+*.user
+*.suo
+vendor/TabularEditor2-2.28.0/

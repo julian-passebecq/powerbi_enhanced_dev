@@ -1,0 +1,60 @@
+{
+  "levels": [
+    {
+      "level": 0,
+      "name": "Inspect",
+      "examples": [
+        "local scan",
+        "metadata read"
+      ]
+    },
+    {
+      "level": 1,
+      "name": "Query",
+      "examples": [
+        "DAX query",
+        "benchmark"
+      ]
+    },
+    {
+      "level": 2,
+      "name": "Propose",
+      "examples": [
+        "diff",
+        "plan"
+      ]
+    },
+    {
+      "level": 3,
+      "name": "Local Write",
+      "examples": [
+        "TMDL/PBIR local edit"
+      ]
+    },
+    {
+      "level": 4,
+      "name": "Remote Model Write",
+      "examples": [
+        "XMLA/TOM write",
+        "semantic updateDefinition"
+      ]
+    },
+    {
+      "level": 5,
+      "name": "Workspace/Deploy Write",
+      "examples": [
+        "create item",
+        "permissions",
+        "deployment"
+      ]
+    },
+    {
+      "level": 6,
+      "name": "Tenant/Capacity Write",
+      "examples": [
+        "tenant setting",
+        "capacity scale/suspend"
+      ]
+    }
+  ]
+}

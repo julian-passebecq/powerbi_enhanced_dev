@@ -1,0 +1,22 @@
+{
+  "name": "PbiBench Demo",
+  "compatibilityLevel": 1600,
+  "model": {
+    "culture": "en-US",
+    "tables": [
+      { "name": "Sales", "columns": [
+        { "name": "ProductID", "dataType": "int64", "sourceColumn": "ProductID", "summarizeBy": "sum" },
+        { "name": "Amount", "dataType": "double", "sourceColumn": "Amount", "summarizeBy": "sum" },
+        { "name": "Quantity", "dataType": "int64", "sourceColumn": "Quantity", "summarizeBy": "sum" }
+      ], "measures": [
+        { "name": "Revenue", "expression": "SUM(Sales[Amount])", "formatString": "#,0.00" },
+        { "name": "Average sale", "expression": "DIVIDE([Revenue],SUM(Sales[Quantity]))" }
+      ], "partitions": [{ "name": "Sales", "mode": "import", "source": { "type": "m", "expression": "#table({\"ProductID\", \"Amount\", \"Quantity\"}, {{1, 120.0, 2}, {2, 80.0, 1}})" } }] },
+      { "name": "Product", "columns": [
+        { "name": "ProductID", "dataType": "int64", "sourceColumn": "ProductID", "isKey": true, "summarizeBy": "none" },
+        { "name": "Product", "dataType": "string", "sourceColumn": "Product", "summarizeBy": "none" }
+      ], "partitions": [{ "name": "Product", "mode": "import", "source": { "type": "m", "expression": "#table({\"ProductID\", \"Product\"}, {{1, \"Desk\"}, {2, \"Chair\"}})" } }] }
+    ],
+    "relationships": [{ "name": "Sales_Product", "fromTable": "Sales", "fromColumn": "ProductID", "toTable": "Product", "toColumn": "ProductID", "fromCardinality": "many", "toCardinality": "one", "crossFilteringBehavior": "oneDirection", "isActive": true }]
+  }
+}

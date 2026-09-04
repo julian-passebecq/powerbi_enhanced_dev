@@ -1,0 +1,180 @@
+diff --git a/TOMWrapper/TOMWrapper/TabularModelHandler.Database.cs b/TOMWrapper/TOMWrapper/TabularModelHandler.Database.cs
+index 113e5b3..9286c0b 100644
+--- a/TOMWrapper/TOMWrapper/TabularModelHandler.Database.cs
++++ b/TOMWrapper/TOMWrapper/TabularModelHandler.Database.cs
+@@ -55,6 +55,12 @@ namespace TabularEditor.TOMWrapper
+ 
+         public TabularDeployer TabularDeployer { get; } = new TabularDeployer();
+ 
++        /// <summary>
++        /// Optional host approval callback for a remote save. The arguments are operation, target,
++        /// and proposed database JSON. A null callback preserves upstream behavior.
++        /// </summary>
++        public Func<string, string, string, bool> ReviewRemoteWrite { get; set; }
++
+         private bool directLakeTableAddedFlag;
+         internal void FlagDirectLakeTableAdded()
+         {
+@@ -74,6 +80,11 @@ namespace TabularEditor.TOMWrapper
+                 throw new InvalidOperationException("The model is currently not connected to any server. Please use Deploy() instead of SaveDB().");
+             }
+ 
++            // PbiBench integration: review before reconnecting, suspending undo, or any remote mutation.
++            if (ReviewRemoteWrite != null && !ReviewRemoteWrite("Save semantic model",
++                database.Server.Name + "/" + database.Name, TOM.JsonSerializer.SerializeDatabase(database)))
++                throw new OperationCanceledException("Remote model save was not approved.");
++
+             KeepAlive();
+ 
+             _disableUpdates = true;
+diff --git a/TOMWrapper/Utils/TabularDeployer.cs b/TOMWrapper/Utils/TabularDeployer.cs
+index 819c1c4..b173aa5 100644
+--- a/TOMWrapper/Utils/TabularDeployer.cs
++++ b/TOMWrapper/Utils/TabularDeployer.cs
+@@ -13,6 +13,20 @@ namespace TabularEditor.TOMWrapper.Utils
+ {
+     public class TabularDeployer : ITabularDeployer
+     {
++        /// <summary>
++        /// Optional host approval callback: operation, target, actual proposed TMSL.
++        /// A null callback preserves upstream behavior. Connection strings are not passed to the callback.
++        /// </summary>
++        public Func<string, string, string, bool> ReviewRemoteWrite { get; set; }
++
++        internal XmlaResultCollection ExecuteReviewed(string target, string tmsl, Func<XmlaResultCollection> execute)
++        {
++            if (ReviewRemoteWrite != null && !ReviewRemoteWrite("Deploy semantic model", target, tmsl))
++                throw new OperationCanceledException("Remote model deployment was not approved.");
++            LastExecutedTmsl = tmsl;
++            return execute();
++        }
++
+         public string GetTMSL(TOM.Database db, TOM.Server server, string targetDatabaseName, DeploymentOptions options, bool includeRestricted = false)
+         {
+             if (db == null) throw new ArgumentNullException("db");
+@@ -34,11 +48,11 @@ namespace TabularEditor.TOMWrapper.Utils
+ 
+         public static DeploymentResult Deploy(TabularModelHandler handler, string targetConnectionString, string targetDatabaseName)
+         {
+-            return (new TabularDeployer()).Deploy(handler.Database, targetConnectionString, targetDatabaseName, DeploymentOptions.Default, CancellationToken.None);
++            return handler.TabularDeployer.Deploy(handler.Database, targetConnectionString, targetDatabaseName, DeploymentOptions.Default, CancellationToken.None);
+         }
+         public static DeploymentResult Deploy(TabularModelHandler handler, string targetConnectionString, string targetDatabaseName, DeploymentOptions options)
+         {
+-            return (new TabularDeployer()).Deploy(handler.Database, targetConnectionString, targetDatabaseName, options, CancellationToken.None);
++            return handler.TabularDeployer.Deploy(handler.Database, targetConnectionString, targetDatabaseName, options, CancellationToken.None);
+         }
+ 
+         public void SaveModelMetadataBackup(string connectionString, string targetDatabaseName, string backupFilePath)
+@@ -97,8 +111,8 @@ namespace TabularEditor.TOMWrapper.Utils
+             cancellationToken.Register(() =>
+                 destinationServer.CancelCommand()
+             );
+-            LastExecutedTmsl = tmsl;
+-            var result = destinationServer.Execute(tmsl);
++            var result = ExecuteReviewed(destinationServer.Name + "/" + targetDatabaseName, tmsl,
++                () => destinationServer.Execute(tmsl));
+ 
+             if (result.ContainsErrors)
+             {
+diff --git a/TOMWrapperTest/RemoteWriteReviewTests.cs b/TOMWrapperTest/RemoteWriteReviewTests.cs
+new file mode 100644
+index 0000000..3cf3519
+--- /dev/null
++++ b/TOMWrapperTest/RemoteWriteReviewTests.cs
+@@ -0,0 +1,76 @@
++using System;
++using System.Reflection;
++using Microsoft.VisualStudio.TestTools.UnitTesting;
++using TabularEditor.TOMWrapper;
++using TabularEditor.TOMWrapper.Utils;
++using TOM = Microsoft.AnalysisServices.Tabular;
++
++namespace TOMWrapperTest
++{
++    [TestClass]
++    public class RemoteWriteReviewTests
++    {
++        [TestMethod]
++        public void RefusedDeploymentDoesNotExecuteOrRecordTmsl()
++        {
++            var deployer = new TabularDeployer { ReviewRemoteWrite = (_, __, ___) => false };
++            var executed = false;
++            Assert.ThrowsException<OperationCanceledException>(() => deployer.ExecuteReviewed("server/database", "{\"createOrReplace\":{}}", () => { executed = true; return null; }));
++            Assert.IsFalse(executed);
++            Assert.IsNull(deployer.LastExecutedTmsl);
++        }
++
++        [TestMethod]
++        public void ApprovedDeploymentReceivesExactProposedContext()
++        {
++            const string tmsl = "{\"createOrReplace\":{\"database\":{\"name\":\"Test\"}}}";
++            var reviewed = false;
++            var executed = false;
++            var deployer = new TabularDeployer { ReviewRemoteWrite = (operation, target, proposed) => {
++                Assert.AreEqual("Deploy semantic model", operation);
++                Assert.AreEqual("server/Test", target);
++                Assert.AreEqual(tmsl, proposed);
++                reviewed = true;
++                return true;
++            }};
++            deployer.ExecuteReviewed("server/Test", tmsl, () => { Assert.IsTrue(reviewed); executed = true; return null; });
++            Assert.IsTrue(executed);
++            Assert.AreEqual(tmsl, deployer.LastExecutedTmsl);
++        }
++
++        [TestMethod]
++        public void UnconfiguredDeployerRetainsUpstreamExecution()
++        {
++            var deployer = new TabularDeployer();
++            var executed = false;
++            deployer.ExecuteReviewed("server/Test", "{}", () => { executed = true; return null; });
++            Assert.IsTrue(executed);
++        }
++
++        [TestMethod]
++        public void RefusedSaveStopsBeforeConnectionAndRetainsUndo()
++        {
++            var handler = new TabularModelHandler();
++            handler.Model.AddTable("Sales").AddMeasure("Amount", "1 + 2");
++            var undoSteps = handler.UndoManager.UndoSteps;
++            // An unconnected TOM server supplies object parentage only; no connection is made.
++            using (var server = new TOM.Server())
++            {
++                server.Databases.Add(handler.Database);
++                typeof(TabularModelHandler).GetProperty("Version").SetValue(handler, 1L);
++                var reviewed = false;
++                handler.ReviewRemoteWrite = (operation, target, proposed) => {
++                    Assert.AreEqual("Save semantic model", operation);
++                    StringAssert.Contains(proposed, "Sales");
++                    StringAssert.Contains(proposed, "1 + 2");
++                    reviewed = true;
++                    return false;
++                };
++                Assert.ThrowsException<OperationCanceledException>(() => handler.SaveDB());
++                Assert.IsTrue(reviewed);
++                Assert.AreEqual(undoSteps, handler.UndoManager.UndoSteps);
++                Assert.IsFalse(server.Connected);
++            }
++        }
++    }
++}
+diff --git a/TOMWrapperTest/TOMWrapperTest.csproj b/TOMWrapperTest/TOMWrapperTest.csproj
+index 95de9c8..4043698 100644
+--- a/TOMWrapperTest/TOMWrapperTest.csproj
++++ b/TOMWrapperTest/TOMWrapperTest.csproj
+@@ -161,6 +161,7 @@
+   </Choose>
+   <ItemGroup>
+     <Compile Include="Constants.cs" />
++    <Compile Include="RemoteWriteReviewTests.cs" />
+     <Compile Include="DeserializerTests.cs" />
+     <Compile Include="FixUpTests.cs" />
+     <Compile Include="FluentPropertyGridTest.cs" />
+@@ -307,4 +308,4 @@
+   <Target Name="AfterBuild">
+   </Target>
+   -->
+-</Project>
+\ No newline at end of file
++</Project>

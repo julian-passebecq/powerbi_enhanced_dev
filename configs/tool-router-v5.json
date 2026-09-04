@@ -1,0 +1,44 @@
+{
+  "routes": [
+    {
+      "intent": "edit-single-measure-live",
+      "preferred": "fabric-xmla",
+      "fallback": [
+        "desktop-xmla",
+        "local-pbip"
+      ]
+    },
+    {
+      "intent": "pull-cloud-model-to-git",
+      "preferred": "fabric-rest",
+      "operation": "semanticModel.getDefinition:TMDL"
+    },
+    {
+      "intent": "whole-definition-deploy",
+      "preferred": "fabric-rest",
+      "operation": "semanticModel.updateDefinition"
+    },
+    {
+      "intent": "advanced-dax-performance",
+      "preferred": "daxstudio"
+    },
+    {
+      "intent": "pbir-source-edit",
+      "preferred": "local-pbip"
+    },
+    {
+      "intent": "tenant-estate-inventory",
+      "preferred": "fabric-admin-rest",
+      "fallback": [
+        "powerbi-rest"
+      ]
+    },
+    {
+      "intent": "agent-fabric-management",
+      "preferred": "fabric-core-mcp",
+      "fallback": [
+        "fabric-rest"
+      ]
+    }
+  ]
+}

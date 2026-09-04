@@ -1,0 +1,8 @@
+{
+  "name": "Fabric Dev",
+  "tenantId": "<tenant-guid>",
+  "workspaceId": "<workspace-guid>",
+  "preferredSemanticTransport": "fabric-xmla",
+  "allowPreviewAdminApis": false,
+  "daxStudioExe": "C:\\Program Files\\DAX Studio\\DaxStudio.exe"
+}

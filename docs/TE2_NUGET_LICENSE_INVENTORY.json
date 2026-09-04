@@ -1,0 +1,684 @@
+[
+  {
+    "Id": "ActionListWinForms",
+    "Version": "2.0.0",
+    "License": "CPL-1.0",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Antlr4",
+    "Version": "4.6.6",
+    "License": "https://raw.github.com/tunnelvisionlabs/antlr4cs/master/LICENSE.txt",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "tools/LICENSE.txt",
+      "tools/THIRD-PARTY-NOTICES.txt"
+    ]
+  },
+  {
+    "Id": "Antlr4.CodeGenerator",
+    "Version": "4.6.6",
+    "License": "https://raw.github.com/tunnelvisionlabs/antlr4cs/master/LICENSE.txt",
+    "LicenseType": "",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Antlr4.Runtime",
+    "Version": "4.6.6",
+    "License": "https://raw.github.com/tunnelvisionlabs/antlr4cs/master/LICENSE.txt",
+    "LicenseType": "",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Castle.Core",
+    "Version": "5.2.1",
+    "License": "Apache-2.0",
+    "LicenseType": "expression",
+    "NoticeEntries": [
+      "ASL - Apache Software Foundation License.txt",
+      "LICENSE"
+    ]
+  },
+  {
+    "Id": "Costura.Fody",
+    "Version": "3.3.2",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "DataConnectionDialog",
+    "Version": "1.2",
+    "License": "http://code.msdn.microsoft.com/Connection/Project/License.aspx",
+    "LicenseType": "",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "FCTB",
+    "Version": "2.16.24",
+    "License": "Not declared in package metadata",
+    "LicenseType": "",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Fody",
+    "Version": "3.3.5",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Microsoft.AnalysisServices",
+    "Version": "19.112.0",
+    "License": "https://go.microsoft.com/fwlink/?linkid=852989",
+    "LicenseType": "",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Microsoft.ApplicationInsights",
+    "Version": "2.23.0",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Microsoft.Identity.Client",
+    "Version": "4.82.1",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Microsoft.Identity.Client.Broker",
+    "Version": "4.82.1",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Microsoft.Identity.Client.NativeInterop",
+    "Version": "0.19.4",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Microsoft.Identity.Client.NativeInterop",
+    "Version": "0.20.2",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Microsoft.IdentityModel.Abstractions",
+    "Version": "8.16.0",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Microsoft.Testing.Extensions.Telemetry",
+    "Version": "1.4.2",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Microsoft.Testing.Extensions.TrxReport.Abstractions",
+    "Version": "1.4.2",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Microsoft.Testing.Extensions.VSTestBridge",
+    "Version": "1.4.2",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Microsoft.Testing.Platform",
+    "Version": "1.4.2",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Microsoft.Testing.Platform.MSBuild",
+    "Version": "1.4.2",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Microsoft.TestPlatform.ObjectModel",
+    "Version": "17.11.1",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Moq",
+    "Version": "4.20.72",
+    "License": "BSD-3-Clause",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "MSTest.TestAdapter",
+    "Version": "3.6.2",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "MSTest.TestFramework",
+    "Version": "3.6.2",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "Newtonsoft.Json",
+    "Version": "13.0.3",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": [
+      "LICENSE.md"
+    ]
+  },
+  {
+    "Id": "System.Buffers",
+    "Version": "4.6.1",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "System.Collections",
+    "Version": "4.0.11",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Collections.Concurrent",
+    "Version": "4.0.12",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Collections.Immutable",
+    "Version": "1.5.0",
+    "License": "https://github.com/dotnet/corefx/blob/master/LICENSE.TXT",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "LICENSE.TXT",
+      "THIRD-PARTY-NOTICES.TXT"
+    ]
+  },
+  {
+    "Id": "System.Console",
+    "Version": "4.0.0",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Diagnostics.Debug",
+    "Version": "4.0.11",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Diagnostics.DiagnosticSource",
+    "Version": "7.0.2",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": [
+      "LICENSE.TXT",
+      "THIRD-PARTY-NOTICES.TXT"
+    ]
+  },
+  {
+    "Id": "System.Diagnostics.FileVersionInfo",
+    "Version": "4.0.0",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Diagnostics.StackTrace",
+    "Version": "4.0.1",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Diagnostics.Tools",
+    "Version": "4.0.1",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Dynamic.Runtime",
+    "Version": "4.0.11",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Formats.Asn1",
+    "Version": "8.0.1",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": [
+      "LICENSE.TXT",
+      "THIRD-PARTY-NOTICES.TXT"
+    ]
+  },
+  {
+    "Id": "System.Globalization",
+    "Version": "4.0.11",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.IO",
+    "Version": "4.1.0",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.IO.FileSystem",
+    "Version": "4.0.1",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.IO.FileSystem.Primitives",
+    "Version": "4.0.1",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Linq",
+    "Version": "4.1.0",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Linq.Expressions",
+    "Version": "4.1.0",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Memory",
+    "Version": "4.6.3",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "System.Numerics.Vectors",
+    "Version": "4.6.1",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "System.Reflection",
+    "Version": "4.1.0",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Reflection.Extensions",
+    "Version": "4.0.1",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Reflection.Metadata",
+    "Version": "1.6.0",
+    "License": "https://github.com/dotnet/corefx/blob/master/LICENSE.TXT",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "LICENSE.TXT",
+      "THIRD-PARTY-NOTICES.TXT"
+    ]
+  },
+  {
+    "Id": "System.Reflection.Primitives",
+    "Version": "4.0.1",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Resources.ResourceManager",
+    "Version": "4.0.1",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Runtime",
+    "Version": "4.1.0",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Runtime.CompilerServices.Unsafe",
+    "Version": "6.1.2",
+    "License": "MIT",
+    "LicenseType": "expression",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "System.Runtime.Extensions",
+    "Version": "4.1.0",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Runtime.Handles",
+    "Version": "4.0.1",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Runtime.InteropServices",
+    "Version": "4.1.0",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Runtime.Numerics",
+    "Version": "4.0.1",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Security.Cryptography.Algorithms",
+    "Version": "4.2.0",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Security.Cryptography.Encoding",
+    "Version": "4.0.0",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Security.Cryptography.Primitives",
+    "Version": "4.0.0",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Security.Cryptography.X509Certificates",
+    "Version": "4.1.2",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Text.Encoding",
+    "Version": "4.0.11",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Text.Encoding.CodePages",
+    "Version": "4.0.1",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Text.Encoding.Extensions",
+    "Version": "4.0.11",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Threading",
+    "Version": "4.0.11",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Threading.Tasks",
+    "Version": "4.0.11",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Threading.Tasks.Extensions",
+    "Version": "4.5.4",
+    "License": "https://github.com/dotnet/corefx/blob/master/LICENSE.TXT",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "LICENSE.TXT",
+      "THIRD-PARTY-NOTICES.TXT"
+    ]
+  },
+  {
+    "Id": "System.Threading.Tasks.Parallel",
+    "Version": "4.0.1",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Threading.Thread",
+    "Version": "4.0.0",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.ValueTuple",
+    "Version": "4.5.0",
+    "License": "https://github.com/dotnet/corefx/blob/master/LICENSE.TXT",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "LICENSE.TXT",
+      "THIRD-PARTY-NOTICES.TXT"
+    ]
+  },
+  {
+    "Id": "System.Xml.ReaderWriter",
+    "Version": "4.0.11",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Xml.XDocument",
+    "Version": "4.0.11",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Xml.XmlDocument",
+    "Version": "4.0.1",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Xml.XPath",
+    "Version": "4.0.1",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "System.Xml.XPath.XDocument",
+    "Version": "4.0.1",
+    "License": "http://go.microsoft.com/fwlink/?LinkId=329770",
+    "LicenseType": "",
+    "NoticeEntries": [
+      "dotnet_library_license.txt",
+      "ThirdPartyNotices.txt"
+    ]
+  },
+  {
+    "Id": "WindowsAPICodePack-Core",
+    "Version": "1.1.2",
+    "License": "https://github.com/aybe/Windows-API-Code-Pack-1.1/blob/master/LICENCE",
+    "LicenseType": "",
+    "NoticeEntries": []
+  },
+  {
+    "Id": "WindowsAPICodePack-Shell",
+    "Version": "1.1.1",
+    "License": "http://code.msdn.microsoft.com/WindowsAPICodePack/Project/License.aspx",
+    "LicenseType": "",
+    "NoticeEntries": []
+  }
+]

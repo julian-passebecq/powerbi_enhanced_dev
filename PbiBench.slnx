@@ -1,0 +1,16 @@
+<Solution>
+  <Project Path="src/PbiBench.Core/PbiBench.Core.csproj" />
+  <Project Path="src/PbiBench.Workspace/PbiBench.Workspace.csproj" />
+  <Project Path="src/PbiBench.Fabric/PbiBench.Fabric.csproj" />
+  <Project Path="src/PbiBench.PowerBI/PbiBench.PowerBI.csproj" />
+  <Project Path="src/PbiBench.DaxStudio/PbiBench.DaxStudio.csproj" />
+  <Project Path="src/PbiBench.Git/PbiBench.Git.csproj" />
+  <Project Path="src/PbiBench.Semantic/PbiBench.Semantic.csproj" />
+  <Project Path="src/PbiBench.ModelEditor/PbiBench.ModelEditor.csproj" />
+  <Project Path="src/PbiBench.Automation/PbiBench.Automation.csproj" />
+  <Project Path="src/PbiBench.DataForge/PbiBench.DataForge.csproj" />
+  <Project Path="src/PbiBench.Cli/PbiBench.Cli.csproj" />
+  <Project Path="src/PbiBench.App/PbiBench.App.csproj" />
+  <Project Path="tests/PbiBench.Adapters.Tests/PbiBench.Adapters.Tests.csproj" />
+  <Project Path="tests/PbiBench.Semantic.Tests/PbiBench.Semantic.Tests.csproj" />
+</Solution>

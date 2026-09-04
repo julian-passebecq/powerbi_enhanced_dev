@@ -1,0 +1,90 @@
+[
+  {
+    "id": "isavailableinmdx-selective",
+    "class": "benchmark-propose",
+    "trigger": [
+      "hidden-key-columns",
+      "technical-columns",
+      "large-import-model"
+    ],
+    "action": "Propose selective IsAvailableInMDX=false and benchmark model/processing/Excel impact",
+    "autofix": false
+  },
+  {
+    "id": "discourage-implicit-measures",
+    "class": "propose",
+    "trigger": [
+      "calculation-groups",
+      "governed-measure-model"
+    ],
+    "action": "Audit existing implicit measures then propose DiscourageImplicitMeasures=true",
+    "autofix": false
+  },
+  {
+    "id": "value-filter-behavior",
+    "class": "test",
+    "trigger": [
+      "summarizecolumns",
+      "multi-column-same-table-filter"
+    ],
+    "action": "Generate regression query before suggesting Independent behavior",
+    "autofix": false
+  },
+  {
+    "id": "directquery-parallelism",
+    "class": "benchmark",
+    "trigger": [
+      "directquery",
+      "slow-page"
+    ],
+    "action": "Benchmark MaxParallelismPerQuery, max connections and DAX dependencies with DAX Studio",
+    "autofix": false
+  },
+  {
+    "id": "visual-calc-vs-measure",
+    "class": "benchmark",
+    "trigger": [
+      "visual-local-calculation"
+    ],
+    "action": "Generate both candidates and compare timings/densification risk",
+    "autofix": false
+  },
+  {
+    "id": "udf-duplication",
+    "class": "propose",
+    "trigger": [
+      "compatibility-1702+",
+      "duplicated-dax"
+    ],
+    "action": "Propose UDF refactor with regression tests",
+    "autofix": false
+  },
+  {
+    "id": "pbip-unapplied-changes",
+    "class": "blocker",
+    "trigger": [
+      "unappliedChanges.json"
+    ],
+    "action": "Block external expression mutation until pending changes are applied",
+    "autofix": false
+  },
+  {
+    "id": "pbip-path-doctor",
+    "class": "auto-check",
+    "trigger": [
+      "pbip"
+    ],
+    "action": "Check path length, git longpaths and synchronized-folder risk",
+    "autofix": false
+  },
+  {
+    "id": "daxqueries-as-tests",
+    "class": "reminder",
+    "trigger": [
+      "pbip",
+      "dax-tests"
+    ],
+    "action": "Persist test queries under DAXQueries and commit them",
+    "autofix": true
+  }
+]

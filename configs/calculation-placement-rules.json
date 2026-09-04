@@ -1,0 +1,72 @@
+{
+  "version": "0.1",
+  "rules": [
+    {
+      "id": "visual-local-navigation",
+      "if": [
+        "single-visual-scope",
+        "depends-on-adjacency-or-hierarchy"
+      ],
+      "prefer": "visual-calculation",
+      "validate": [
+        "field-availability",
+        "densification-risk",
+        "publish-limitations",
+        "benchmark"
+      ]
+    },
+    {
+      "id": "reusable-business-kpi",
+      "if": [
+        "reused-across-visuals",
+        "business-definition"
+      ],
+      "prefer": "measure",
+      "validate": [
+        "filter-context-tests",
+        "format",
+        "performance"
+      ]
+    },
+    {
+      "id": "reusable-parameterized-implementation",
+      "if": [
+        "code-duplication",
+        "parameterizable",
+        "developer-facing"
+      ],
+      "prefer": "dax-udf",
+      "validate": [
+        "compatibility-level-1702",
+        "dependency-scan",
+        "tests"
+      ]
+    },
+    {
+      "id": "user-facing-global-transformation",
+      "if": [
+        "end-user-choice",
+        "applies-uniformly-to-many-measures"
+      ],
+      "prefer": "calculation-group",
+      "validate": [
+        "selected-measure-behavior",
+        "interaction-tests",
+        "performance"
+      ]
+    },
+    {
+      "id": "refresh-time-row-transformation",
+      "if": [
+        "row-level",
+        "can-be-computed-at-refresh"
+      ],
+      "prefer": "power-query-m",
+      "validate": [
+        "folding",
+        "refresh",
+        "data-type"
+      ]
+    }
+  ]
+}

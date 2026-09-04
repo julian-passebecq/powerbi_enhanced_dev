@@ -1,0 +1,49 @@
+{
+  "name": "Power BI Engineering Bench Codex Pack V6 - TE2++ Integrated",
+  "date": "2026-09-04",
+  "base_pack": "powerbi_engineering_bench_codex_v5_fabric_control_plane_2026-09-04.zip",
+  "main_decision": "PbiBench.exe is the product; TE2++ is integrated Model page/semantic foundation",
+  "bundled_te2": {
+    "path": "vendor/TabularEditor2-bundled",
+    "snapshot_version_history": "2.27.2",
+    "current_web_release_at_handoff": "2.28.0",
+    "update_script": "scripts/update-te2-2.28.0.ps1"
+  },
+  "dax_studio": {
+    "mode": "standalone specialist process",
+    "integration": [
+      "--server",
+      "--database",
+      "--file",
+      "dscmd later"
+    ]
+  },
+  "pass1": [
+    "working TE2-derived Model Editor inside PbiBench",
+    "modern shell",
+    "Automation panel",
+    "BPA+",
+    "DAX formatting",
+    "DAX Studio bridge",
+    "basic model diagram",
+    "PBIP/Git status"
+  ],
+  "new_files": [
+    "README_FIRST.md",
+    "PASTE_THIS_TO_CODEX.txt",
+    "docs/MASTER_CODEX_PROMPT_V6.md",
+    "docs/ARCHITECTURE_LOCK_V6.md",
+    "docs/TE2PLUSPLUS_FIRST_PASS.md",
+    "docs/FEATURE_MATRIX_V6.md",
+    "docs/PASS1_TASKS_V6.md",
+    "docs/DAX_STUDIO_BOUNDARY_V6.md",
+    "docs/PBIP_TMDL_PBIR_V6.md",
+    "docs/TEST_AND_ACCEPTANCE_V6.md",
+    "docs/LICENSING_AND_SOURCE_BOUNDARIES_V6.md",
+    "docs/WEB_SOURCES_V6.md",
+    "src/PbiBench.ModelEditor/",
+    "src/PbiBench.Automation/",
+    "vendor/TabularEditor2-bundled/"
+  ],
+  "file_count": 838
+}

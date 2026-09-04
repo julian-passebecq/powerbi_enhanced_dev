@@ -1,0 +1,111 @@
+[
+  {
+    "title": "Testing DAX measures by using AI",
+    "url": "https://www.sqlbi.com/articles/testing-dax-measures-by-using-ai/",
+    "date": "2026-08-24",
+    "topics": [
+      "DAX",
+      "AI",
+      "Testing"
+    ],
+    "pbibench": [
+      "DAX Test Generator",
+      "DataForge truth tests"
+    ]
+  },
+  {
+    "title": "Creating DAX functions with AI to remove duplicated code",
+    "url": "https://www.sqlbi.com/articles/creating-dax-functions-with-ai-to-remove-duplicated-code/",
+    "date": "2026-08-10",
+    "topics": [
+      "DAX",
+      "AI",
+      "UDF"
+    ],
+    "pbibench": [
+      "UDF Refactoring Assistant",
+      "DAX Lab"
+    ]
+  },
+  {
+    "title": "Analyzing the performance impact of visual calculations",
+    "url": "https://www.sqlbi.com/articles/analyzing-the-performance-impact-of-visual-calculations/",
+    "date": "2026-07-27",
+    "topics": [
+      "DAX",
+      "Visual Calculations",
+      "Performance"
+    ],
+    "pbibench": [
+      "Visual Calculation Engine",
+      "Benchmark Runner"
+    ]
+  },
+  {
+    "title": "Dynamic formatting by hierarchy level with ISINSCOPE and ISATLEVEL",
+    "url": "https://www.sqlbi.com/articles/dynamic-formatting-by-hierarchy-level-with-isinscope-and-isatlevel/",
+    "date": "2026-07-14",
+    "topics": [
+      "DAX",
+      "Visual Calculations",
+      "Formatting"
+    ],
+    "pbibench": [
+      "Calculation Placement Advisor",
+      "Report QA"
+    ]
+  },
+  {
+    "title": "DAX user-defined functions (UDF) vs. calculation groups",
+    "url": "https://www.sqlbi.com/articles/dax-user-defined-functions-udf-vs-calculation-groups/",
+    "date": "2026-03-25",
+    "topics": [
+      "DAX",
+      "UDF",
+      "Calculation Groups"
+    ],
+    "pbibench": [
+      "Calculation Placement Advisor"
+    ]
+  },
+  {
+    "title": "Model-dependent and model-independent user-defined functions in DAX",
+    "url": "https://www.sqlbi.com/articles/model-dependent-and-model-independent-user-defined-functions-in-dax/",
+    "date": "2025-11-17",
+    "topics": [
+      "DAX",
+      "UDF",
+      "Architecture"
+    ],
+    "pbibench": [
+      "UDF Refactoring Assistant"
+    ]
+  },
+  {
+    "title": "Using REMOVEFILTERS in DAX user-defined functions",
+    "url": "https://www.sqlbi.com/articles/using-removefilters-in-dax-user-defined-functions/",
+    "date": "2026-06-29",
+    "topics": [
+      "DAX",
+      "UDF",
+      "Filter Context"
+    ],
+    "pbibench": [
+      "DAX Lab",
+      "Knowledge Radar"
+    ]
+  },
+  {
+    "title": "Direct Lake vs. Import mode in Power BI",
+    "url": "https://www.sqlbi.com/articles/",
+    "date": "2026-07-14",
+    "topics": [
+      "Direct Lake",
+      "Import",
+      "Performance"
+    ],
+    "pbibench": [
+      "Scenario Planner"
+    ]
+  }
+]

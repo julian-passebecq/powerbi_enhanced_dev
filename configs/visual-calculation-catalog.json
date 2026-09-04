@@ -1,0 +1,39 @@
+{
+  "templates": [
+    "running-sum",
+    "moving-average",
+    "percent-of-parent",
+    "percent-of-grand-total",
+    "average-of-children",
+    "versus-previous",
+    "versus-next",
+    "versus-first",
+    "versus-last",
+    "lookup-with-context",
+    "lookup-with-totals"
+  ],
+  "functions": [
+    "RUNNINGSUM",
+    "MOVINGAVERAGE",
+    "PREVIOUS",
+    "NEXT",
+    "FIRST",
+    "LAST",
+    "RANGE",
+    "LOOKUP",
+    "LOOKUPWITHTOTALS",
+    "COLLAPSE",
+    "COLLAPSEALL",
+    "EXPAND",
+    "EXPANDALL",
+    "ISATLEVEL"
+  ],
+  "performanceChecks": [
+    "base-measure-cost",
+    "visual-virtual-table-size",
+    "densification-risk",
+    "expanded-hierarchy-leaf-count",
+    "server-timings",
+    "measure-vs-visual-calc-benchmark"
+  ]
+}

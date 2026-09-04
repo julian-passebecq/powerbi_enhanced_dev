@@ -1,0 +1,82 @@
+{
+  "version": "6",
+  "product": "PbiBench",
+  "architecture": {
+    "main_executable": "PbiBench.exe",
+    "model_editor": "TE2-derived integrated Model page",
+    "semantic_core": "TE2/TOM/TMDL",
+    "dax_specialist": "DAX Studio standalone bridge",
+    "report_source": "PBIR",
+    "model_source": "TMDL",
+    "cloud": [
+      "Fabric REST",
+      "Power BI REST",
+      "XMLA/TOM"
+    ],
+    "ai": "later optional MCP/agent layer"
+  },
+  "passes": [
+    {
+      "id": "pass1",
+      "name": "TE2++ integrated usable core",
+      "must_ship": [
+        "working semantic model editor",
+        "PbiBench shell",
+        "automation panel",
+        "BPA+",
+        "DAX formatter",
+        "DAX Studio bridge",
+        "basic model diagram",
+        "PBIP/Git status"
+      ]
+    },
+    {
+      "id": "pass2",
+      "name": "Modern semantic IDE",
+      "must_ship": [
+        "DAX query tabs/results",
+        "data preview",
+        "autocomplete/code actions",
+        "UDF/calendar tools",
+        "TMDL workspace/diff",
+        "VertiPaq adapter",
+        "advanced action library"
+      ]
+    },
+    {
+      "id": "pass3",
+      "name": "PBIR report engineering",
+      "must_ship": [
+        "PBIR tree/editor",
+        "visual calculations",
+        "theme manager",
+        "Desktop Bridge",
+        "screenshot QA",
+        "report semantic diff"
+      ]
+    },
+    {
+      "id": "pass4",
+      "name": "Fabric/Power BI control plane",
+      "must_ship": [
+        "Fabric REST",
+        "Power BI REST",
+        "XMLA/TOM",
+        "cloud TMDL pull/push",
+        "deployment",
+        "estate/admin basics"
+      ]
+    },
+    {
+      "id": "pass5",
+      "name": "AI, DataForge, VizForge",
+      "must_ship": [
+        "MCP orchestration",
+        "DataForge truth regression",
+        "VizForge",
+        "Knowledge Radar",
+        "Senior Playbook automation"
+      ]
+    }
+  ]
+}

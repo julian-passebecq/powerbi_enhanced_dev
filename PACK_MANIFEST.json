@@ -1,0 +1,185 @@
+{
+  "name": "Power BI Engineering Bench v1 TE2 Codex Handoff",
+  "date": "2026-09-04",
+  "decision": "Reuse TE2 engine/core selectively; new WPF UI",
+  "primary_ui": "WPF .NET 10 + WPF UI + Fluent System Icons",
+  "files": [
+    {
+      "path": "START_HERE.md",
+      "size": 1935,
+      "sha256": "460f80a809539be56d6ae94a6754c6780170328774f1b9bb37f78154e8da68d9"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "size": 1816,
+      "sha256": "fa6fd485b9b42fa787c5034c7accea1b199a81b8d7dd9037fc89995e357b01f5"
+    },
+    {
+      "path": "docs/AUTOMATION_ACTION_LIBRARY.md",
+      "size": 2900,
+      "sha256": "90aff9edf3164b4c22fc4c0005188e6bd6506ad51e0f22642321755ea0ca9607"
+    },
+    {
+      "path": "docs/CODEX_MASTER_PROMPT.md",
+      "size": 6984,
+      "sha256": "619b01136e8992d3907458d5757d9f4954207c6bfc33c205020f5cb1caa01830"
+    },
+    {
+      "path": "docs/FABRIC_AND_PBI_FIXER_NOTES.md",
+      "size": 1026,
+      "sha256": "be3a64b98efb5c5e914e5261bfd5581d36a4263573b20fc235a796ef428a8ffb"
+    },
+    {
+      "path": "docs/IMPLEMENTATION_PLAN.md",
+      "size": 2088,
+      "sha256": "cbec6811f81358bf39f454036c06547b3b894b6b722b03191ecb0bc0aefa4ebf"
+    },
+    {
+      "path": "docs/REFERENCE_LICENSE_MATRIX.md",
+      "size": 2312,
+      "sha256": "276eee1970c5f405d76b22e5b85c5b09e9a2cb0ee782c4b2440106460d543d2f"
+    },
+    {
+      "path": "docs/RESOURCE_PRIORITY.md",
+      "size": 727,
+      "sha256": "84374c3ada8829daecfad146bee5d8cc9ea5dca0ac53ce8a20819a32385b8b0d"
+    },
+    {
+      "path": "docs/TE2_COMPONENT_REUSE_MAP.md",
+      "size": 1899,
+      "sha256": "dbdb15fc1b60bdf9110c563fda0b4e93cef1e5a920436202c92c835ca3a3b45e"
+    },
+    {
+      "path": "docs/TE2_REUSE_DECISION.md",
+      "size": 1894,
+      "sha256": "580605bf6416c6743d5d984d42075bc7cd8918b82d5655f640af8865f68eeff8"
+    },
+    {
+      "path": "docs/TEST_AND_SAFETY.md",
+      "size": 1140,
+      "sha256": "b2475e7d1245f17873a90e11365351f6dac297e856dc1922f435f4d01ea5e8d0"
+    },
+    {
+      "path": "docs/UI_UX_DESIGN_SYSTEM.md",
+      "size": 4378,
+      "sha256": "fcadb2d41fc8054c883b7e198db14c385f1aa1207e2b4e68ce7369228a959edf"
+    },
+    {
+      "path": "docs/WEB_SOURCES_2026.md",
+      "size": 1228,
+      "sha256": "a2be2c3151b9c0cfceef69d12e0c4977d1b7c64abacd4b3adba8f70052b8bc03"
+    },
+    {
+      "path": "references/fabric_toolbox_selected/DAXPerformanceTunerMCPServer__LICENSE",
+      "size": 1826,
+      "sha256": "f9b4233468f5950f40e25beb16780627f019d02f9325d0474c661aa33381b9b1"
+    },
+    {
+      "path": "references/fabric_toolbox_selected/DAXPerformanceTunerMCPServer__README.md",
+      "size": 7282,
+      "sha256": "15c69efca12a106fee45bf609e163edc1137d9d94cbaf999b683343116124d19"
+    },
+    {
+      "path": "references/fabric_toolbox_selected/Git-based-deployment-with-sqlproj-schemas__README.md",
+      "size": 47138,
+      "sha256": "d2788edcb0ec94b7e3625efef39410d657560bb852c9b3b629a2c216e7b52155"
+    },
+    {
+      "path": "references/fabric_toolbox_selected/MicrosoftFabricMgmtMCPServer__README.md",
+      "size": 8155,
+      "sha256": "c49b60c676b900626a6eb498724825d33f5bc28bcb59e42793af38c280a24563"
+    },
+    {
+      "path": "references/fabric_toolbox_selected/Update_metadata_to_Lakehouse_and_Semantic_model__README.md",
+      "size": 9137,
+      "sha256": "1aba0f443073497faf4188f1f8cafefc6495da5a5b01b6b5daa32b6cd8823dff"
+    },
+    {
+      "path": "references/fabric_toolbox_selected/fabric-toolbox-main__LICENSE",
+      "size": 1141,
+      "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+    },
+    {
+      "path": "references/fabric_toolbox_selected/fabric-toolbox-main__README.md",
+      "size": 5643,
+      "sha256": "0456ed3d35c3ba55a3f348ec317554e2c84f814b3a4a9f4c2a09cf52da35b44a"
+    },
+    {
+      "path": "references/research_inputs/README.md",
+      "size": 390,
+      "sha256": "d022644eb80045b8430adcf1dadb77d1e62905e276f69d3f169cf480215399b4"
+    },
+    {
+      "path": "references/research_inputs/actionable-reporting-pimp-script-blog.md",
+      "size": 10881,
+      "sha256": "78a18a35d0a2b2a50d899a407ac38f86c2f616e666e9b6459130edd2fb17d503"
+    },
+    {
+      "path": "references/research_inputs/actionable-reporting-toolbox-blog.md",
+      "size": 18279,
+      "sha256": "dc928c62670f0edc688baede63d14bdfef144ff8920db1238760faaef38c7fed"
+    },
+    {
+      "path": "references/research_inputs/macroactions-user-paste.json",
+      "size": 408707,
+      "sha256": "882b51278fa54f0ca968cc2ec9b2fcd4d5c98e0748e41863895e8728ab81eb00"
+    },
+    {
+      "path": "references/ui_inspiration/README.md",
+      "size": 346,
+      "sha256": "016566d4d8ad7c14a8985a76ddbb2e64b6775c000de5ff3391690c3fa71ba61d"
+    },
+    {
+      "path": "references/ui_inspiration/pbi-pimp-slide-reference.png",
+      "size": 99274,
+      "sha256": "ea4808a60a2f2efad335b788334357a52e15724386dceabfc319832c2ab72a9e"
+    },
+    {
+      "path": "references/upstream/PowerBI-Developer-Samples.zip",
+      "size": 595523,
+      "sha256": "e7947a36cdc9355e7fa4d2c4ef94b04cb7e9ae5d1ea497c03f86da63af8cb491"
+    },
+    {
+      "path": "references/upstream/PowerBI-visuals-tools.zip",
+      "size": 234669,
+      "sha256": "ca6d1ae1ed11032875391e2bb84d382898a44e38564f771c4f4b1065b70dfa88"
+    },
+    {
+      "path": "references/upstream/TabularEditor2-source.zip",
+      "size": 2149516,
+      "sha256": "040d3de8bffb967b61361f0117ba03333bd428a6c38f311de30c1cc0c71ebe8c"
+    },
+    {
+      "path": "references/upstream/customer-churn-powerbi-MIT-reference.zip",
+      "size": 1641883,
+      "sha256": "95e93d8ae7a9f0e769546778b1f3f47f00c79d5215cd868263766091635a33f5"
+    },
+    {
+      "path": "references/upstream/pbi_fixer-reference.zip",
+      "size": 3753634,
+      "sha256": "b8c64a14d024a51126421c09acd7582ae4eff63dfd53a0f6429e1c47eca0b872"
+    },
+    {
+      "path": "references/upstream/semantic-link-labs.zip",
+      "size": 1026066,
+      "sha256": "9272ac358b702a56b6d51b02b97594dc4f5cc84160fff3e33cce2acf4e183cc0"
+    }
+  ],
+  "code_reuse_green": [
+    "Tabular Editor 2 MIT core with notices",
+    "PowerBI-visuals-tools MIT",
+    "Power BI Developer Samples MIT",
+    "semantic-link-labs MIT"
+  ],
+  "code_reuse_yellow": [
+    "pbi_fixer snapshot: verify exact license",
+    "Fabric Toolbox: verify subcomponent license",
+    "TabularEditor third-party bundled dependencies"
+  ],
+  "code_reuse_red": [
+    "pbi-tools AGPL embedding",
+    "powerbi-macguyver restricted derivatives",
+    "unlicensed macro paste direct copying",
+    "pbir.tools restricted source"
+  ]
+}

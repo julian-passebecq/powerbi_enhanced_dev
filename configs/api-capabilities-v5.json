@@ -1,0 +1,99 @@
+{
+  "version": "2026-09-04",
+  "transports": [
+    {
+      "id": "local-pbip",
+      "status": "supported",
+      "capabilities": [
+        "read-definition",
+        "write-definition",
+        "git-diff",
+        "offline"
+      ]
+    },
+    {
+      "id": "desktop-xmla",
+      "status": "supported",
+      "capabilities": [
+        "read-model",
+        "write-model-if-desktop-allows",
+        "dax-query"
+      ]
+    },
+    {
+      "id": "fabric-xmla",
+      "status": "supported-when-enabled",
+      "capabilities": [
+        "read-model",
+        "write-model",
+        "dax-query",
+        "partition-refresh",
+        "dmv"
+      ]
+    },
+    {
+      "id": "fabric-rest",
+      "status": "supported",
+      "baseUrl": "https://api.fabric.microsoft.com/v1/",
+      "capabilities": [
+        "workspace",
+        "items",
+        "definitions",
+        "semantic-model-definitions",
+        "lro"
+      ]
+    },
+    {
+      "id": "powerbi-rest",
+      "status": "supported",
+      "baseUrl": "https://api.powerbi.com/v1.0/myorg/",
+      "capabilities": [
+        "workspaces",
+        "reports",
+        "datasets",
+        "datasources",
+        "refresh",
+        "admin"
+      ]
+    },
+    {
+      "id": "fabric-admin-rest",
+      "status": "mixed-preview",
+      "capabilities": [
+        "tenant-workspaces",
+        "tenant-items",
+        "tenant-settings"
+      ]
+    },
+    {
+      "id": "fabric-core-mcp",
+      "status": "preview",
+      "endpoint": "https://api.fabric.microsoft.com/v1/mcp/core",
+      "capabilities": [
+        "catalog",
+        "workspaces",
+        "items",
+        "permissions",
+        "folders",
+        "capacities"
+      ]
+    },
+    {
+      "id": "powerbi-modeling-mcp",
+      "status": "preview-external",
+      "capabilities": [
+        "semantic-model-agent-operations"
+      ]
+    },
+    {
+      "id": "daxstudio",
+      "status": "external-specialist",
+      "capabilities": [
+        "server-timings",
+        "query-plans",
+        "benchmark",
+        "vpax"
+      ]
+    }
+  ]
+}
