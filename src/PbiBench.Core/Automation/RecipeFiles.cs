@@ -5,7 +5,11 @@ using PbiBench.Core.Queries;
 namespace PbiBench.Core.Automation;
 
 public enum MacroMode { SafeScript, Recipe, TrustedLegacy }
-public sealed record ScriptMacro(string Id, string Name, MacroMode Mode, string Source, ActionRecipe? Recipe = null);
+public sealed record ScriptMacro(string Id, string Name, MacroMode Mode, string Source, ActionRecipe? Recipe = null)
+{
+    public IReadOnlyList<string> Tags { get; init; } = Array.Empty<string>();
+    public bool Favorite { get; init; }
+}
 public sealed record MacroLibrary(IReadOnlyList<ScriptMacro> Macros, int Version = 1);
 
 public static class RecipeFiles
@@ -28,6 +32,7 @@ public static class RecipeFiles
             if (macro == null || !Guid.TryParse(macro.Id, out _) || !ids.Add(macro.Id) || string.IsNullOrWhiteSpace(macro.Name) || macro.Name.Length > 128 || !Enum.IsDefined(typeof(MacroMode), macro.Mode) || macro.Source == null || macro.Source.Length > 262144) throw new InvalidDataException("Invalid macro id, name, mode or source.");
             if (macro.Mode == MacroMode.Recipe) { if (macro.Recipe == null) throw new InvalidDataException("A typed macro requires a recipe."); ActionRecipeRules.Validate(macro.Recipe); }
             else if (macro.Recipe != null) throw new InvalidDataException("Script macros cannot contain a hidden recipe.");
+            if (macro.Tags == null || macro.Tags.Count > 16 || macro.Tags.Any(t => string.IsNullOrWhiteSpace(t) || t.Length > 64)) throw new InvalidDataException("Macros support at most 16 tags of 64 characters.");
         }
     }
     private static async Task<string> ReadAsync(string path, CancellationToken ct)

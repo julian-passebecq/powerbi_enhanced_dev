@@ -1,0 +1,565 @@
+{
+  "schemaVersion": 1,
+  "productVersion": "11.1.0",
+  "baselineCommit": "53813388fbf2a3d7075572fd0a33be207faeccdf",
+  "components": [
+    {
+      "id": "semantic.model-editor.te2",
+      "feature": "Model tree / properties / undo",
+      "ownerProject": "PbiBench.ModelEditor",
+      "sourceType": "te2-mit",
+      "upstream": "TabularEditor/TabularEditor",
+      "pin": "2.28.0 / 75f10e331b8de0dda5c213180b9b8867b4a38191",
+      "localAdapter": "src/PbiBench.ModelEditor/Te2ModelEditor.cs",
+      "license": "MIT",
+      "updateLane": "te2",
+      "localPatches": [
+        "vendor/patches/te2-2.28.0-remote-write-review.patch",
+        "vendor/patches/te2-2.28.0-function-undo-order.patch"
+      ],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/ModelEditorBoundaryTests.cs"
+      ]
+    },
+    {
+      "id": "automation.trusted",
+      "feature": "Trusted C# compilation / execution",
+      "ownerProject": "PbiBench.ModelEditor",
+      "sourceType": "te2-backed",
+      "upstream": "TabularEditor/TabularEditor",
+      "pin": "2.28.0",
+      "localAdapter": "src/PbiBench.ModelEditor/TrustedScriptRunner.cs",
+      "license": "MIT (TE2); local integration original",
+      "updateLane": "te2",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/TrustedScriptBoundaryTests.cs"
+      ]
+    },
+    {
+      "id": "editor.fctb",
+      "feature": "Native DAX / C# text controls",
+      "ownerProject": "PbiBench.App / PbiBench.ModelEditor",
+      "sourceType": "third-party-package",
+      "upstream": "FCTB",
+      "pin": "2.16.24",
+      "localAdapter": "src/PbiBench.App/CSharpWorkspaceView.cs",
+      "license": "LGPL-3.0 (upstream notice)",
+      "updateLane": "editor-control",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.App.Tests/V11WorkspaceTests.cs"
+      ]
+    },
+    {
+      "id": "dax.language",
+      "feature": "DAX language intelligence / grammar catalog",
+      "ownerProject": "PbiBench.Dax.LanguageService",
+      "sourceType": "original-plus-te2-data",
+      "upstream": "TE2 grammar identifiers; public Microsoft DAX semantics",
+      "pin": "TE2 2.28.0 seed; PbiBench V9",
+      "localAdapter": "src/PbiBench.Dax.LanguageService/DaxLanguageService.cs",
+      "license": "MIT for TE2 grammar; local service original",
+      "updateLane": "dax-language",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Dax.LanguageService.Tests/LanguageServiceTests.cs"
+      ]
+    },
+    {
+      "id": "fabric.services",
+      "feature": "Fabric auth / REST / OneLake / SQL",
+      "ownerProject": "PbiBench.Fabric",
+      "sourceType": "original-public-api-adapter",
+      "upstream": "Microsoft public Fabric APIs / MSAL / SqlClient",
+      "pin": "MSAL 4.84.2; SqlClient 6.1.6",
+      "localAdapter": "src/PbiBench.Fabric/FabricCatalogService.cs",
+      "license": "MIT (verified MSAL/SqlClient nuspec); API terms apply",
+      "updateLane": "fabric",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/FabricTransportTests.cs"
+      ]
+    },
+    {
+      "id": "external.daxstudio",
+      "feature": "DAX Studio query handoff",
+      "ownerProject": "PbiBench.DaxStudio",
+      "sourceType": "external-process-bridge",
+      "upstream": "DAX Studio external executable",
+      "pin": "detected-at-runtime",
+      "localAdapter": "src/PbiBench.DaxStudio/DaxStudioBridge.cs",
+      "license": "external-tool-terms (not redistributed)",
+      "updateLane": "external-tools",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/AdapterTests.cs"
+      ]
+    },
+    {
+      "id": "external.tools",
+      "feature": "Fabric/DataForge/Desktop/VS Code/Codex switcher",
+      "ownerProject": "PbiBench.App / PbiBench.DaxStudio",
+      "sourceType": "original-process-bridge",
+      "upstream": "User-installed companion executables",
+      "pin": "detected-at-runtime",
+      "localAdapter": "src/PbiBench.DaxStudio/CompanionTools.cs",
+      "license": "external-tool-terms (not redistributed)",
+      "updateLane": "external-tools",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/PlatformTests.cs"
+      ]
+    },
+    {
+      "id": "fixture.vpax",
+      "feature": "SQLBI VPAX parser fixture",
+      "ownerProject": "PbiBench.Adapters.Tests",
+      "sourceType": "licensed-test-fixture",
+      "upstream": "SQLBI fixture",
+      "pin": "repository Contoso.vpax",
+      "localAdapter": "tests/PbiBench.Adapters.Tests/TestData/VertiPaq/Contoso.vpax",
+      "license": "See tests/PbiBench.Adapters.Tests/TestData/VertiPaq/LICENSE.SQLBI.md",
+      "updateLane": "fixtures",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/VertiPaqQualityTests.cs"
+      ]
+    },
+    {
+      "id": "automation.safe",
+      "feature": "Safe C# Preview / detached recipe execution",
+      "ownerProject": "PbiBench.Core / PbiBench.Semantic",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Core/Automation/SafeCSharpParser.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "automation",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/SafeScriptTests.cs"
+      ]
+    },
+    {
+      "id": "automation.recorder",
+      "feature": "Action recorder / generated C# / macro library",
+      "ownerProject": "PbiBench.Core / PbiBench.Semantic / PbiBench.App",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "11.1.0",
+      "localAdapter": "src/PbiBench.Core/Automation/RecipeCSharpGenerator.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "automation",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/LanguageTests.cs"
+      ]
+    },
+    {
+      "id": "csharp.language",
+      "feature": "Practical C# language assistance / snippets / recovery",
+      "ownerProject": "PbiBench.CSharp.LanguageService",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "11.1.0",
+      "localAdapter": "src/PbiBench.CSharp.LanguageService/CSharpLanguageService.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "csharp-language",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/LanguageTests.cs"
+      ]
+    },
+    {
+      "id": "ai.export",
+      "feature": "Provider-neutral AI Context Export",
+      "ownerProject": "PbiBench.AI.ContextExport / PbiBench.Semantic / PbiBench.App",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "11.1.0",
+      "localAdapter": "src/PbiBench.AI.ContextExport/ContextExporter.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "ai-interchange",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/ExportTests.cs"
+      ]
+    },
+    {
+      "id": "fabric.toolbox",
+      "feature": "Separate Fabric Toolbox desktop application",
+      "ownerProject": "PbiBench.FabricToolbox",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "11.1.0",
+      "localAdapter": "src/PbiBench.FabricToolbox/Program.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "fabric",
+      "localPatches": [],
+      "protectingTests": [
+        "scripts/invoke-v11-gate.ps1"
+      ]
+    },
+    {
+      "id": "fabric.handoff",
+      "feature": "Versioned Fabric selection handoff",
+      "ownerProject": "PbiBench.Core / PbiBench.App",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "11.1.0",
+      "localAdapter": "src/PbiBench.Core/Fabric/FabricSelectionHandoff.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "contracts",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/PlatformTests.cs"
+      ]
+    },
+    {
+      "id": "semantic.query",
+      "feature": "DAX Query workspace / query transport",
+      "ownerProject": "PbiBench.App / PbiBench.Semantic",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Semantic/TomDaxQueryService.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "semantic",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Semantic.Tests/QueryServiceTests.cs"
+      ]
+    },
+    {
+      "id": "semantic.authoring",
+      "feature": "DAX scripts / UDF workbench / model metadata authoring",
+      "ownerProject": "PbiBench.Semantic / PbiBench.App",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Semantic/ModelAuthoring/DaxAuthoringService.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "semantic",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Semantic.Tests/DaxAuthoringTests.cs"
+      ]
+    },
+    {
+      "id": "semantic.metadata",
+      "feature": "Calendar / perspective / translation editors",
+      "ownerProject": "PbiBench.Semantic / PbiBench.App",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Semantic/ModelAuthoring/CalendarEditorService.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "semantic",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Semantic.Tests/MetadataAuthoringTests.cs"
+      ]
+    },
+    {
+      "id": "semantic.diagram",
+      "feature": "Relationship diagram / authoring",
+      "ownerProject": "PbiBench.Semantic / PbiBench.App",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.App/DiagramView.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "semantic",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Semantic.Tests/DiagramAuthoringTests.cs"
+      ]
+    },
+    {
+      "id": "data.preview",
+      "feature": "Data preview / profiling / Pivot Lab",
+      "ownerProject": "PbiBench.Core / PbiBench.App",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Core/DataExploration/DataPreviewBuilder.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "data-exploration",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/DataPreviewTests.cs"
+      ]
+    },
+    {
+      "id": "bpa.packs",
+      "feature": "Original BPA rule packs / fix review",
+      "ownerProject": "PbiBench.Automation",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Automation/BpaRulePacks.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "bpa",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Semantic.Tests/BpaPackTests.cs"
+      ]
+    },
+    {
+      "id": "quality.vertipaq",
+      "feature": "VertiPaq / VPAX capture / optimization",
+      "ownerProject": "PbiBench.Core / PbiBench.Semantic / PbiBench.App",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Semantic/TomVertiPaqSnapshotService.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "quality",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Semantic.Tests/VertiPaqCaptureTests.cs"
+      ]
+    },
+    {
+      "id": "quality.tests",
+      "feature": "Semantic assertions / benchmark contracts",
+      "ownerProject": "PbiBench.Core / PbiBench.App",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Core/Quality/SemanticTestService.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "quality",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/SemanticTestTests.cs"
+      ]
+    },
+    {
+      "id": "workspace.pbip",
+      "feature": "PBIP/TMDL workspace / disk-live-Git sync",
+      "ownerProject": "PbiBench.Workspace / PbiBench.Git / PbiBench.Semantic",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Semantic/Workspaces/TomWorkspaceSyncService.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "workspace",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Semantic.Tests/WorkspaceNativeTests.cs"
+      ]
+    },
+    {
+      "id": "semantic.refresh",
+      "feature": "Refresh / reviewed deployment",
+      "ownerProject": "PbiBench.Core / PbiBench.Semantic",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Semantic/TomRefreshService.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "semantic",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Semantic.Tests/RefreshServiceTests.cs"
+      ]
+    },
+    {
+      "id": "fabric.semantic",
+      "feature": "Semantic source import / Direct Lake / schema review",
+      "ownerProject": "PbiBench.Semantic / PbiBench.App",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.App/FabricWorkspaceView.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "semantic-fabric",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.App.Tests/FabricWorkspaceViewTests.cs"
+      ]
+    },
+    {
+      "id": "cli",
+      "feature": "CLI commands / reviewed local operations",
+      "ownerProject": "PbiBench.Cli / PbiBench.Automation",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Cli/Program.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "cli",
+      "localPatches": [],
+      "protectingTests": [
+        "scripts/invoke-cli-smoke.ps1"
+      ]
+    },
+    {
+      "id": "agent.proposals",
+      "feature": "Strict proposal import / preview",
+      "ownerProject": "PbiBench.Core / PbiBench.Automation",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Core/Agent/AgentProposalJson.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "optional-agent",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/AgentProposalTests.cs"
+      ]
+    },
+    {
+      "id": "agent.online",
+      "feature": "Optional existing online provider",
+      "ownerProject": "PbiBench.Automation",
+      "sourceType": "pbibench-original",
+      "upstream": "OpenAI public Responses API",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Automation/Agent/AgentProviders.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "optional-agent",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Semantic.Tests/AgentProviderTests.cs"
+      ]
+    },
+    {
+      "id": "prototype.compiler",
+      "feature": "Bounded semantic compiler prototype",
+      "ownerProject": "PbiBench.Core / PbiBench.Semantic",
+      "sourceType": "pbibench-original",
+      "upstream": "Databricks public Metric View format documentation",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Core/Compiler/MetricViewCompiler.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "prototype",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/SemanticPrototypeTests.cs"
+      ]
+    },
+    {
+      "id": "prototype.packages",
+      "feature": "Local DAX package prototype",
+      "ownerProject": "PbiBench.Core / PbiBench.Semantic",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.Core/Packages/LocalDaxPackage.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "prototype",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Semantic.Tests/SemanticPrototypeNativeTests.cs"
+      ]
+    },
+    {
+      "id": "dataforge",
+      "feature": "DataForge versioned truth contract reader",
+      "ownerProject": "PbiBench.DataForge",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "baseline 53813388fbf2a3d7075572fd0a33be207faeccdf",
+      "localAdapter": "src/PbiBench.DataForge/DataForgeContractReader.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "dataforge",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/AdapterTests.cs"
+      ]
+    },
+    {
+      "id": "platform.provenance",
+      "feature": "Runtime feature provenance / update ownership",
+      "ownerProject": "PbiBench.Core / PbiBench.App",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
+      "pin": "11.1.0",
+      "localAdapter": "src/PbiBench.Core/Platform/ProvenanceCatalog.cs",
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "provenance",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/PlatformTests.cs"
+      ]
+    },
+    {
+      "id": "dependency.tom",
+      "feature": "Microsoft TOM/XMLA SDK",
+      "ownerProject": "PbiBench.Semantic / PbiBench.ModelEditor",
+      "sourceType": "third-party-package",
+      "upstream": "Microsoft.AnalysisServices",
+      "pin": "19.112.0",
+      "localAdapter": "src/PbiBench.Semantic/PbiBench.Semantic.csproj",
+      "license": "Microsoft package terms: https://go.microsoft.com/fwlink/?linkid=852989",
+      "updateLane": "semantic",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/ExportTests.cs"
+      ]
+    },
+    {
+      "id": "dependency.msal.fabric",
+      "feature": "Fabric authentication package",
+      "ownerProject": "PbiBench.Fabric",
+      "sourceType": "third-party-package",
+      "upstream": "Microsoft.Identity.Client",
+      "pin": "4.84.2",
+      "localAdapter": "src/PbiBench.Fabric/PbiBench.Fabric.csproj",
+      "license": "MIT (nuspec verified)",
+      "updateLane": "fabric",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/FabricTransportTests.cs"
+      ]
+    },
+    {
+      "id": "dependency.sqlclient",
+      "feature": "Fabric SQL preview package",
+      "ownerProject": "PbiBench.Fabric",
+      "sourceType": "third-party-package",
+      "upstream": "Microsoft.Data.SqlClient",
+      "pin": "6.1.6",
+      "localAdapter": "src/PbiBench.Fabric/FabricSqlDataService.cs",
+      "license": "MIT (nuspec verified)",
+      "updateLane": "fabric",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/FabricTransportTests.cs"
+      ]
+    },
+    {
+      "id": "dependency.msal.te2",
+      "feature": "TE2 authentication dependency set",
+      "ownerProject": "PbiBench.ModelEditor",
+      "sourceType": "third-party-package",
+      "upstream": "Microsoft.Identity.Client / Broker",
+      "pin": "4.82.1 upstream; host binding resolves shared MSAL 4.84.2",
+      "localAdapter": "docs/TE2_NUGET_LICENSE_INVENTORY.json",
+      "license": "MIT (recorded upstream inventory)",
+      "updateLane": "te2",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/TrustedScriptBoundaryTests.cs"
+      ]
+    },
+    {
+      "id": "dependency.json",
+      "feature": "Shared net48 JSON serialization",
+      "ownerProject": "PbiBench.Core",
+      "sourceType": "third-party-package",
+      "upstream": "System.Text.Json",
+      "pin": "9.0.9 (net48); framework provided on net10",
+      "localAdapter": "src/PbiBench.Core/PbiBench.Core.csproj",
+      "license": "MIT (NuGet metadata)",
+      "updateLane": "contracts",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/ExportTests.cs"
+      ]
+    }
+  ]
+}

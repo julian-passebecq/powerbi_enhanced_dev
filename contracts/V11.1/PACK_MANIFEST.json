@@ -1,0 +1,78 @@
+{
+  "pack": "PbiBench V11.1 - Compartmentalized Platform + AI Context Export + Practical C# Automation",
+  "schemaVersion": 1,
+  "preparedDate": "2026-09-05",
+  "baselineRepository": "julian-passebecq/powerbi_enhanced_dev",
+  "baselineCommit": "53813388fbf2a3d7075572fd0a33be207faeccdf",
+  "supersedes": [
+    "V10 planning pack",
+    "V11 planning pack"
+  ],
+  "files": [
+    {
+      "path": "ACCEPTANCE_GATE_V11_1.md",
+      "bytes": 3820,
+      "sha256": "70cef8ae9cfcb0289232f9f2520e2085b657377d3564799471d6bfd38e68a9ac"
+    },
+    {
+      "path": "AI_CONTEXT_EXPORT_SPEC.md",
+      "bytes": 5358,
+      "sha256": "80bf91e539ea90e1e38a7f45d4798544c2cce0b6e4a4833a1460e824be7ae69e"
+    },
+    {
+      "path": "APP_SWITCHER_AND_EXTERNAL_TOOLS.md",
+      "bytes": 1524,
+      "sha256": "64851c2b738abd50a48ca7680757d13840d8ea93635cde79c6459b144dcba3c4"
+    },
+    {
+      "path": "COMPARTMENTALIZED_ARCHITECTURE.md",
+      "bytes": 4101,
+      "sha256": "55cc0ce379b7093dbaaac1692ce95837d4b4231fa6fd4b8dab4d69076e5f3df9"
+    },
+    {
+      "path": "CSHARP_AUTOMATION_IDE_SCOPE.md",
+      "bytes": 6513,
+      "sha256": "cd3330b618f68384a62680fab03088eb37d86b40802d7de65df5016782223bd9"
+    },
+    {
+      "path": "DEPENDENCY_UPDATE_MATRIX.md",
+      "bytes": 2018,
+      "sha256": "5b49651ffb768769fd0ebdb3e78c4639c92cfe6062ecb357b504a74cd3eab432"
+    },
+    {
+      "path": "FABRIC_TOOLBOX_BOUNDARY.md",
+      "bytes": 2380,
+      "sha256": "9dcd220a4610da34e59a8c544797a29c049bcf42a4c00bcd558b70113348a79f"
+    },
+    {
+      "path": "FEATURE_PROVENANCE_LEDGER.md",
+      "bytes": 8119,
+      "sha256": "03cee27af11869bc63aa044c43204664b8be6922f0bed6629404b85660df1d52"
+    },
+    {
+      "path": "MASTER_PROMPT_V11_1.md",
+      "bytes": 6396,
+      "sha256": "eabf10fe20ffaad3c7da04ea4d9fcfea36e8f3a0cc3ddd6776bf7d0cd17e0136"
+    },
+    {
+      "path": "PASTE_THIS_TO_CODEX.txt",
+      "bytes": 2334,
+      "sha256": "77224d4290726b746dd84f38f7bbc015965f3560f377a579c5380835ee47a5d6"
+    },
+    {
+      "path": "README_FIRST.md",
+      "bytes": 3004,
+      "sha256": "9beef7206db3cd16160a0c76940c3b1e8435c6d593425afb5d6f8a47d158b79b"
+    },
+    {
+      "path": "TESTING_DELEGATION.md",
+      "bytes": 3826,
+      "sha256": "dcf1d0a14a6ef299bde35bc2fc5eef27473a7fb32913b84a948ba89724a3836d"
+    },
+    {
+      "path": "UPDATE_AND_VERSIONING_POLICY.md",
+      "bytes": 2336,
+      "sha256": "5c8add3ca5335070ad86294186c22c819451ed112185b5f5434c8fe3b9648b26"
+    }
+  ]
+}

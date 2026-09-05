@@ -7,6 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../PbiBench.CSharp.LanguageService/PbiBench.CSharp.LanguageService.csproj" />
     <ProjectReference Include="../PbiBench.Core/PbiBench.Core.csproj" />
     <ProjectReference Include="../PbiBench.Semantic/PbiBench.Semantic.csproj" />
     <ProjectReference Include="../PbiBench.Dax.LanguageService/PbiBench.Dax.LanguageService.csproj" />

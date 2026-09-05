@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net48</TargetFramework></PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../PbiBench.AI.ContextExport/PbiBench.AI.ContextExport.csproj" />
     <ProjectReference Include="../PbiBench.Core/PbiBench.Core.csproj" />
     <ProjectReference Include="../PbiBench.Workspace/PbiBench.Workspace.csproj" />
     <ProjectReference Include="../PbiBench.Dax.LanguageService/PbiBench.Dax.LanguageService.csproj" />

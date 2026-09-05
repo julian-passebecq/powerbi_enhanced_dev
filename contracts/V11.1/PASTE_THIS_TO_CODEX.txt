@@ -1,0 +1,15 @@
+Use the attached PbiBench V11.1 delta pack against the current pushed baseline. This pack supersedes the older V10 and V11 planning packs. Preserve all working V9 functionality and do not replay already-completed milestones.
+
+Priorities:
+
+1. Compartmentalize ownership and updates. Keep PbiBench.exe as the Semantic IDE/TE2++ host. Establish Fabric Toolbox as a separate modern-.NET executable using the existing shared PbiBench.Fabric services. Keep DataForge separate. Add a clear Apps/Tools switcher and permanent provenance/update ledgers.
+
+2. Build AI Context Export as the default AI workflow: selected model metadata/DAX/relationships plus optional bounded sample rows/quality evidence exported to a privacy-reviewed ZIP for use with any external AI. Samples off by default. Never export credentials/tokens/connection strings. Optionally include an automation API reference so an external AI can generate Safe Preview or Trusted C# scripts correctly. Preserve strict local proposal import/preview if useful, but do not expand online provider/chat functionality in this pass.
+
+3. Do NOT abandon C#. Add the practical C# automation improvements in CSHARP_AUTOMATION_IDE_SCOPE.md: script tabs/document UX, model/Selected completion, signature help, compile diagnostics, useful snippets, advisory Trusted-C# risk hints, recorder Recipe + generated-C# view, and lightweight Macro Library discoverability. Preserve Safe Preview and Trusted C# as distinct lanes. Prefer an isolated language-service project; use Roslyn only if it integrates cleanly with net48/TE2. Do not force a runtime migration and do not build a debugger/project/NuGet IDE.
+
+4. Keep PbiBench DAX IDE/query. Keep DAX Studio external for deep specialist analysis with a visible handoff.
+
+Testing/token policy: run focused changed-module tests during implementation and one final impacted Windows/native gate before push. Do not rerun every historic test after every edit and do not spend a large post-push pass auditing your own work. Keep new pure components dual-targeted where practical so an external reviewer can run portable tests. Do not delegate away net48/WPF/native TE2 tests that only your Windows environment can execute. Add a sensible Windows GitHub Actions fast gate if feasible without destabilizing dependencies.
+
+Stop at ACCEPTANCE_GATE_V11_1.md.

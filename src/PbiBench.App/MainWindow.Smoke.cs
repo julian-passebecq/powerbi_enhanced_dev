@@ -21,6 +21,7 @@ public partial class MainWindow
         var index = Array.IndexOf(args, "--smoke-test");
         var outputRoot = index + 1 < args.Length ? Path.GetFullPath(args[index + 1]) : Path.Combine(settingsDirectory, "smoke");
         Directory.CreateDirectory(outputRoot);
+        if (args.Contains("--v11")) { await RunV11SmokeAsync(outputRoot); return; }
         var checks = new List<string>();
         try
         {
@@ -109,6 +110,7 @@ public partial class MainWindow
             var nativeSurfaces = new List<(FrameworkElement Surface, Func<System.Drawing.Bitmap> Capture)>();
             if (ModelSurface.Visibility == Visibility.Visible) nativeSurfaces.Add((ModelSurface, editor.Capture));
             if (DaxPage.Visibility == Visibility.Visible) nativeSurfaces.Add((ScratchSurface, scratch.Capture));
+            if (scriptAutomation != null) foreach (var script in scriptAutomation.VisibleEditors) nativeSurfaces.Add((script.NativeView, script.Capture));
             if (AuthoringPage.Visibility == Visibility.Visible && daxAuthoring != null)
                 foreach (var sourceEditor in daxAuthoring.VisibleEditors) nativeSurfaces.Add((sourceEditor.View, sourceEditor.Capture));
             foreach (var native in nativeSurfaces)

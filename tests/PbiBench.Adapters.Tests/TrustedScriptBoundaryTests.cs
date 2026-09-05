@@ -18,6 +18,10 @@ public sealed class TrustedScriptBoundaryTests
         {
             using var editor = new Te2ModelEditor(() => true, Path.Combine(directory, "profile")); editor.Open(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "examples", "pass1-demo.bim"));
             var handler = editor.Handler!; var before = new SemanticModelService(handler).Fingerprint();
+            var compileOnly = TrustedScriptRunner.Validate("Model.Tables[\"Sales\"].Description = \"must not execute\";");
+            Assert.DoesNotContain(compileOnly, d => !d.IsWarning); Assert.Equal(before, new SemanticModelService(handler).Fingerprint());
+            Assert.Contains(TrustedScriptRunner.Validate("Model.DoesNotExist();"), d => !d.IsWarning && d.Line > 0 && d.Column > 0);
+            foreach (var snippet in PbiBench.CSharp.LanguageService.ScriptSnippets.All) Assert.DoesNotContain(TrustedScriptRunner.Validate(snippet.Source), d => !d.IsWarning);
             var ticket = Await(TrustedScriptRunner.PrepareAsync(handler, "Model.Tables[\"Sales\"].Description = \"trusted edit\"; System.Console.WriteLine(\"Captured output\");", Array.Empty<TabularNamedObject>(), Path.Combine(directory, "snapshots"), CancellationToken.None));
             Assert.True(File.Exists(ticket.SnapshotPath)); Assert.Throws<InvalidOperationException>(() => TrustedScriptRunner.Run(ticket, handler, false)); Assert.Equal(before, new SemanticModelService(handler).Fingerprint());
             var console = Console.Out; var errors = Console.Error; var result = TrustedScriptRunner.Run(ticket, handler, true); Assert.Same(console, Console.Out); Assert.Same(errors, Console.Error); Assert.True(result.Succeeded, string.Join(";", result.Diagnostics)); Assert.Contains("Captured output", result.ConsoleOutput); Assert.Equal("trusted edit", handler.Model.Tables["Sales"].Description);

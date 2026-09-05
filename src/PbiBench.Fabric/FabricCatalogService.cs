@@ -22,6 +22,14 @@ public sealed class FabricCatalogService(HttpClient http, IAccessTokenProvider t
             FabricSchemaRules.Id(Required(row, "id")), Required(row, "displayName"), Required(row, "type"))).ToArray();
         Unique(result.Select(item => item.Id)); return result;
     }
+    /// <summary>Platform inventory for Toolbox. The existing semantic source picker retains its supported-type filter.</summary>
+    public async Task<IReadOnlyList<FabricItem>> ListAllItemsAsync(string workspaceId, CancellationToken cancellationToken)
+    {
+        var workspace = FabricSchemaRules.Id(workspaceId);
+        var rows = await Pages(new Uri(FabricApiClient.BaseUri, "workspaces/" + workspace + "/items"), "value", FabricAudience.Fabric, cancellationToken).ConfigureAwait(false);
+        var result = rows.Select(row => new FabricItem(workspace, FabricSchemaRules.Id(Required(row, "id")), Required(row, "displayName"), Required(row, "type"))).ToArray();
+        Unique(result.Select(item => item.Id)); return result;
+    }
     public async Task<FabricItem> ResolveItemAsync(FabricItem item, CancellationToken cancellationToken)
     {
         var group = item.Kind switch { "Lakehouse" => "lakehouses", "Warehouse" => "warehouses", "SQLDatabase" => "sqlDatabases", "MirroredDatabase" => "mirroredDatabases", "MirroredWarehouse" => "mirroredWarehouses", _ => throw new ArgumentException("Unsupported Fabric item kind.") };

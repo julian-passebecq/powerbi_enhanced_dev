@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using PbiBench.Semantic;
+using PbiBench.CSharp.LanguageService;
 using TabularEditor;
 using TabularEditor.Scripting;
 using TabularEditor.TOMWrapper;
@@ -26,6 +27,17 @@ public sealed record TrustedScriptResult(bool Succeeded, IReadOnlyList<string> D
 /// <summary>Explicit unrestricted legacy compatibility. It is never called by Safe Preview and offers no security sandbox or external-side-effect rollback.</summary>
 public static class TrustedScriptRunner
 {
+    /// <summary>Compile using the existing TE2 compiler; never invoke the generated delegate.</summary>
+    public static IReadOnlyList<CSharpDiagnostic> Validate(string source)
+    {
+        if (string.IsNullOrWhiteSpace(source) || source.Length > 1024 * 1024) return new[] { new CSharpDiagnostic(1, 1, "SOURCE", "Enter a script up to 1 MiB.") };
+        try
+        {
+            ScriptEngine.CompileScript(source, out var compilation);
+            return compilation.Errors.Cast<CompilerError>().Select(e => new CSharpDiagnostic(e.Line, e.Column, e.ErrorNumber, e.ErrorText, e.IsWarning)).ToArray();
+        }
+        catch (Exception error) { return new[] { new CSharpDiagnostic(1, 1, "COMPILER", error.GetType().Name + ": " + error.Message) }; }
+    }
     public static async Task<TrustedScriptTicket> PrepareAsync(TabularModelHandler handler, string source, IReadOnlyList<TabularNamedObject> selection, string snapshotDirectory, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();

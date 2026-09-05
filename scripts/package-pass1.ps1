@@ -7,6 +7,7 @@ $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $source = Join-Path $repo "src/PbiBench.App/bin/$Configuration/net48"
 $cliSource = Join-Path $repo "src/PbiBench.Cli/bin/$Configuration/net48"
+$toolboxSource = Join-Path $repo "src/PbiBench.FabricToolbox/bin/$Configuration/net10.0-windows"
 $destinationPath = [IO.Path]::GetFullPath($Destination)
 $artifacts = [IO.Path]::GetFullPath((Join-Path $repo 'artifacts'))
 if (-not $destinationPath.StartsWith($artifacts + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
@@ -20,12 +21,15 @@ foreach ($required in @('pbibench.exe', 'pbibench.exe.config', 'TOMWrapper.dll',
     if (-not (Test-Path -LiteralPath (Join-Path $cliSource $required))) { throw "Missing CLI runtime file: $required. Build the complete solution before packaging." }
 }
 $staging = Join-Path $artifacts ('.PbiBench-stage-' + [Guid]::NewGuid().ToString('N'))
+foreach ($required in @('PbiBench.FabricToolbox.exe', 'PbiBench.FabricToolbox.runtimeconfig.json', 'PbiBench.FabricToolbox.deps.json')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $toolboxSource $required))) { throw "Missing Fabric Toolbox runtime: $required. Build the solution first." }
+}
 New-Item -ItemType Directory -Path $staging | Out-Null
 # Ship runtime binaries/config only; exclude build logs, private settings, scratch queries and test fixtures.
-foreach ($runtime in @(@{ Source = $source; Output = $staging }, @{ Source = $cliSource; Output = (Join-Path $staging 'cli') })) {
+foreach ($runtime in @(@{ Source = $source; Output = $staging }, @{ Source = $cliSource; Output = (Join-Path $staging 'cli') }, @{ Source = $toolboxSource; Output = (Join-Path $staging 'fabric-toolbox') })) {
 # Windows file names ignore case: the CLI lives in cli/ to preserve both entry points.
 Get-ChildItem -LiteralPath $runtime.Source -File -Recurse | Where-Object {
-    $_.Extension -in @('.dll', '.exe', '.config') -and $_.FullName -notmatch '[\\/](TestResults|examples)[\\/]'
+    ($_.Extension -in @('.dll', '.exe', '.config') -or ($runtime.Source -eq $toolboxSource -and $_.Name -match '\.(runtimeconfig|deps)\.json$')) -and $_.FullName -notmatch '[\\/](TestResults|examples)[\\/]'
 } | ForEach-Object {
     $relative = $_.FullName.Substring($runtime.Source.Length + 1)
     $target = Join-Path $runtime.Output $relative
@@ -42,6 +46,8 @@ New-Item -ItemType Directory -Path (Join-Path $staging 'examples') | Out-Null
 Copy-Item -LiteralPath (Join-Path $repo 'examples/pass1-demo.bim') -Destination (Join-Path $staging 'examples/pass1-demo.bim')
 Copy-Item -LiteralPath (Join-Path $repo 'examples/prototypes') -Destination (Join-Path $staging 'examples/prototypes') -Recurse
 New-Item -ItemType Directory -Path (Join-Path $staging 'docs') | Out-Null
+Copy-Item -LiteralPath (Join-Path $repo 'docs/architecture') -Destination (Join-Path $staging 'docs/architecture') -Recurse
+Copy-Item -LiteralPath (Join-Path $repo 'docs/V11_IMPLEMENTATION.md') -Destination (Join-Path $staging 'docs/V11_IMPLEMENTATION.md')
 foreach ($guide in @('V9_CLI_REFERENCE.md', 'V9_AGENT_REFERENCE.md', 'V9_PROTOTYPES_REFERENCE.md', 'V9_MODEL_AUTHORING_REFERENCE.md', 'V9_DAX_AUTHORING_REFERENCE.md', 'V9_FABRIC_REFERENCE.md', 'V9_FABRIC_AUTHORING_REFERENCE.md', 'V9_REFRESH_REFERENCE.md', 'V9_WORKSPACE_REFERENCE.md', 'V9_SCRIPT_AUTOMATION_REFERENCE.md', 'V9_SEMANTIC_TESTS_REFERENCE.md', 'V9_VERTIPAQ_REFERENCE.md', 'V9_BPA_RULE_PACKS.md')) {
     Copy-Item -LiteralPath (Join-Path $repo "docs/$guide") -Destination (Join-Path $staging "docs/$guide")
 }
@@ -60,7 +66,7 @@ Copy-Item -LiteralPath (Join-Path $repo 'vendor/patches/te2-2.28.0-remote-write-
 Copy-Item -LiteralPath (Join-Path $repo 'vendor/patches/te2-2.28.0-function-undo-order.patch') -Destination $upstreamNotices
 $packageFiles = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 Get-ChildItem -LiteralPath (Join-Path $vendor 'packages') -Filter '*.nupkg' -Recurse | ForEach-Object { [void]$packageFiles.Add($_.FullName) }
-foreach ($assetsRelativePath in @('src/PbiBench.App/obj/project.assets.json', 'src/PbiBench.Cli/obj/project.assets.json')) {
+foreach ($assetsRelativePath in @('src/PbiBench.App/obj/project.assets.json', 'src/PbiBench.Cli/obj/project.assets.json', 'src/PbiBench.FabricToolbox/obj/project.assets.json')) {
 $assetsFile = Join-Path $repo $assetsRelativePath
 if (-not (Test-Path -LiteralPath $assetsFile)) { throw 'Package assets missing; build the complete solution before packaging.' }
 $assets = Get-Content -LiteralPath $assetsFile -Raw | ConvertFrom-Json
@@ -99,9 +105,11 @@ foreach ($packageFile in $packageFiles) {
 }
 $packageManifest | Sort-Object Package | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $notices 'packaged-notices.json') -Encoding utf8
 @'
-PbiBench V9 portable build
+PbiBench V11.1 portable build
 
 Launch PbiBench.exe on Windows with .NET Framework 4.8 installed.
+Apps / Tools launches fabric-toolbox/PbiBench.FabricToolbox.exe in its separate process.
+Fabric Toolbox requires the .NET 10 Windows Desktop runtime. Its dependencies stay in its own folder.
 Use Home > Open demo for the included synthetic example model.
 DAX Studio and Power BI Desktop are separate optional installed applications.
 Run cli/pbibench.exe --help for the shared semantic-engine CLI.

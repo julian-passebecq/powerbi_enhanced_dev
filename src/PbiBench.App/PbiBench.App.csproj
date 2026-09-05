@@ -7,6 +7,8 @@
     <ApplicationIcon>Assets/PbiBench.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../PbiBench.CSharp.LanguageService/PbiBench.CSharp.LanguageService.csproj" />
+    <Reference Include="FastColoredTextBox"><HintPath>../../vendor/TabularEditor2-2.28.0/packages/FCTB.2.16.24/lib/FastColoredTextBox.dll</HintPath></Reference>
     <Reference Include="TOMWrapper"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/TOMWrapper.dll</HintPath></Reference>
     <Reference Include="Microsoft.AnalysisServices.Tabular"><HintPath>../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/Microsoft.AnalysisServices.Tabular.dll</HintPath></Reference>
     <Reference Include="Microsoft.AnalysisServices.Core"><HintPath>../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/Microsoft.AnalysisServices.Core.dll</HintPath></Reference>

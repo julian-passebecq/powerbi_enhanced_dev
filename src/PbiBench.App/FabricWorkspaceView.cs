@@ -42,6 +42,13 @@ public sealed class FabricWorkspaceView : UserControl, IDisposable
     public string Status => status.Text;
     public bool IsRunning => pending != null;
     public int SourceColumnCount => columnChoices.Count;
+    private FabricSelectionHandoff? handoff;
+    public void AcceptSelectionHandoff(FabricSelectionHandoff selection)
+    {
+        // Revalidate even programmatically supplied envelopes; this is never an approval or a remote write.
+        handoff = FabricSelectionHandoff.Parse(System.Text.Json.JsonSerializer.Serialize(selection));
+        status.Text = "Selection from Fabric Toolbox: " + selection.DisplayName + " (" + selection.ItemType + "). Workspace " + selection.WorkspaceId + ", item " + selection.ItemId + ". Sign in, then Load workspaces to review the source. No import or connection has run.";
+    }
 
     public FabricWorkspaceView(BackgroundTaskQueue? backgroundTasks = null, IFabricAuthenticator? authenticator = null,
         IFabricCatalogService? catalog = null, IFabricDataPreviewService? preview = null)
@@ -118,10 +125,10 @@ public sealed class FabricWorkspaceView : UserControl, IDisposable
         ClearCatalog(); return Work("Entra authorization", async ct => { await auth.SignInAsync(options, audience, ct); return () => status.Text = "Authorized " + audience + " · " + auth.AccountLabel + ". Load workspaces to continue."; });
     }
     public Task LoadWorkspacesAsync() => Work("Load Fabric workspaces", async ct =>
-    { var values = await catalog.ListWorkspacesAsync(ct); return () => { ClearCatalog(); workspaces.ItemsSource = values; status.Text = values.Count + " workspaces. Select a workspace."; }; });
+    { var values = await catalog.ListWorkspacesAsync(ct); return () => { ClearCatalog(); workspaces.ItemsSource = values; status.Text = values.Count + " workspaces. Select a workspace."; if (handoff != null) workspaces.SelectedItem = values.FirstOrDefault(w => w.Id == handoff.WorkspaceId); }; });
     private Task LoadItemsAsync(FabricWorkspace workspace)
     {
-        ClearFrom(1); return Work("Load Fabric items", async ct => { var values = await catalog.ListItemsAsync(workspace.Id, ct); return () => { items.ItemsSource = values; status.Text = values.Count + " supported data items. Select an item."; }; });
+        ClearFrom(1); return Work("Load Fabric items", async ct => { var values = await catalog.ListItemsAsync(workspace.Id, ct); return () => { items.ItemsSource = values; status.Text = values.Count + " supported data items. Select an item."; if (handoff?.WorkspaceId == workspace.Id) items.SelectedItem = values.FirstOrDefault(i => i.Id == handoff.ItemId); }; });
     }
     private Task LoadSchemasAsync(FabricItem item)
     {
