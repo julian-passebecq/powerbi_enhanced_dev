@@ -21,6 +21,8 @@ jobs:
         run: dotnet test tests/PbiBench.V11.Tests/PbiBench.V11.Tests.csproj -c Release -f net48 --nologo --logger "trx;LogFileName=v11-net48.trx" --results-directory artifacts/ci-release
       - name: Release Fabric Toolbox build
         run: dotnet build src/PbiBench.FabricToolbox/PbiBench.FabricToolbox.csproj -c Release --nologo
+      - name: Release Fabric Toolbox WPF tests (offline)
+        run: dotnet test tests/PbiBench.FabricToolbox.Tests/PbiBench.FabricToolbox.Tests.csproj -c Release --nologo --logger "trx;LogFileName=toolbox-net10.trx" --results-directory artifacts/ci-release
       - name: Check Toolbox output isolation
         shell: pwsh
         run: |
@@ -33,6 +35,6 @@ jobs:
           name: v11-windows-release-test-results
           path: artifacts/ci-release/*.trx
           if-no-files-found: warn
-      # Hosted scope: portable dual-target modules and the isolated Toolbox build.
+      # Hosted scope: portable dual-target modules and the isolated Toolbox build and offline WPF tests.
       # No private credentials, live Power BI/Fabric, TE2 bootstrap, main WPF/native
       # tests, GUI smoke or package claim. The local Release gate owns those checks.

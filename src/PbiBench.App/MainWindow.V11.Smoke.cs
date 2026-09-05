@@ -34,6 +34,13 @@ public partial class MainWindow
             Check(new SemanticModelService(handler).Fingerprint() == before, "Script text and preview do not mutate metadata", checks);
             await PaintAsync(); Capture(outputRoot, "v11-scripts");
             Check(TrustedScriptRunner.Validate("Model.DoesNotExist();").Any(d => !d.IsWarning && d.Line > 0), "TE2 compiler returns positioned diagnostics without executing", checks);
+            scriptAutomation.ShowTool("Trusted Legacy"); await PaintAsync();
+            var trustedEditor = scriptAutomation.VisibleEditors.Single(); trustedEditor.Text = "// Compile-only fixture\nModel.DoesNotExist();";
+            var problems = TrustedScriptRunner.Validate(trustedEditor.Text); trustedEditor.SetDiagnostics(problems);
+            var diagnostic = trustedEditor.Problems.First(p => !p.Diagnostic.IsWarning); trustedEditor.NewDocument("// Other draft");
+            Check(trustedEditor.NavigateProblem(diagnostic) && trustedEditor.CaretOffset >= "// Compile-only fixture\n".Length, "Compiler Problems activates the originating script and navigates without execution", checks);
+            Check(new SemanticModelService(handler).Fingerprint() == before, "Compiler Problems navigation leaves the model unchanged", checks);
+            await PaintAsync(); Check(trustedEditor.NativeView.ActualHeight >= 80, "Compiler Problems retains a visible script editing area", checks); Capture(outputRoot, "v11-csharp-problems");
             Check(RecipeCSharpGenerator.Generate(SafeCSharpParser.Parse("Model.Tables[\"Sales\"].Description = \"Example\";").Recipe!).Source.Contains("Description"), "Typed recipe generates readable review-only C#", checks);
             var export = CreateAIExportWindow(); export.Show(); await export.PrepareAsync(); await export.Dispatcher.InvokeAsync(() => export.UpdateLayout());
             Check(export.CurrentPlan != null && export.CurrentPlan.Review.All(f => !f.Path.StartsWith("samples/")), "Export UI defaults to metadata-only and shows exact files", checks);
@@ -48,7 +55,7 @@ public partial class MainWindow
                 featureWindow.Show(); await PaintAsync();
                 Check(featureWindow.Map.VisibleRows.Count == 21 && featureWindow.Pages.Items.Count == 2, "Apps / Tools About opens the offline Feature Map and preserves Provenance", checks);
                 featureWindow.Map.SelectFilter(FeatureMapFilter.Labs);
-                Check(featureWindow.Map.VisibleRows.Count == 6 && featureWindow.Map.VisibleRows.All(r => r.Focus == "Freeze"), "Feature Map distinguishes frozen and future work", checks);
+                Check(featureWindow.Map.VisibleRows.Count == 5 && featureWindow.Map.VisibleRows.All(r => r.Status is "Labs" or "Future"), "Feature Map shows incubating and future areas with evolvable lifecycles", checks);
                 featureWindow.Map.SelectFilter(FeatureMapFilter.Te3Gaps);
                 Check(featureWindow.Map.VisibleRows.Any(r => r.Feature.Id == "dax-debugger" && r.Status == "Gap"), "Feature Map records the DAX debugger gap without adding a debugger", checks);
                 featureWindow.Map.SelectFilter(FeatureMapFilter.All); await featureWindow.Dispatcher.InvokeAsync(() => featureWindow.UpdateLayout());

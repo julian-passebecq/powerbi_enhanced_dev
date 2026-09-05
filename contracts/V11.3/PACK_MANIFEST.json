@@ -1,0 +1,14 @@
+{
+  "name": "PbiBench V11.3 Modular Growth",
+  "repository": "julian-passebecq/powerbi_enhanced_dev",
+  "baselineCommit": "4caccae9f4751555cbe584ffbf02e81e2fb88f77",
+  "targetProductVersion": "11.3.0",
+  "targetFabricToolboxVersion": "0.2.0",
+  "principle": "Continue functionality; compartmentalize ownership, dependencies and update lanes.",
+  "mainWork": [
+    "replace freeze semantics with evolvable lifecycle modes",
+    "module catalog and dependency boundaries",
+    "Fabric Toolbox v0.2 read-only operations/inventory",
+    "C# Problems navigation, macro context rules and semantic snippets"
+  ]
+}

@@ -24,6 +24,7 @@ public sealed class ScriptAutomationView : UserControl, IDisposable
     private readonly BackgroundTaskQueue queue;
     private readonly bool ownsQueue;
     private readonly TabControl tabs = new();
+    private readonly TabControl trustedResults = new();
     private readonly CSharpWorkspaceView safeSource = new(Example), trustedSource = new("// TRUSTED C#: unrestricted TE2 C#. Review before running.\n");
     private readonly TextBox trustedOutput = Editor("", true), recipeSource = Editor("", true), generatedSource = Editor("", true), macroSource = Editor("", true), macroFilter = new() { MinWidth = 180 }, macroTags = new() { MinWidth = 130 };
     private readonly DataGrid diff = Grid(), recipeSteps = Grid(), macros = Grid();
@@ -32,6 +33,13 @@ public sealed class ScriptAutomationView : UserControl, IDisposable
     private readonly TextBox recipeName = new() { Text = "Recorded model actions", MinWidth = 240 }, macroName = new() { Text = "My macro", MinWidth = 210 };
     private readonly ActionRecorder recorder = new();
     private readonly List<ScriptMacro> library = new();
+    private readonly Dictionary<string, ScriptMacro> documentMacros = new(StringComparer.Ordinal);
+    private readonly TextBox minimumSelection = new() { Text = "0", Width = 55, MaxLength = 5 }, maximumSelection = new() { Text = "10000", Width = 55, MaxLength = 5 };
+    private readonly CheckBox requiresConnection = new() { Content = "Requires connected model", Margin = new Thickness(5) };
+    private readonly Dictionary<string, CheckBox> allowedKinds = new();
+    private readonly DispatcherTimer contextTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
+    private Button? loadMacroButton;
+    private string lastContext = "";
     private readonly string libraryPath, snapshotDirectory;
     private TabularModelHandler? handler;
     private ActionRecipe? recipeDraft;
@@ -50,12 +58,15 @@ public sealed class ScriptAutomationView : UserControl, IDisposable
         libraryPath = Path.Combine(profileDirectory, "macros.json"); snapshotDirectory = Path.Combine(profileDirectory, "TrustedScriptSnapshots");
         safeSource.Configure(Path.Combine(profileDirectory, "safe-scripts-recovery.json"), CaptureSymbols);
         trustedSource.Configure(Path.Combine(profileDirectory, "trusted-scripts-recovery.json"), CaptureSymbols);
+        safeSource.SemanticSnippetRequested += UseSemanticSnippet; trustedSource.SemanticSnippetRequested += UseSemanticSnippet;
         var root = new DockPanel(); DockPanel.SetDock(status, Dock.Bottom); root.Children.Add(status); root.Children.Add(tabs); Content = root;
         tabs.Items.Add(new TabItem { Header = "Safe C# Preview", Content = SafePage() }); tabs.Items.Add(new TabItem { Header = "Trusted Legacy", Content = TrustedPage() }); tabs.Items.Add(new TabItem { Header = "Action recorder", Content = RecorderPage() }); tabs.Items.Add(new TabItem { Header = "Macro library", Content = MacroPage() });
         safeSource.TextChanged += (_, _) => { if (!loadingSource) { recipeDraft = null; draftVersion++; LastPreview = null; diff.ItemsSource = null; pending?.Cancel(); } };
         trustedSource.TextChanged += (_, _) => { trust.IsChecked = false; compiledTrustedSource = null; };
         macroFilter.TextChanged += (_, _) => RefreshLibrary();
-        macros.SelectionChanged += (_, _) => { if (macros.SelectedItem is ScriptMacro macro) macroSource.Text = macro.Mode == MacroMode.Recipe ? JsonSerializer.Serialize(macro.Recipe, new JsonSerializerOptions { WriteIndented = true }) : macro.Source; };
+        macros.SelectionChanged += (_, _) => { var row = macros.SelectedItem as MacroRow; if (row != null) macroSource.Text = row.Reason + "\n\n" + (row.Macro.Mode == MacroMode.Recipe ? JsonSerializer.Serialize(row.Macro.Recipe, new JsonSerializerOptions { WriteIndented = true }) : row.Macro.Source); if (loadMacroButton != null) loadMacroButton.IsEnabled = row?.Enabled == true; };
+        contextTimer.Tick += (_, _) => { var context = CaptureContext(); var key = context.HasModel + ":" + context.IsConnected + ":" + string.Join(",", context.SelectedKinds); if (key != lastContext) { lastContext = key; RefreshLibrary(); } };
+        Loaded += (_, _) => contextTimer.Start(); Unloaded += (_, _) => contextTimer.Stop();
         Loaded += async (_, _) => { if (initialized) return; initialized = true; try { if (File.Exists(libraryPath)) { var saved = await RecipeFiles.LoadLibraryAsync(libraryPath, CancellationToken.None); if (!disposed) { library.AddRange(saved.Macros); RefreshLibrary(); } } } catch (Exception error) { status.Text = "Macro library could not be loaded: " + error.Message; } };
         RefreshModel();
     }
@@ -66,6 +77,7 @@ public sealed class ScriptAutomationView : UserControl, IDisposable
         if (disposed) return; var next = currentHandler();
         if (!ReferenceEquals(handler, next)) { pending?.Cancel(); recorder.Discard(); recorded = null; recipeSteps.ItemsSource = null; recipeSource.Text = ""; trust.IsChecked = false; draftVersion++; }
         handler = next; LastPreview = null; diff.ItemsSource = null;
+        RefreshLibrary();
         if (handler == null) status.Text = "Open a semantic model before previewing or recording model actions.";
     }
     public async Task PrepareSafePreviewAsync(string source)
@@ -74,6 +86,7 @@ public sealed class ScriptAutomationView : UserControl, IDisposable
     }
     private async Task PreparePreviewAsync()
     {
+        CheckMacroContext(safeSource);
         var active = Handler(); var version = draftVersion; var service = new ScriptPreviewService(active);
         var captured = recipeDraft == null ? service.PrepareScript(safeSource.Text, selection()) : service.PrepareRecipe(recipeDraft, selection());
         pending?.Cancel(); var cancellation = pending = new CancellationTokenSource(); LastPreview = null; diff.ItemsSource = null;
@@ -91,7 +104,7 @@ public sealed class ScriptAutomationView : UserControl, IDisposable
     private UIElement SafePage()
     {
         var panel = new DockPanel(); var top = new StackPanel(); DockPanel.SetDock(top, Dock.Top); panel.Children.Add(top);
-        top.Children.Add(safeNotice); top.Children.Add(Bar(Button("Preview", PreparePreviewAsync), Button("Cancel", () => pending?.Cancel()), Button("Review / apply…", () => { var preview = LastPreview ?? throw new InvalidOperationException("Prepare a current preview first."); if (AuthoringReview.Show(this, preview, currentHandler, changed)) { LastPreview = null; diff.ItemsSource = null; status.Text = "Reviewed changes applied locally. Native Undo restores the batch."; } }),
+        top.Children.Add(safeNotice); top.Children.Add(Bar(Button("Preview", PreparePreviewAsync), Button("Cancel", () => pending?.Cancel()), Button("Review / apply…", () => { CheckMacroContext(safeSource); var preview = LastPreview ?? throw new InvalidOperationException("Prepare a current preview first."); if (AuthoringReview.Show(this, preview, currentHandler, changed)) { LastPreview = null; diff.ItemsSource = null; status.Text = "Reviewed changes applied locally. Native Undo restores the batch."; } }),
             Button("Example / script mode", () => { recipeDraft = null; safeSource.IsReadOnly = false; safeSource.Text = Example; }), Button("Open C#…", OpenSafeAsync), Button("Save C#…", SaveSafeAsync), Button("Open recipe…", OpenRecipeAsync)));
         top.Children.Add(Note("Supported: literal property assignments; Name/Table.Name concatenation; foreach over approved Model/Selected tables, columns or measures; explicit Model.Tables[\"T\"] indexing; AddMeasure and measure Delete. Unsupported C# is rejected in full."));
         panel.Children.Add(Split(safeSource, diff)); return panel;
@@ -101,7 +114,9 @@ public sealed class ScriptAutomationView : UserControl, IDisposable
         var panel = new DockPanel(); var top = new StackPanel(); DockPanel.SetDock(top, Dock.Top); panel.Children.Add(top);
         var warning = Note("TRUSTED LEGACY — unrestricted C# through the existing TE2 compiler. File, network and process effects cannot be previewed or undone. PbiBench creates a model snapshot before running; model Undo is available only where the script preserves native undo state. Execution uses the native UI thread and cannot be forcibly canceled."); warning.Foreground = Brushes.Firebrick; warning.FontWeight = FontWeights.SemiBold; top.Children.Add(warning); top.Children.Add(trust);
         top.Children.Add(Bar(Button("Compile / review risks", () => { CompileTrusted(); }), Button("TRUSTED C# · Snapshot and run", RunTrustedAsync), Button("Open legacy C#…", async () => { var text = await ReadSourceAsync(); if (text != null) trustedSource.Text = text; }), Button("Save legacy C#…", async () => await WriteSourceAsync(trustedSource.Text, "legacy.csx"))));
-        panel.Children.Add(Split(trustedSource, trustedOutput)); return panel;
+        trustedResults.Items.Add(new TabItem { Header = "Problems", Content = trustedSource.CompilerProblemsView });
+        trustedResults.Items.Add(new TabItem { Header = "Risk review / output", Content = trustedOutput });
+        panel.Children.Add(Split(trustedSource, trustedResults)); return panel;
     }
     private UIElement RecorderPage()
     {
@@ -116,11 +131,16 @@ public sealed class ScriptAutomationView : UserControl, IDisposable
         var panel = new DockPanel(); var top = new StackPanel(); DockPanel.SetDock(top, Dock.Top); panel.Children.Add(top);
         top.Children.Add(Note("Local macros keep their explicit Safe Script, Typed Recipe or Trusted Legacy mode. Loading a macro never executes it, and loading trusted code resets its trust acknowledgment."));
         top.Children.Add(Bar(Note("Search name / tags / mode"), macroFilter, Note("Tags (comma-separated)"), macroTags, Button("Favorite / unpin", ToggleFavoriteAsync)));
-        top.Children.Add(Bar(macroName, Button("Save safe draft", () => SaveMacroAsync(MacroMode.SafeScript)), Button("Save recorded recipe", () => SaveMacroAsync(MacroMode.Recipe)), Button("Save trusted draft", () => SaveMacroAsync(MacroMode.TrustedLegacy)), Button("Load selected", LoadMacro), Button("Remove selected", RemoveMacroAsync), Button("Export library…", ExportLibraryAsync), Button("Import library…", ImportLibraryAsync)));
-        macros.AutoGeneratingColumn += (_, e) => { if (e.PropertyName is "Source" or "Recipe" or "Id") e.Cancel = true; }; panel.Children.Add(Split(macros, macroSource)); return panel;
+        loadMacroButton = Button("Load selected", LoadMacro); loadMacroButton.IsEnabled = false;
+        top.Children.Add(Bar(macroName, Button("Save safe draft", () => SaveMacroAsync(MacroMode.SafeScript)), Button("Save recorded recipe", () => SaveMacroAsync(MacroMode.Recipe)), Button("Save trusted draft", () => SaveMacroAsync(MacroMode.TrustedLegacy)), loadMacroButton, Button("Refresh context", RefreshLibrary), Button("Remove selected", RemoveMacroAsync), Button("Export library…", ExportLibraryAsync), Button("Import library…", ImportLibraryAsync)));
+        var rules = Bar(Note("New macro selection rules (none checked = any)"));
+        foreach (var kind in new[] { "Model", "Table", "Column", "Measure" }) { var check = new CheckBox { Content = kind, Margin = new Thickness(5) }; allowedKinds.Add(kind, check); rules.Children.Add(check); }
+        rules.Children.Add(Note("Min")); rules.Children.Add(minimumSelection); rules.Children.Add(Note("Max")); rules.Children.Add(maximumSelection); rules.Children.Add(requiresConnection); top.Children.Add(rules);
+        macros.AutoGeneratingColumn += (_, e) => { if (e.PropertyName == "Macro") e.Cancel = true; }; panel.Children.Add(Split(macros, macroSource)); return panel;
     }
     private async Task RunTrustedAsync()
     {
+        CheckMacroContext(trustedSource);
         if (trust.IsChecked != true) throw new InvalidOperationException("Review the source and explicitly acknowledge unrestricted access before running.");
         if (compiledTrustedSource != trustedSource.Text) { CompileTrusted(); trust.IsChecked = false; status.Text = "Review compile diagnostics and advisory risk hints, then acknowledge trust before running. Nothing was executed."; return; }
         var active = Handler(); var source = trustedSource.Text; status.Text = "Writing the pre-run model snapshot…";
@@ -128,8 +148,11 @@ public sealed class ScriptAutomationView : UserControl, IDisposable
         if (disposed || source != trustedSource.Text || !ReferenceEquals(active, currentHandler()) || trust.IsChecked != true) throw new InvalidOperationException("The trusted source/session changed while preparing the snapshot. Review again.");
         status.Text = "Running unrestricted legacy C#. Native UI-thread execution cannot be canceled.";
         await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
+        CheckMacroContext(trustedSource);
+        if (disposed || source != trustedSource.Text || !ReferenceEquals(active, currentHandler()) || trust.IsChecked != true) throw new InvalidOperationException("The trusted source/session changed. Review again.");
         var result = TrustedScriptRunner.Run(ticket, active, true); trust.IsChecked = false;
         trustedOutput.Text = (result.Succeeded ? "Execution completed." : "Execution failed.") + "\nSnapshot: " + result.SnapshotPath + "\nModel Undo available: " + result.UndoAvailable + "\n\n" + string.Join("\n", result.Diagnostics) + "\n\nConsole output\n" + result.ConsoleOutput;
+        trustedResults.SelectedIndex = 1;
         status.Text = "Trusted run finished. Snapshot and diagnostics are shown below; external effects are not reversible by PbiBench."; changed();
     }
     private async Task StopRecordingAsync()
@@ -161,28 +184,63 @@ public sealed class ScriptAutomationView : UserControl, IDisposable
         var recipe = mode == MacroMode.Recipe ? recorded?.Recipe ?? recipeDraft ?? throw new InvalidOperationException("Record or load a recipe first.") : null;
         if (mode == MacroMode.SafeScript && recipeDraft != null) throw new InvalidOperationException("The safe draft contains a typed recipe. Save it as a recorded recipe macro.");
         var macro = new ScriptMacro(Guid.NewGuid().ToString(), name, mode, mode == MacroMode.TrustedLegacy ? trustedSource.Text : mode == MacroMode.SafeScript ? safeSource.Text : "", recipe);
-        macro = macro with { Tags = macroTags.Text.Split(',').Select(t => t.Trim()).Where(t => t.Length > 0).Distinct().ToArray() };
+        macro = macro with { Tags = macroTags.Text.Split(',').Select(t => t.Trim()).Where(t => t.Length > 0).Distinct().ToArray(), Context = ReadContextRule() };
         var updated = library.Concat(new[] { macro }).ToArray(); await RecipeFiles.SaveLibraryAsync(libraryPath, new MacroLibrary(updated), CancellationToken.None); library.Add(macro); RefreshLibrary(); status.Text = "Saved " + mode + " macro locally. It has not been executed.";
     }
-    private void LoadMacro()
+    private void LoadMacro() => LoadMacroDraft(SelectedMacro());
+    internal void LoadMacroDraft(ScriptMacro macro)
     {
-        var macro = macros.SelectedItem as ScriptMacro ?? throw new InvalidOperationException("Select a macro first.");
+        var availability = MacroContextRules.Evaluate(macro.Context, CaptureContext());
+        if (!availability.Enabled) throw new InvalidOperationException(availability.Reason);
+        var target = macro.Mode == MacroMode.TrustedLegacy ? trustedSource : safeSource;
+        target.NewDocument(macro.Source); documentMacros[target.ActiveDocument.Id] = macro;
         if (macro.Mode == MacroMode.Recipe) UseRecipe(macro.Recipe!);
-        else if (macro.Mode == MacroMode.TrustedLegacy) { ShowTool("Trusted Legacy"); trustedSource.Text = macro.Source; trust.IsChecked = false; }
-        else { ShowTool("Safe C# Preview"); recipeDraft = null; safeSource.IsReadOnly = false; safeSource.Text = macro.Source; }
-        status.Text = "Loaded " + macro.Name + " as " + macro.Mode + ". Review before any preview or run.";
+        else ShowTool(macro.Mode == MacroMode.TrustedLegacy ? "Trusted Legacy" : "Safe C# Preview");
+        trust.IsChecked = false; status.Text = "Loaded " + macro.Name + " as " + macro.Mode + ". Review before any preview or run.";
     }
-    private async Task RemoveMacroAsync() { var macro = macros.SelectedItem as ScriptMacro ?? throw new InvalidOperationException("Select a macro first."); var updated = library.Where(item => item.Id != macro.Id).ToArray(); await RecipeFiles.SaveLibraryAsync(libraryPath, new MacroLibrary(updated), CancellationToken.None); library.Remove(macro); RefreshLibrary(); }
+    private ScriptMacro SelectedMacro() => (macros.SelectedItem as MacroRow)?.Macro ?? throw new InvalidOperationException("Select a macro first.");
+    private async Task RemoveMacroAsync() { var macro = SelectedMacro(); var updated = library.Where(item => item.Id != macro.Id).ToArray(); await RecipeFiles.SaveLibraryAsync(libraryPath, new MacroLibrary(updated), CancellationToken.None); library.Remove(macro); RefreshLibrary(); }
     private async Task ExportLibraryAsync() { var dialog = new SaveFileDialog { Filter = "PbiBench macro library|*.json", FileName = "pbibench-macros.json" }; if (dialog.ShowDialog(Window.GetWindow(this)) == true) await RecipeFiles.SaveLibraryAsync(dialog.FileName, new MacroLibrary(library.ToArray()), CancellationToken.None); }
     private async Task ImportLibraryAsync()
     {
         var dialog = new OpenFileDialog { Filter = "PbiBench macro library|*.json" }; if (dialog.ShowDialog(Window.GetWindow(this)) != true) return; var imported = await RecipeFiles.LoadLibraryAsync(dialog.FileName, CancellationToken.None);
         var merged = library.Concat(imported.Macros.Where(item => library.All(existing => existing.Id != item.Id))).ToArray(); await RecipeFiles.SaveLibraryAsync(libraryPath, new MacroLibrary(merged), CancellationToken.None); library.Clear(); library.AddRange(merged); RefreshLibrary(); status.Text = "Imported macros; nothing was executed. Each entry retains its explicit mode.";
     }
-    private void RefreshLibrary() { var term = macroFilter.Text.Trim(); macros.ItemsSource = library.Where(m => (m.Name + " " + m.Mode + " " + string.Join(" ", m.Tags)).IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0).OrderByDescending(m => m.Favorite).ThenBy(m => m.Name, StringComparer.OrdinalIgnoreCase).ToArray(); }
+    internal sealed record MacroRow(ScriptMacro Macro, bool Enabled, string Reason)
+    { public string Name => Macro.Name; public string Mode => Macro.Mode.ToString(); public string Tags => string.Join(", ", Macro.Tags); public bool Favorite => Macro.Favorite; }
+    private void RefreshLibrary()
+    {
+        var selectedId = (macros.SelectedItem as MacroRow)?.Macro.Id; var term = macroFilter.Text.Trim(); var context = CaptureContext();
+        var rows = library.Where(m => (m.Name + " " + m.Mode + " " + string.Join(" ", m.Tags)).IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0)
+            .OrderByDescending(m => m.Favorite).ThenBy(m => m.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(m => { var a = MacroContextRules.Evaluate(m.Context, context); return new MacroRow(m, a.Enabled, a.Reason); }).ToArray();
+        macros.ItemsSource = rows; macros.SelectedItem = rows.FirstOrDefault(r => r.Macro.Id == selectedId) ?? rows.FirstOrDefault();
+    }
+    private MacroSelectionContext CaptureContext()
+    {
+        var model = currentHandler(); return new(model != null, model?.IsConnected == true, model == null ? Array.Empty<string>() : selection().Select(o =>
+            o is Measure ? "Measure" : o is Column ? "Column" : o is Table ? "Table" : ReferenceEquals(o, model.Model) ? "Model" : "Unsupported").ToArray());
+    }
+    internal void CheckMacroContext(CSharpWorkspaceView view)
+    {
+        if (!documentMacros.TryGetValue(view.ActiveDocument.Id, out var macro)) return;
+        var a = MacroContextRules.Evaluate(macro.Context, CaptureContext()); if (!a.Enabled) throw new InvalidOperationException(a.Reason);
+    }
+    private MacroContextRule ReadContextRule()
+    {
+        if (!int.TryParse(minimumSelection.Text, out var min) || !int.TryParse(maximumSelection.Text, out var max)) throw new InvalidOperationException("Enter whole selection counts from 0 to 10,000.");
+        var rule = new MacroContextRule(allowedKinds.Where(p => p.Value.IsChecked == true).Select(p => p.Key).ToArray(), min, max, requiresConnection.IsChecked == true); rule.Validate(); return rule;
+    }
+    internal void UseSemanticSnippet(GeneratedSnippet generated)
+    {
+        if (!generated.Enabled) throw new InvalidOperationException(generated.Reason);
+        var target = generated.TrustedOnly ? trustedSource : safeSource; target.NewDocument(generated.Source);
+        ShowTool(generated.TrustedOnly ? "Trusted Legacy" : "Safe C# Preview"); trust.IsChecked = false;
+        status.Text = generated.Reason + " Text generated only. " + (generated.TrustedOnly ? "Review, compile and acknowledge trust to run." : "Review and preview the exact local changes.");
+    }
     private async Task ToggleFavoriteAsync()
     {
-        if (macros.SelectedItem is not ScriptMacro selected) throw new InvalidOperationException("Select a macro first.");
+        var selected = SelectedMacro();
         var updated = library.Select(m => m.Id == selected.Id ? m with { Favorite = !m.Favorite } : m).ToArray();
         await RecipeFiles.SaveLibraryAsync(libraryPath, new(updated), CancellationToken.None); library.Clear(); library.AddRange(updated); RefreshLibrary();
     }
@@ -190,12 +248,14 @@ public sealed class ScriptAutomationView : UserControl, IDisposable
     {
         var active = currentHandler(); if (active == null) return Array.Empty<AutomationSymbol>(); var selected = selection();
         return active.Model.Tables.SelectMany(t => new[] { new AutomationSymbol("Table", t.Name, Selected: selected.Contains(t)) }
-            .Concat(t.Columns.Select(c => new AutomationSymbol("Column", c.Name, t.Name, selected.Contains(c))))
+            .Concat(t.Columns.Select(c => new AutomationSymbol("Column", c.Name, t.Name, selected.Contains(c), c.DataType.ToString())))
             .Concat(t.Measures.Select(m => new AutomationSymbol("Measure", m.Name, t.Name, selected.Contains(m))))).ToArray();
     }
     private bool CompileTrusted()
     {
         var result = TrustedScriptRunner.Validate(trustedSource.Text); var risks = new CSharpLanguageService().Risks(trustedSource.Text);
+        trustedSource.SetDiagnostics(result);
+        trustedResults.SelectedIndex = result.Count == 0 ? 1 : 0;
         trustedOutput.Text = "COMPILE DIAGNOSTICS (no execution)\n" + string.Join("\n", result.Select(d => $"{(d.IsWarning ? "warning" : "error")} {d.Code} ({d.Line},{d.Column}): {d.Message}")) +
             "\n\nADVISORY RISK REVIEW — incomplete; no findings do not prove safety.\n" + string.Join("\n", risks.Select(r => $"Line {r.Line}: {r.Category} · {r.Message}"));
         trust.IsChecked = false; compiledTrustedSource = result.All(d => d.IsWarning) ? trustedSource.Text : null;
@@ -209,5 +269,5 @@ public sealed class ScriptAutomationView : UserControl, IDisposable
     private static TextBox Editor(string text, bool readOnly = false) => new() { Text = text, IsReadOnly = readOnly, AcceptsReturn = true, AcceptsTab = true, FontFamily = new FontFamily("Consolas"), FontSize = 13, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto, Margin = new Thickness(4) };
     private static DataGrid Grid() => new() { IsReadOnly = true, AutoGenerateColumns = true, CanUserAddRows = false, EnableRowVirtualization = true, EnableColumnVirtualization = true, Margin = new Thickness(4), SelectionMode = DataGridSelectionMode.Single };
     private static UIElement Split(UIElement first, UIElement second) { var grid = new System.Windows.Controls.Grid(); grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(5) }); grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }); grid.Children.Add(first); var splitter = new GridSplitter { Height = 5, HorizontalAlignment = HorizontalAlignment.Stretch }; System.Windows.Controls.Grid.SetRow(splitter, 1); grid.Children.Add(splitter); System.Windows.Controls.Grid.SetRow(second, 2); grid.Children.Add(second); return grid; }
-    public void Dispose() { if (disposed) return; disposed = true; pending?.Cancel(); recorder.Discard(); safeSource.Dispose(); trustedSource.Dispose(); if (ownsQueue) queue.Dispose(); }
+    public void Dispose() { if (disposed) return; disposed = true; contextTimer.Stop(); pending?.Cancel(); recorder.Discard(); safeSource.Dispose(); trustedSource.Dispose(); if (ownsQueue) queue.Dispose(); }
 }

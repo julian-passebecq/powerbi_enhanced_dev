@@ -40,7 +40,7 @@ public sealed class FeatureMapView : UserControl
         toolbar.Children.Add(count);
         var documentation = new Button { Content = "Open detailed catalog", Margin = new Thickness(16, 0, 0, 0), Padding = new Thickness(9, 5, 9, 5) };
         documentation.Click += (_, _) => DocumentationRequested?.Invoke(this, EventArgs.Empty); toolbar.Children.Add(documentation);
-        header.Children.Add(Note("Companions includes external tools. Labs includes frozen and future work. TE3 gaps includes Partial and Gap comparisons."));
+        header.Children.Add(Note("Companions includes external tools. Labs includes incubating and future work. TE3 gaps includes Partial and Gap comparisons."));
 
         var footer = new StackPanel { Margin = new Thickness(0, 10, 0, 0) }; DockPanel.SetDock(footer, Dock.Bottom); root.Children.Add(footer);
         footer.Children.Add(new TextBlock { Text = "Selected feature", FontWeight = FontWeights.SemiBold }); footer.Children.Add(detail);
@@ -50,7 +50,7 @@ public sealed class FeatureMapView : UserControl
         AddColumn("Origin", nameof(FeatureMapRow.Origin), 1.05, 155);
         AddColumn("Our implementation", nameof(FeatureMapRow.Implementation), 1.8, 220);
         AddColumn("TE3 comparable capability", nameof(FeatureMapRow.Te3), 1.45, 200);
-        AddColumn("Focus", nameof(FeatureMapRow.Focus), .9, 130);
+        AddColumn("Lifecycle", nameof(FeatureMapRow.Lifecycle), .9, 130);
         grid.SelectionChanged += (_, _) => detail.Text = grid.SelectedItem is FeatureMapRow row ? row.Detail +
             (row.Feature.Te3.SourceUrl == null ? "" : "\nTE3 public reference: " + row.Feature.Te3.SourceUrl) : "";
         root.Children.Add(grid); SelectFilter(FeatureMapFilter.All);

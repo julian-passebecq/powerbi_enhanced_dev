@@ -15,21 +15,22 @@ public sealed class FeatureCatalogTests
     [Fact] public void BundledCatalogHasTheAuditedVersionAndConservativePublicBaseline()
     {
         var provenance = ProvenanceCatalog.Bundled(); var catalog = FeatureCatalog.Bundled(provenance);
-        Assert.Equal("11.2.0", catalog.ProductVersion); Assert.Equal("675a5026749094206339c312b7f190964953ce57", catalog.BaselineCommit);
+        Assert.Equal("11.3.0", catalog.ProductVersion); Assert.Equal("4caccae9f4751555cbe584ffbf02e81e2fb88f77", catalog.BaselineCommit);
         Assert.Equal("Tabular Editor 3", catalog.Comparison.Product); Assert.Equal("3.26.3", catalog.Comparison.VerifiedVersion); Assert.Equal("2026-09-05", catalog.Comparison.VerifiedDate);
         Assert.Equal(21, catalog.Features.Count); Assert.Equal(catalog.Features.Count, catalog.Features.Select(f => f.Id).Distinct().Count());
-        Assert.All(catalog.Features, f => { Assert.Contains(f.Status, FeatureCatalog.Statuses); Assert.Contains(f.Focus, FeatureCatalog.Focuses); Assert.Contains(f.Te3.Comparison, FeatureCatalog.Comparisons); });
+        Assert.All(catalog.Features, f => { Assert.Contains(f.Status, FeatureCatalog.Statuses); Assert.Contains(f.Lifecycle, FeatureCatalog.Lifecycles); Assert.Contains(f.Te3.Comparison, FeatureCatalog.Comparisons); });
         Assert.All(catalog.Features.SelectMany(f => f.ProvenanceIds), id => Assert.Contains(provenance.Components, c => c.Id == id));
     }
-    [Fact] public void ProductFocusPreservesFrozenAreasAndDistinguishesUnimplementedGaps()
+    [Fact] public void ProductLifecycleAllowsGrowthAndDistinguishesUnimplementedGaps()
     {
         var catalog = FeatureCatalog.Bundled(); var features = catalog.Features.ToDictionary(f => f.Id);
-        foreach (var id in new[] { "semantic-ide", "dax-ide", "workspace" }) Assert.Equal("Heavy focus", features[id].Focus);
-        Assert.Equal("Improve selectively", features["csharp-automation"].Focus); Assert.Equal("Improve", features["fabric-semantic"].Focus);
-        Assert.Equal("Develop independently", features["fabric-toolbox"].Focus); Assert.Equal("Polish only", features["ai-context-export"].Focus);
-        foreach (var id in new[] { "daxstudio", "cli-ci" }) Assert.Equal("Keep", features[id].Focus);
-        foreach (var id in new[] { "dataforge", "embedded-agent", "semantic-compiler", "dax-packages", "pbir", "knowledge" }) Assert.Equal("Freeze", features[id].Focus);
-        Assert.Equal("Gap", features["dax-debugger"].Status); Assert.Equal("Later", features["dax-debugger"].Focus); Assert.Equal("Gap", features["dax-debugger"].Te3.Comparison);
+        foreach (var id in new[] { "semantic-ide", "dax-ide", "workspace" }) Assert.Equal("Active", features[id].Lifecycle);
+        Assert.Equal("Selective", features["csharp-automation"].Lifecycle); Assert.Equal("Active", features["fabric-semantic"].Lifecycle);
+        Assert.Equal("Independent", features["fabric-toolbox"].Lifecycle); Assert.Equal("Selective", features["ai-context-export"].Lifecycle);
+        foreach (var id in new[] { "daxstudio", "cli-ci" }) Assert.Equal("OnDemand", features[id].Lifecycle);
+        foreach (var id in new[] { "embedded-agent", "semantic-compiler", "dax-packages" }) Assert.Equal("Incubating", features[id].Lifecycle);
+        Assert.Equal("OnDemand", features["dataforge"].Lifecycle); Assert.Equal("Later", features["pbir"].Lifecycle);
+        Assert.Equal("Gap", features["dax-debugger"].Status); Assert.Equal("Later", features["dax-debugger"].Lifecycle); Assert.Equal("Gap", features["dax-debugger"].Te3.Comparison);
         Assert.All(catalog.Rows(ProvenanceCatalog.Bundled()).Where(r => r.Status is "Future" or "Gap"), row => { Assert.Equal("Not implemented", row.Origin); Assert.Empty(row.Components); });
     }
     [Fact] public void FiltersHaveExplicitSemanticsWithoutChangingTheCatalog()
@@ -37,7 +38,7 @@ public sealed class FeatureCatalogTests
         var provenance = ProvenanceCatalog.Bundled(); var catalog = FeatureCatalog.Bundled();
         Assert.Equal(10, catalog.Rows(provenance, FeatureMapFilter.Core).Count);
         Assert.Equal(new[] { "fabric-toolbox", "daxstudio", "dataforge" }, catalog.Rows(provenance, FeatureMapFilter.Companions).Select(r => r.Feature.Id));
-        Assert.Equal(6, catalog.Rows(provenance, FeatureMapFilter.Labs).Count);
+        Assert.Equal(5, catalog.Rows(provenance, FeatureMapFilter.Labs).Count);
         Assert.All(catalog.Rows(provenance, FeatureMapFilter.Te3Gaps), r => Assert.Contains(r.Feature.Te3.Comparison, new[] { "Partial", "Gap" }));
         Assert.Contains(catalog.Rows(provenance, FeatureMapFilter.Te3Gaps), r => r.Feature.Id == "dax-debugger");
         Assert.Equal(21, catalog.Rows(provenance).Count);
@@ -67,10 +68,10 @@ public sealed class FeatureCatalogTests
         try { CultureInfo.CurrentCulture = new CultureInfo("tr-TR"); Assert.Equal(catalog.ToMarkdown(provenance), FeatureCatalog.Bundled().ToMarkdown(provenance)); }
         finally { CultureInfo.CurrentCulture = previous; }
     }
-    [Theory] [InlineData("core", "Heavy focus", "Comparable")] [InlineData("Everything", "Heavy focus", "Comparable")]
-    [InlineData("Core", "Expand all", "Comparable")] [InlineData("Core", "Heavy focus", "Full parity")]
-    public void RejectsUnboundedEnumLabels(string status, string focus, string comparison)
-    { Assert.Throws<InvalidDataException>(() => FeatureCatalog.Parse(Serialize(WithFeature(f => f with { Status = status, Focus = focus, Te3 = f.Te3 with { Comparison = comparison } })), ProvenanceCatalog.Bundled())); }
+    [Theory] [InlineData("core", "Active", "Comparable")] [InlineData("Everything", "Active", "Comparable")]
+    [InlineData("Core", "Expand all", "Comparable")] [InlineData("Core", "Active", "Full parity")]
+    public void RejectsUnboundedEnumLabels(string status, string lifecycle, string comparison)
+    { Assert.Throws<InvalidDataException>(() => FeatureCatalog.Parse(Serialize(WithFeature(f => f with { Status = status, Lifecycle = lifecycle, Te3 = f.Te3 with { Comparison = comparison } })), ProvenanceCatalog.Bundled())); }
     [Theory] [InlineData("http://docs.tabulareditor.com/en/page.html")]
     [InlineData("https://docs.tabulareditor.com.evil.example/en/page.html")] [InlineData("https://docs.tabulareditor.com@evil.example/en/page.html")]
     [InlineData("https://cdn.tabulareditor.com/TabularEditor.exe")] [InlineData("file:///C:/TE3/private.html")]
@@ -83,7 +84,7 @@ public sealed class FeatureCatalogTests
     {
         var provenance = ProvenanceCatalog.Bundled(); var catalog = FeatureCatalog.Bundled(); var json = Serialize(catalog);
         foreach (var invalid in new[] {
-            catalog with { SchemaVersion = 2 }, catalog with { ProductVersion = "11.1.1" }, catalog with { BaselineCommit = new string('a', 40) },
+            catalog with { SchemaVersion = 1 }, catalog with { ProductVersion = "11.1.1" }, catalog with { BaselineCommit = new string('a', 40) },
             catalog with { Comparison = catalog.Comparison with { VerifiedDate = "2026-02-30" } },
             catalog with { Comparison = catalog.Comparison with { Product = "Other product" } },
             catalog with { Features = Array.Empty<CatalogFeature>() }, catalog with { Features = new[] { catalog.Features[0], catalog.Features[0] } },
@@ -92,7 +93,7 @@ public sealed class FeatureCatalogTests
             WithFeature(f => f with { Implementation = new string('x', 121) }), WithFeature(f => f with { Name = "Name\nsecond line" }),
             WithFeature(f => f with { Limitations = Array.Empty<string>() }) })
             Assert.Throws<InvalidDataException>(() => FeatureCatalog.Parse(Serialize(invalid), provenance));
-        Assert.Throws<InvalidDataException>(() => FeatureCatalog.Parse(json.Replace("\"schemaVersion\":1", "\"schemaVersion\":1,\"schemaVersion\":1"), provenance));
+        Assert.Throws<InvalidDataException>(() => FeatureCatalog.Parse(json.Replace("\"schemaVersion\":2", "\"schemaVersion\":2,\"schemaVersion\":2"), provenance));
         Assert.Throws<InvalidDataException>(() => FeatureCatalog.Parse(json.Replace("\"status\":\"Core\"", "\"status\":\"Core\",\"license\":\"forged second ledger\""), provenance));
         Assert.Throws<InvalidDataException>(() => FeatureCatalog.Parse(new string('日', 90000), provenance));
         Assert.Throws<InvalidDataException>(() => FeatureCatalog.Parse("{}", provenance));

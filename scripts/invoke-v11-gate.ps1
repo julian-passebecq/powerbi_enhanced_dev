@@ -1,5 +1,5 @@
 param([ValidateSet('Debug', 'Release')][string]$Configuration = 'Release', [switch]$SkipPackaging,
-    [ValidateSet('V11', 'FeatureMap')][string]$Scope = 'V11')
+    [ValidateSet('V11', 'FeatureMap', 'ModularGrowth')][string]$Scope = 'V11')
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $dotnet = Join-Path $env:LOCALAPPDATA 'PbiBench/dotnet/dotnet.exe'
@@ -26,12 +26,13 @@ try {
     $moduleArguments = @('test', 'tests/PbiBench.V11.Tests/PbiBench.V11.Tests.csproj', '-c', $Configuration, '--no-build', '--nologo', '--logger', 'trx', '--results-directory', $logs)
     if ($Scope -eq 'FeatureMap') { $moduleArguments += @('--filter', 'FullyQualifiedName~FeatureCatalogTests|FullyQualifiedName~PlatformTests') }
     Invoke-Dotnet -Arguments $moduleArguments
-    if ($Scope -eq 'V11') {
+    if ($Scope -ne 'FeatureMap') {
+        Invoke-Dotnet -Arguments @('test', 'tests/PbiBench.FabricToolbox.Tests/PbiBench.FabricToolbox.Tests.csproj', '-c', $Configuration, '--no-build', '--nologo', '--logger', 'trx', '--results-directory', $logs)
         Invoke-Dotnet -Arguments @('test', 'tests/PbiBench.Adapters.Tests/PbiBench.Adapters.Tests.csproj', '-c', $Configuration, '-f', 'net48', '--no-build', '--nologo', '--filter', 'FullyQualifiedName~TrustedScriptBoundaryTests|FullyQualifiedName~SafeScriptTests|FullyQualifiedName~FabricTransportTests|FullyQualifiedName~FabricSqlTests|FullyQualifiedName~ModelEditorBoundaryTests', '--logger', 'trx', '--results-directory', $logs)
         Invoke-Dotnet -Arguments @('test', 'tests/PbiBench.Semantic.Tests/PbiBench.Semantic.Tests.csproj', '-c', $Configuration, '--no-build', '--nologo', '--filter', 'FullyQualifiedName~AIContextCaptureTests|FullyQualifiedName~ScriptPreviewTests', '--logger', 'trx', '--results-directory', $logs)
     }
     $appFilter = 'FullyQualifiedName~FeatureMapTests'
-    if ($Scope -eq 'V11') { $appFilter += '|FullyQualifiedName~V11WorkspaceTests|FullyQualifiedName~FabricWorkspaceViewTests' }
+    if ($Scope -ne 'FeatureMap') { $appFilter += '|FullyQualifiedName~V11WorkspaceTests|FullyQualifiedName~FabricWorkspaceViewTests|FullyQualifiedName~CSharpAutomationTests' }
     Invoke-Dotnet -Arguments @('test', 'tests/PbiBench.App.Tests/PbiBench.App.Tests.csproj', '-c', $Configuration, '--no-build', '--nologo', '--filter', $appFilter, '--logger', 'trx', '--results-directory', $logs)
     $app = Join-Path $repo "src/PbiBench.App/bin/$Configuration/net48/PbiBench.exe"
     $toolbox = Join-Path $repo "src/PbiBench.FabricToolbox/bin/$Configuration/net10.0-windows/PbiBench.FabricToolbox.exe"

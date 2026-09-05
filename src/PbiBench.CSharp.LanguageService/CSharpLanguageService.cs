@@ -3,9 +3,10 @@ using System.Text;
 
 namespace PbiBench.CSharp.LanguageService;
 
-public sealed record AutomationSymbol(string Kind, string Name, string? Table = null, bool Selected = false);
+public sealed record AutomationSymbol(string Kind, string Name, string? Table = null, bool Selected = false, string? DataType = null);
 public sealed record CSharpCompletion(string Text, string Kind, string Signature, string Description, int? ReplaceStart = null, int ReplaceLength = 0);
-public sealed record CSharpDiagnostic(int Line, int Column, string Code, string Message, bool IsWarning = false);
+public sealed record CSharpDiagnostic(int Line, int Column, string Code, string Message, bool IsWarning = false)
+{ public string Severity => IsWarning ? "Warning" : "Error"; }
 public sealed record ScriptRisk(string Category, int Line, string Message);
 public interface ICSharpLanguageService
 {
@@ -75,7 +76,7 @@ public sealed class CSharpLanguageService : ICSharpLanguageService
     private static Match Match(string text, string pattern) => Regex.Match(text, pattern, RegexOptions.None, TimeSpan.FromSeconds(1));
     private static CSharpCompletion Collection(string name) => new(name, "Collection", name, "Semantic objects; use foreach or exact name indexing where supported.");
     private static CSharpCompletion NameCompletion(AutomationSymbol s) => new(EscapeLiteral(s.Name), s.Kind, s.Name, s.Selected ? "Selected model object" : "Loaded model object");
-    private static string EscapeLiteral(string value)
+    public static string EscapeLiteral(string value)
     {
         var result = new StringBuilder();
         foreach (var c in value)

@@ -1,0 +1,20 @@
+Start from current `main` of `julian-passebecq/powerbi_enhanced_dev`.
+
+Audited baseline: `4caccae9f4751555cbe584ffbf02e81e2fb88f77`.
+
+Read the attached V11.3 pack completely.
+
+Important correction: V11.2 used `Freeze` too aggressively. The user did NOT ask us to stop functionality. Compartmentalization means each feature evolves in its own module/update lane so TE2, Fabric, external tools, and PbiBench-owned features can be upgraded independently.
+
+Implement V11.3 as a modular-growth pass:
+1. replace `Freeze` semantics in Feature Map with lifecycle modes that allow future evolution;
+2. add a machine-readable module catalog and bind features to module/update lanes;
+3. preserve the separate net48 Semantic IDE and net10 Fabric Toolbox;
+4. continue useful C# automation improvements;
+5. continue Fabric Toolbox functionality independently with the bounded V0.2 read-only operations/inventory scope;
+6. do not force unrelated modules to upgrade together.
+
+Use targeted tests while editing and one final relevant Release gate before push. Leave post-push audit and GitHub CI inspection to the separate reviewer.
+
+Commit:
+`v11.3 - Modular growth, Fabric Toolbox v0.2 and C# automation`

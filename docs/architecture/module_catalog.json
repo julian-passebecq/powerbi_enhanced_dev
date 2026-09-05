@@ -1,0 +1,365 @@
+{
+  "schemaVersion": 1,
+  "productVersion": "11.3.0",
+  "baselineCommit": "4caccae9f4751555cbe584ffbf02e81e2fb88f77",
+  "modules": [
+    {
+      "id": "semantic-ide",
+      "displayName": "Semantic IDE / TE2++",
+      "kind": "InProcess",
+      "lifecycle": "Active",
+      "version": "11.3.0",
+      "entryPoint": "PbiBench.exe",
+      "targetFrameworks": [
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.App/PbiBench.App.csproj",
+        "src/PbiBench.ModelEditor/PbiBench.ModelEditor.csproj",
+        "src/PbiBench.Semantic/PbiBench.Semantic.csproj",
+        "src/PbiBench.Automation/PbiBench.Automation.csproj",
+        "src/PbiBench.Workspace/PbiBench.Workspace.csproj",
+        "src/PbiBench.Git/PbiBench.Git.csproj"
+      ],
+      "updateLane": "te2",
+      "upstreamDependencies": [
+        "TabularEditor 2.28.0",
+        "TOMWrapper"
+      ],
+      "contracts": [
+        "Semantic command DTO v1",
+        "ApprovedChangePlan"
+      ],
+      "dependsOnModules": [
+        "dax",
+        "csharp-automation",
+        "fabric-services",
+        "ai-context-export",
+        "daxstudio-bridge",
+        "dataforge-bridge",
+        "agent",
+        "semantic-compiler",
+        "dax-packages"
+      ],
+      "forbiddenDependencies": [
+        "fabric-toolbox",
+        "PbiBench.FabricToolbox",
+        "ReportToolbox",
+        "DataForge.UI"
+      ],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/ModelEditorBoundaryTests.cs"
+      ]
+    },
+    {
+      "id": "dax",
+      "displayName": "DAX language and authoring",
+      "kind": "Library",
+      "lifecycle": "Active",
+      "version": "11.2.0",
+      "entryPoint": "PbiBench.Dax.LanguageService.dll",
+      "targetFrameworks": [
+        "net10.0",
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.Dax.LanguageService/PbiBench.Dax.LanguageService.csproj"
+      ],
+      "updateLane": "dax-language",
+      "upstreamDependencies": [],
+      "contracts": [
+        "DAX document and diagnostic DTO v1"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [],
+      "protectingTests": [
+        "tests/PbiBench.Dax.LanguageService.Tests/DaxCodeActionTests.cs"
+      ]
+    },
+    {
+      "id": "csharp-automation",
+      "displayName": "C# automation",
+      "kind": "Library",
+      "lifecycle": "Active",
+      "version": "11.3.0",
+      "entryPoint": "Automate / C# workspaces",
+      "targetFrameworks": [
+        "net10.0",
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.CSharp.LanguageService/PbiBench.CSharp.LanguageService.csproj",
+        "src/PbiBench.Core/PbiBench.Core.csproj",
+        "src/PbiBench.Automation/PbiBench.Automation.csproj",
+        "src/PbiBench.ModelEditor/PbiBench.ModelEditor.csproj",
+        "src/PbiBench.App/PbiBench.App.csproj"
+      ],
+      "updateLane": "csharp-language",
+      "upstreamDependencies": [
+        "TE2 compiler 2.28.0",
+        "FastColoredTextBox"
+      ],
+      "contracts": [
+        "Macro library v1 (optional context rules)",
+        "Script recovery v2 (detached draft restore)",
+        "Safe recipe v1"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [],
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/LanguageTests.cs",
+        "tests/PbiBench.App.Tests/CSharpAutomationTests.cs",
+        "tests/PbiBench.Adapters.Tests/TrustedScriptBoundaryTests.cs"
+      ]
+    },
+    {
+      "id": "fabric-services",
+      "displayName": "Fabric transports and contracts",
+      "kind": "Library",
+      "lifecycle": "Active",
+      "version": "11.3.0",
+      "entryPoint": "PbiBench.Fabric.dll",
+      "targetFrameworks": [
+        "net10.0",
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.Fabric/PbiBench.Fabric.csproj",
+        "src/PbiBench.Core/PbiBench.Core.csproj"
+      ],
+      "updateLane": "fabric",
+      "upstreamDependencies": [
+        "Microsoft.Identity.Client 4.84.2",
+        "Microsoft.Data.SqlClient 6.1.6"
+      ],
+      "contracts": [
+        "Fabric source DTO v1",
+        ".pbifabric.json v1",
+        "Fabric job inventory DTO v1"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [
+        "TabularEditor",
+        "TOMWrapper",
+        "PbiBench.ModelEditor",
+        "PbiBench.Semantic",
+        "PbiBench.App"
+      ],
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/FabricOperationsTests.cs",
+        "tests/PbiBench.Adapters.Tests/FabricTransportTests.cs"
+      ]
+    },
+    {
+      "id": "fabric-toolbox",
+      "displayName": "Fabric Toolbox",
+      "kind": "SeparateProcess",
+      "lifecycle": "Independent",
+      "version": "0.2.0",
+      "entryPoint": "fabric-toolbox/PbiBench.FabricToolbox.exe",
+      "targetFrameworks": [
+        "net10.0-windows"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.FabricToolbox/PbiBench.FabricToolbox.csproj"
+      ],
+      "updateLane": "fabric",
+      "upstreamDependencies": [],
+      "contracts": [
+        ".pbifabric.json v1",
+        "Inventory export v1"
+      ],
+      "dependsOnModules": [
+        "fabric-services"
+      ],
+      "forbiddenDependencies": [
+        "semantic-ide",
+        "TabularEditor",
+        "TOMWrapper",
+        "PbiBench.App",
+        "PbiBench.ModelEditor",
+        "PbiBench.Semantic"
+      ],
+      "protectingTests": [
+        "tests/PbiBench.FabricToolbox.Tests/ToolboxTests.cs",
+        "tests/PbiBench.V11.Tests/ModuleCatalogTests.cs"
+      ]
+    },
+    {
+      "id": "ai-context-export",
+      "displayName": "AI Context Export",
+      "kind": "Library",
+      "lifecycle": "Selective",
+      "version": "11.2.0",
+      "entryPoint": "Apps / Tools / AI Context Export",
+      "targetFrameworks": [
+        "net10.0",
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.AI.ContextExport/PbiBench.AI.ContextExport.csproj"
+      ],
+      "updateLane": "ai-context-export",
+      "upstreamDependencies": [],
+      "contracts": [
+        "AI context ZIP v1"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [],
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/ExportTests.cs"
+      ]
+    },
+    {
+      "id": "daxstudio-bridge",
+      "displayName": "DAX Studio bridge",
+      "kind": "ExternalProcess",
+      "lifecycle": "OnDemand",
+      "version": "11.2.0",
+      "entryPoint": "daxstudio.exe (external)",
+      "targetFrameworks": [
+        "net10.0",
+        "net48",
+        "external"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.DaxStudio/PbiBench.DaxStudio.csproj"
+      ],
+      "updateLane": "daxstudio",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Process arguments --server --database --file"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [],
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/PlatformTests.cs"
+      ]
+    },
+    {
+      "id": "dataforge-bridge",
+      "displayName": "DataForge bridge",
+      "kind": "ExternalProcess",
+      "lifecycle": "OnDemand",
+      "version": "11.2.0",
+      "entryPoint": "DataForge (external)",
+      "targetFrameworks": [
+        "net10.0",
+        "net48",
+        "external"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.DataForge/PbiBench.DataForge.csproj"
+      ],
+      "updateLane": "dataforge",
+      "upstreamDependencies": [],
+      "contracts": [
+        "DataForge JSON contracts v1"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/AdapterTests.cs"
+      ]
+    },
+    {
+      "id": "agent",
+      "displayName": "Embedded Agent",
+      "kind": "Lab",
+      "lifecycle": "Incubating",
+      "version": "11.2.0",
+      "entryPoint": "Agent workspace",
+      "targetFrameworks": [
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.Automation/PbiBench.Automation.csproj",
+        "src/PbiBench.App/PbiBench.App.csproj",
+        "src/PbiBench.Core/PbiBench.Core.csproj"
+      ],
+      "updateLane": "agent",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Agent proposal v1",
+        "ApprovedChangePlan"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/AgentProposalTests.cs"
+      ]
+    },
+    {
+      "id": "semantic-compiler",
+      "displayName": "Semantic compiler",
+      "kind": "Lab",
+      "lifecycle": "Incubating",
+      "version": "11.2.0",
+      "entryPoint": "Semantic prototype workspace",
+      "targetFrameworks": [
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.Core/PbiBench.Core.csproj",
+        "src/PbiBench.Semantic/PbiBench.Semantic.csproj"
+      ],
+      "updateLane": "semantic-compiler",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Semantic intent v1"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/SemanticPrototypeTests.cs"
+      ]
+    },
+    {
+      "id": "dax-packages",
+      "displayName": "DAX packages",
+      "kind": "Lab",
+      "lifecycle": "Incubating",
+      "version": "11.2.0",
+      "entryPoint": "DAX package prototype",
+      "targetFrameworks": [
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.Core/PbiBench.Core.csproj",
+        "src/PbiBench.Semantic/PbiBench.Semantic.csproj"
+      ],
+      "updateLane": "dax-packages",
+      "upstreamDependencies": [],
+      "contracts": [
+        "DAX package manifest v1"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [],
+      "protectingTests": [
+        "tests/PbiBench.Adapters.Tests/SemanticPrototypeTests.cs"
+      ]
+    },
+    {
+      "id": "future-report-tooling",
+      "displayName": "Future report tooling",
+      "kind": "Lab",
+      "lifecycle": "Later",
+      "version": "0.0.0",
+      "entryPoint": "Planned report module",
+      "targetFrameworks": [
+        "planned"
+      ],
+      "ownerProjects": [
+        "planned"
+      ],
+      "updateLane": "report-tooling",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Report selection handoff (planned)"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [],
+      "protectingTests": []
+    }
+  ]
+}

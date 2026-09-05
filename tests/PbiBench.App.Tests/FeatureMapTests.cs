@@ -16,7 +16,7 @@ public sealed class FeatureMapTests
         owner.Show(); var window = MainWindow.CreateAboutWindow(owner);
         try
         {
-            Assert.Same(owner, window.Owner); Assert.Equal(0, window.Pages.SelectedIndex); Assert.Contains("11.2.0", window.Title);
+            Assert.Same(owner, window.Owner); Assert.Equal(0, window.Pages.SelectedIndex); Assert.Contains("11.3.0", window.Title);
             Assert.Equal(new[] { "Feature Map", "Provenance / About" }, window.Pages.Items.Cast<TabItem>().Select(t => (string)t.Header));
             Assert.Equal(21, window.Map.VisibleRows.Count);
             var provenance = (DataGrid)((TabItem)window.Pages.Items[1]).Content; Assert.True(provenance.IsReadOnly);
@@ -28,12 +28,12 @@ public sealed class FeatureMapTests
     [Fact] public Task MapUsesSixConciseReadOnlyColumnsAndUserOperableFilters() => Sta(() =>
     {
         var view = View(); Assert.True(view.FeatureGrid.IsReadOnly); Assert.False(view.FeatureGrid.CanUserAddRows);
-        Assert.Equal(new[] { "Feature", "Status", "Origin", "Our implementation", "TE3 comparable capability", "Focus" }, view.FeatureGrid.Columns.Select(c => (string)c.Header));
+        Assert.Equal(new[] { "Feature", "Status", "Origin", "Our implementation", "TE3 comparable capability", "Lifecycle" }, view.FeatureGrid.Columns.Select(c => (string)c.Header));
         var filters = Descendants(view).OfType<RadioButton>().ToDictionary(b => (string)b.Content);
         Assert.Equal(new[] { "All", "Core", "Companions", "Labs", "TE3 gaps" }, filters.Keys);
         filters["Core"].IsChecked = true; Assert.Equal(10, view.VisibleRows.Count); Assert.All(view.VisibleRows, r => Assert.Equal("Core", r.Status));
         filters["Companions"].IsChecked = true; Assert.Equal(3, view.VisibleRows.Count); Assert.Contains(view.VisibleRows, r => r.Status == "External");
-        filters["Labs"].IsChecked = true; Assert.Equal(6, view.VisibleRows.Count); Assert.All(view.VisibleRows, r => Assert.Equal("Freeze", r.Focus));
+        filters["Labs"].IsChecked = true; Assert.Equal(5, view.VisibleRows.Count); Assert.All(view.VisibleRows, r => Assert.Contains(r.Status, new[] { "Labs", "Future" }));
         filters["TE3 gaps"].IsChecked = true; Assert.Contains(view.VisibleRows, r => r.Feature.Id == "dax-debugger");
         filters["All"].IsChecked = true; Assert.Equal(21, view.VisibleRows.Count);
     });

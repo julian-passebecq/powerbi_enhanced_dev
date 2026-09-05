@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Forms.Integration;
 using System.Windows.Threading;
 using FastColoredTextBoxNS;
@@ -17,6 +18,9 @@ public sealed class CSharpWorkspaceView : UserControl, IDisposable
     private readonly TabControl tabs = new() { Height = 33 };
     private readonly TextBlock status = new() { Margin = new Thickness(4), TextWrapping = TextWrapping.Wrap };
     private readonly ComboBox completions = new() { MinWidth = 150, DisplayMemberPath = "Signature" };
+    private readonly DataGrid problems = new() { IsReadOnly = true, AutoGenerateColumns = false, CanUserAddRows = false, SelectionMode = DataGridSelectionMode.Single };
+    private readonly List<ScriptProblem> problemRows = new();
+    private readonly Expander problemsPanel = new() { Header = "Compile / review risks to populate compiler Problems", IsExpanded = true };
     private readonly List<ScriptDocument> documents = new();
     private readonly CSharpLanguageService language = new();
     private readonly DispatcherTimer recoveryTimer = new() { Interval = TimeSpan.FromSeconds(1) };
@@ -27,10 +31,12 @@ public sealed class CSharpWorkspaceView : UserControl, IDisposable
     private string? completionSource; private int completionOffset;
     private bool fileOperation;
     public event EventHandler? TextChanged;
+    public event Action<GeneratedSnippet>? SemanticSnippetRequested;
     public string Text { get => editor.Text; set => editor.Text = value ?? ""; }
     public bool IsReadOnly { get => editor.ReadOnly; set => editor.ReadOnly = value; }
     public int DocumentCount => documents.Count;
     public WindowsFormsHost NativeView { get; }
+    internal FrameworkElement CompilerProblemsView => problemsPanel;
     public System.Drawing.Bitmap Capture()
     { var bitmap = new System.Drawing.Bitmap(Math.Max(1, editor.Width), Math.Max(1, editor.Height)); editor.DrawToBitmap(bitmap, new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height)); return bitmap; }
     public bool ActiveDirty => documents.First(d => d.Id == activeId).IsDirty;
@@ -47,6 +53,12 @@ public sealed class CSharpWorkspaceView : UserControl, IDisposable
         Button("Insert member", () => { InsertCompletion(); return Task.CompletedTask; });
         var snippets = new ComboBox { ItemsSource = ScriptSnippets.All, MinWidth = 170, SelectedIndex = 0 }; bar.Children.Add(snippets);
         Button("Insert snippet", () => { if (!editor.ReadOnly && snippets.SelectedItem is ScriptSnippet s) editor.InsertText(s.Source); return Task.CompletedTask; });
+        var semantic = new ComboBox { ItemsSource = SemanticSnippets.All, MinWidth = 190, SelectedIndex = 0 }; bar.Children.Add(semantic);
+        Button("Generate from selection", () => { if (semantic.SelectedItem is SemanticSnippet s) { var generated = SemanticSnippets.Generate(s, symbols()); status.Text = generated.Reason; if (generated.Enabled) SemanticSnippetRequested?.Invoke(generated); } return Task.CompletedTask; });
+        foreach (var pair in new[] { ("Script", "Script"), ("Severity", "Severity"), ("Code", "Code"), ("Line", "Line"), ("Column", "Column"), ("Message", "Message") })
+            problems.Columns.Add(new DataGridTextColumn { Header = pair.Item1, Binding = new Binding(pair.Item2), Width = pair.Item1 == "Message" ? new DataGridLength(1, DataGridLengthUnitType.Star) : DataGridLength.Auto });
+        problemsPanel.Content = problems;
+        problems.SelectionChanged += (_, _) => { if (problems.SelectedItem is ScriptProblem p) NavigateProblem(p); };
         top.Children.Add(tabs); DockPanel.SetDock(status, Dock.Bottom); root.Children.Add(status); NativeView = new WindowsFormsHost { Child = editor }; root.Children.Add(NativeView); Content = root;
         tabs.SelectionChanged += (_, _) => { if (!loading && tabs.SelectedItem is TabItem tab && tab.Tag is string id) SelectDocument(id); };
         editor.TextChanged += (_, _) => { if (loading) return; var index = documents.FindIndex(d => d.Id == activeId); documents[index] = documents[index] with { Text = editor.Text }; Headers(); ScheduleRecovery(); TextChanged?.Invoke(this, EventArgs.Empty); };
@@ -69,7 +81,7 @@ public sealed class CSharpWorkspaceView : UserControl, IDisposable
         if (restored || recoveryPath == null) return;
         if (!File.Exists(recoveryPath)) { restored = true; return; }
         var saved = await ScriptWorkspaceFiles.LoadRecoveryAsync(recoveryPath, ct); if (disposed) return;
-        documents.Clear(); documents.AddRange(saved.Documents); restored = true; RebuildTabs(saved.ActiveId);
+        documents.Clear(); documents.AddRange(saved.Documents); problemRows.Clear(); problems.ItemsSource = problemRows.ToArray(); restored = true; RebuildTabs(saved.ActiveId);
         status.Text = "Recovered detached drafts. Save As or reopen the source file; execution trust has not been restored.";
     }
     public void Configure(string path, Func<IReadOnlyList<AutomationSymbol>> metadata) { recoveryTimer.Stop(); recoveryPath = path; symbols = metadata; restored = !File.Exists(path); }
@@ -77,6 +89,31 @@ public sealed class CSharpWorkspaceView : UserControl, IDisposable
     {
         if (documents.Count >= 24) throw new InvalidOperationException("Close a script before opening more than 24 tabs.");
         var document = new ScriptDocument(Guid.NewGuid().ToString(), "Script " + (documents.Count + 1) + ".csx", source); documents.Add(document); RebuildTabs(document.Id); ScheduleRecovery();
+    }
+    internal sealed record ScriptProblem(string DocumentId, string Script, string CompiledSource, CSharpDiagnostic Diagnostic)
+    {
+        public string Severity => Diagnostic.Severity; public string Code => Diagnostic.Code; public int Line => Diagnostic.Line; public int Column => Diagnostic.Column; public string Message => Diagnostic.Message;
+    }
+    internal IReadOnlyList<ScriptProblem> Problems => problemRows;
+    internal int CaretOffset => editor.SelectionStart;
+    internal void SetDiagnostics(IReadOnlyList<CSharpDiagnostic> diagnostics)
+    {
+        problemRows.RemoveAll(p => p.DocumentId == activeId);
+        problemRows.AddRange(diagnostics.Take(1000).Select(d => new ScriptProblem(activeId, ActiveDocument.Name, Text, d)));
+        problems.ItemsSource = problemRows.ToArray(); problemsPanel.Visibility = Visibility.Visible;
+        problemsPanel.Header = "Compiler Problems · " + diagnostics.Count + " in active script · select to navigate";
+    }
+    internal bool NavigateProblem(ScriptProblem problem)
+    {
+        var document = documents.FirstOrDefault(d => d.Id == problem.DocumentId);
+        if (document == null || document.Text != problem.CompiledSource) { status.Text = "This diagnostic is stale or its script was closed. Compile the current source again."; return false; }
+        SelectDocument(document.Id);
+        var offset = 0; var line = 1;
+        while (line < Math.Max(1, problem.Line) && offset < Text.Length) { var next = Text.IndexOf('\n', offset); if (next < 0) { offset = Text.Length; break; } offset = next + 1; line++; }
+        var end = Text.IndexOf('\n', offset); if (end < 0) end = Text.Length;
+        if (end > offset && Text[end - 1] == '\r') end--;
+        editor.SelectionStart = (int)Math.Min(end, (long)offset + Math.Max(0L, (long)problem.Column - 1)); editor.SelectionLength = 0;
+        editor.DoSelectionVisible(); editor.Focus(); status.Text = problem.Severity + " " + problem.Code + ": " + problem.Message; return true;
     }
     public async Task SaveRecoveryAsync()
     {
@@ -146,7 +183,8 @@ public sealed class CSharpWorkspaceView : UserControl, IDisposable
     private async Task CloseDocumentAsync()
     {
         if (ActiveDirty && MessageBox.Show(Window.GetWindow(this), "Discard the unsaved text in this script tab?", "Close script", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-        documents.RemoveAll(d => d.Id == activeId); if (documents.Count == 0) NewDocument(); else RebuildTabs(documents[0].Id); await SaveRecoveryAsync();
+        documents.RemoveAll(d => d.Id == activeId); problemRows.RemoveAll(p => p.DocumentId == activeId); problems.ItemsSource = problemRows.ToArray();
+        if (documents.Count == 0) NewDocument(); else RebuildTabs(documents[0].Id); await SaveRecoveryAsync();
     }
     private void RebuildTabs(string id)
     {

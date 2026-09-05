@@ -9,12 +9,13 @@ public sealed record ScriptMacro(string Id, string Name, MacroMode Mode, string 
 {
     public IReadOnlyList<string> Tags { get; init; } = Array.Empty<string>();
     public bool Favorite { get; init; }
+    public MacroContextRule? Context { get; init; }
 }
 public sealed record MacroLibrary(IReadOnlyList<ScriptMacro> Macros, int Version = 1);
 
 public static class RecipeFiles
 {
-    private static readonly JsonSerializerOptions Json = new() { WriteIndented = true, MaxDepth = 20, PropertyNameCaseInsensitive = false };
+    private static readonly JsonSerializerOptions Json = new() { WriteIndented = true, MaxDepth = 20, PropertyNameCaseInsensitive = false, UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow };
     public static async Task SaveRecipeAsync(string path, ActionRecipe recipe, CancellationToken ct)
     { ActionRecipeRules.Validate(recipe); await WriteAsync(path, JsonSerializer.Serialize(recipe, Json), ct).ConfigureAwait(false); }
     public static async Task<ActionRecipe> LoadRecipeAsync(string path, CancellationToken ct)
@@ -33,6 +34,7 @@ public static class RecipeFiles
             if (macro.Mode == MacroMode.Recipe) { if (macro.Recipe == null) throw new InvalidDataException("A typed macro requires a recipe."); ActionRecipeRules.Validate(macro.Recipe); }
             else if (macro.Recipe != null) throw new InvalidDataException("Script macros cannot contain a hidden recipe.");
             if (macro.Tags == null || macro.Tags.Count > 16 || macro.Tags.Any(t => string.IsNullOrWhiteSpace(t) || t.Length > 64)) throw new InvalidDataException("Macros support at most 16 tags of 64 characters.");
+            macro.Context?.Validate();
         }
     }
     private static async Task<string> ReadAsync(string path, CancellationToken ct)

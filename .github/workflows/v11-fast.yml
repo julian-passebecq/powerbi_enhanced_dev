@@ -14,6 +14,7 @@ jobs:
           dotnet-version: '10.0.x'
       - run: dotnet test tests/PbiBench.V11.Tests/PbiBench.V11.Tests.csproj -f net10.0 --nologo
       - run: dotnet build src/PbiBench.FabricToolbox/PbiBench.FabricToolbox.csproj --nologo
+      - run: dotnet test tests/PbiBench.FabricToolbox.Tests/PbiBench.FabricToolbox.Tests.csproj --nologo
       # Intentionally excludes the pinned TE2 build, net48 native tests, main WPF
       # compile/smoke and packaging. scripts/invoke-v11-gate.ps1 runs those locally
       # with the prebuilt pinned upstream toolchain. No live integration claim.

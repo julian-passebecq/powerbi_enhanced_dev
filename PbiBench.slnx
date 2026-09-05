@@ -16,6 +16,7 @@
     <Project Path="src/PbiBench.FabricToolbox/PbiBench.FabricToolbox.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/PbiBench.FabricToolbox.Tests/PbiBench.FabricToolbox.Tests.csproj" />
     <Project Path="tests/PbiBench.V11.Tests/PbiBench.V11.Tests.csproj" />
   </Folder>
   <Project Path="src/PbiBench.App/PbiBench.App.csproj" />

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "productVersion": "11.2.0",
-  "baselineCommit": "675a5026749094206339c312b7f190964953ce57",
+  "productVersion": "11.3.0",
+  "baselineCommit": "4caccae9f4751555cbe584ffbf02e81e2fb88f77",
   "components": [
     {
       "id": "semantic.model-editor.te2",
@@ -195,7 +195,7 @@
       "ownerProject": "PbiBench.FabricToolbox",
       "sourceType": "pbibench-original",
       "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
-      "pin": "11.1.0",
+      "pin": "0.2.0",
       "localAdapter": "src/PbiBench.FabricToolbox/Program.cs",
       "license": "unknown-needs-review (original repository code)",
       "updateLane": "fabric",
@@ -480,7 +480,7 @@
       "ownerProject": "PbiBench.Core / PbiBench.App",
       "sourceType": "pbibench-original",
       "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
-      "pin": "11.2.0",
+      "pin": "11.3.0",
       "localAdapter": "src/PbiBench.Core/Platform/ProvenanceCatalog.cs",
       "license": "unknown-needs-review (original repository code)",
       "updateLane": "provenance",
@@ -564,6 +564,84 @@
       "localPatches": [],
       "protectingTests": [
         "tests/PbiBench.V11.Tests/ExportTests.cs"
+      ]
+    },
+    {
+      "id": "platform.modules",
+      "feature": "Versioned module catalog and dependency boundaries",
+      "ownerProject": "PbiBench.Core",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original",
+      "pin": "11.3.0",
+      "localAdapter": "src/PbiBench.Core/Platform/ModuleCatalog.cs",
+      "localPatches": [],
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "provenance",
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/ModuleCatalogTests.cs"
+      ]
+    },
+    {
+      "id": "fabric.jobs",
+      "feature": "Read-only recent Fabric jobs",
+      "ownerProject": "PbiBench.Fabric",
+      "sourceType": "original-public-api-adapter",
+      "upstream": "Microsoft Fabric public Job Scheduler REST v1 (verified 2026-09-05)",
+      "pin": "11.3.0",
+      "localAdapter": "src/PbiBench.Fabric/FabricOperationsService.cs",
+      "localPatches": [],
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "fabric",
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/FabricOperationsTests.cs",
+        "tests/PbiBench.FabricToolbox.Tests/ToolboxTests.cs"
+      ]
+    },
+    {
+      "id": "fabric.inventory-export",
+      "feature": "Allowlisted JSON/CSV inventory export",
+      "ownerProject": "PbiBench.Core / PbiBench.FabricToolbox",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original",
+      "pin": "11.3.0",
+      "localAdapter": "src/PbiBench.Core/Fabric/FabricInventoryExport.cs",
+      "localPatches": [],
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "fabric",
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/FabricOperationsTests.cs"
+      ]
+    },
+    {
+      "id": "automation.macro-context",
+      "feature": "Bounded macro context rules",
+      "ownerProject": "PbiBench.Core / PbiBench.App",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original",
+      "pin": "11.3.0",
+      "localAdapter": "src/PbiBench.Core/Automation/MacroContext.cs",
+      "localPatches": [],
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "csharp-language",
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/MacroContextTests.cs",
+        "tests/PbiBench.App.Tests/CSharpAutomationTests.cs"
+      ]
+    },
+    {
+      "id": "csharp.semantic-snippets",
+      "feature": "Selection-aware semantic source generation",
+      "ownerProject": "PbiBench.CSharp.LanguageService",
+      "sourceType": "pbibench-original",
+      "upstream": "PbiBench original",
+      "pin": "11.3.0",
+      "localAdapter": "src/PbiBench.CSharp.LanguageService/SemanticSnippets.cs",
+      "localPatches": [],
+      "license": "unknown-needs-review (original repository code)",
+      "updateLane": "csharp-language",
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/MacroContextTests.cs",
+        "tests/PbiBench.App.Tests/CSharpAutomationTests.cs"
       ]
     }
   ]
