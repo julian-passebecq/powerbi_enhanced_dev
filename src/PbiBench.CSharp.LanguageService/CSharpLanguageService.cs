@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using System.Text;
 
 namespace PbiBench.CSharp.LanguageService;
 
@@ -35,13 +36,14 @@ public sealed class CSharpLanguageService : ICSharpLanguageService
     public IReadOnlyList<CSharpCompletion> Complete(string source, int offset, IReadOnlyList<AutomationSymbol> symbols)
     {
         var prefix = Prefix(source, offset);
-        var indexed = Match(prefix, "Model\\.Tables\\[\"((?:[^\"\\\\]|\\\\.)*)\"\\]\\.(Columns|Measures)\\[\"([^\"]*)$");
+        const string literal = @"(?:[^""\\\r\n]|\\.)*";
+        var indexed = Match(prefix, "Model\\.Tables\\[\"(" + literal + ")\"\\]\\.(Columns|Measures)\\[\"(" + literal + @"\\?)$");
         if (indexed.Success)
-            return symbols.Where(s => s.Table == indexed.Groups[1].Value && s.Kind == (indexed.Groups[2].Value == "Columns" ? "Column" : "Measure"))
-                .Where(s => s.Name.StartsWith(indexed.Groups[3].Value, StringComparison.OrdinalIgnoreCase)).Take(200).Select(s => NameCompletion(s) with { ReplaceStart = offset - indexed.Groups[3].Value.Length, ReplaceLength = indexed.Groups[3].Value.Length }).ToArray();
-        var tables = Match(prefix, "Model\\.Tables\\[\"([^\"]*)$");
-        if (tables.Success) return symbols.Where(s => s.Kind == "Table" && s.Name.StartsWith(tables.Groups[1].Value, StringComparison.OrdinalIgnoreCase)).Take(200).Select(s => NameCompletion(s) with { ReplaceStart = offset - tables.Groups[1].Value.Length, ReplaceLength = tables.Groups[1].Value.Length }).ToArray();
-        var member = Match(prefix, @"([A-Za-z_][\w]*(?:\.Tables\[""[^""]+""\])?)\.([\w]*)$");
+            return symbols.Where(s => s.Table != null && EscapeLiteral(s.Table) == indexed.Groups[1].Value && s.Kind == (indexed.Groups[2].Value == "Columns" ? "Column" : "Measure"))
+                .Where(s => EscapeLiteral(s.Name).StartsWith(indexed.Groups[3].Value, StringComparison.OrdinalIgnoreCase)).Take(200).Select(s => NameCompletion(s) with { ReplaceStart = offset - indexed.Groups[3].Value.Length, ReplaceLength = indexed.Groups[3].Value.Length }).ToArray();
+        var tables = Match(prefix, "Model\\.Tables\\[\"(" + literal + @"\\?)$");
+        if (tables.Success) return symbols.Where(s => s.Kind == "Table" && EscapeLiteral(s.Name).StartsWith(tables.Groups[1].Value, StringComparison.OrdinalIgnoreCase)).Take(200).Select(s => NameCompletion(s) with { ReplaceStart = offset - tables.Groups[1].Value.Length, ReplaceLength = tables.Groups[1].Value.Length }).ToArray();
+        var member = Match(prefix, @"([A-Za-z_][\w]*(?:\.Tables\[""" + literal + @"""\])?)\.([\w]*)$");
         if (member.Success)
         {
             var receiver = member.Groups[1].Value; var partial = member.Groups[2].Value;
@@ -72,6 +74,14 @@ public sealed class CSharpLanguageService : ICSharpLanguageService
     private static string Prefix(string source, int offset) { if (source.Length > 1024 * 1024 || offset < 0 || offset > source.Length) throw new ArgumentException("Invalid script size or caret."); return source.Substring(0, offset); }
     private static Match Match(string text, string pattern) => Regex.Match(text, pattern, RegexOptions.None, TimeSpan.FromSeconds(1));
     private static CSharpCompletion Collection(string name) => new(name, "Collection", name, "Semantic objects; use foreach or exact name indexing where supported.");
-    private static CSharpCompletion NameCompletion(AutomationSymbol s) => new(s.Name.Replace("\\", "\\\\").Replace("\"", "\\\""), s.Kind, s.Name, s.Selected ? "Selected model object" : "Loaded model object");
+    private static CSharpCompletion NameCompletion(AutomationSymbol s) => new(EscapeLiteral(s.Name), s.Kind, s.Name, s.Selected ? "Selected model object" : "Loaded model object");
+    private static string EscapeLiteral(string value)
+    {
+        var result = new StringBuilder();
+        foreach (var c in value)
+            result.Append(c switch { '\\' => "\\\\", '"' => "\\\"", '\n' => "\\n", '\r' => "\\r", '\t' => "\\t",
+                _ => char.IsControl(c) || c is '\u2028' or '\u2029' ? "\\u" + ((int)c).ToString("x4") : c.ToString() });
+        return result.ToString();
+    }
     private static CSharpCompletion[] Filter(IEnumerable<CSharpCompletion> source, string prefix) => source.Where(m => m.Text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToArray();
 }

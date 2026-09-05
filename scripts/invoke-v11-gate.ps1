@@ -1,12 +1,13 @@
-param([ValidateSet('Debug', 'Release')][string]$Configuration = 'Debug', [switch]$SkipPackaging)
+param([ValidateSet('Debug', 'Release')][string]$Configuration = 'Release', [switch]$SkipPackaging)
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $dotnet = Join-Path $env:LOCALAPPDATA 'PbiBench/dotnet/dotnet.exe'
 if (-not (Test-Path -LiteralPath $dotnet)) { $dotnet = (Get-Command dotnet).Source }
 $env:DOTNET_ROOT = Split-Path $dotnet
 $env:PATH = "$env:DOTNET_ROOT;$env:PATH"
-$logs = Join-Path $repo ('artifacts/v11-gate-' + [Guid]::NewGuid().ToString('N'))
+$logs = Join-Path $repo ('artifacts/v11-gate-' + $Configuration + '-' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $logs | Out-Null
+Start-Transcript -LiteralPath (Join-Path $logs 'gate.log') | Out-Null
 function Invoke-Dotnet([string[]]$Arguments) {
     & $dotnet @Arguments
     if ($LASTEXITCODE -ne 0) { throw "V11 gate failed: dotnet $($Arguments -join ' ')" }
@@ -33,11 +34,16 @@ try {
         $app = Join-Path $package 'PbiBench.exe'
         $toolbox = Join-Path $package 'fabric-toolbox/PbiBench.FabricToolbox.exe'
     }
+    $forbidden = Get-ChildItem -LiteralPath (Split-Path $toolbox) -File -Recurse | Where-Object { $_.Name -match '^(TabularEditor|TOMWrapper|PbiBench\.(App|ModelEditor|Semantic))(\.|$)' }
+    if ($forbidden) { throw 'Fabric Toolbox contains Semantic IDE / TE2 runtime dependencies.' }
     $smoke = Join-Path $logs 'semantic-smoke'
     Invoke-ChildSmoke $app ('--smoke-test "' + $smoke + '" --v11') (Join-Path $smoke 'smoke-result.json')
     $result = Get-Content -LiteralPath (Join-Path $smoke 'smoke-result.json') -Raw | ConvertFrom-Json
     if ($result.success -ne $true) { throw 'Semantic UI smoke did not pass.' }
     $toolboxResult = Join-Path $logs 'toolbox-smoke.txt'
     Invoke-ChildSmoke $toolbox ('--smoke-test "' + $toolboxResult + '"') $toolboxResult
-    Write-Host "V11 final impacted gate passed. Evidence: $logs"
-} finally { Pop-Location }
+    if ((Get-Content -LiteralPath $toolboxResult -Raw) -notmatch '^Toolbox WPF launch:') { throw 'Fabric Toolbox smoke did not report a successful WPF launch.' }
+    [pscustomobject]@{ success = $true; configuration = $Configuration; packaged = -not $SkipPackaging; semanticExecutable = $app; toolboxExecutable = $toolbox; liveIntegration = $false } |
+        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $logs 'gate-result.json') -Encoding utf8
+    Write-Host "V11 final impacted $Configuration gate passed. Packaged: $(-not $SkipPackaging). Evidence: $logs"
+} finally { Pop-Location; Stop-Transcript | Out-Null }

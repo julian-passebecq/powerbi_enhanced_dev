@@ -25,6 +25,7 @@ public sealed class CSharpWorkspaceView : UserControl, IDisposable
     private string? recoveryPath; private bool loading, restored, disposed;
     private string activeId = "";
     private string? completionSource; private int completionOffset;
+    private bool fileOperation;
     public event EventHandler? TextChanged;
     public string Text { get => editor.Text; set => editor.Text = value ?? ""; }
     public bool IsReadOnly { get => editor.ReadOnly; set => editor.ReadOnly = value; }
@@ -33,6 +34,7 @@ public sealed class CSharpWorkspaceView : UserControl, IDisposable
     public System.Drawing.Bitmap Capture()
     { var bitmap = new System.Drawing.Bitmap(Math.Max(1, editor.Width), Math.Max(1, editor.Height)); editor.DrawToBitmap(bitmap, new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height)); return bitmap; }
     public bool ActiveDirty => documents.First(d => d.Id == activeId).IsDirty;
+    internal ScriptDocument ActiveDocument => documents.First(d => d.Id == activeId);
     public CSharpWorkspaceView(string source)
     {
         var root = new DockPanel(); var top = new StackPanel(); DockPanel.SetDock(top, Dock.Top); root.Children.Add(top);
@@ -60,11 +62,15 @@ public sealed class CSharpWorkspaceView : UserControl, IDisposable
         completions.SelectionChanged += (_, _) => { if (completions.SelectedItem is CSharpCompletion item) status.Text = item.Kind + " · " + item.Description; };
         recoveryTimer.Tick += async (_, _) => { recoveryTimer.Stop(); await Work(SaveRecoveryAsync); };
         NewDocument(source);
-        Loaded += async (_, _) =>
-        {
-            if (restored || recoveryPath == null) return;
-            await Work(async () => { if (!File.Exists(recoveryPath)) { restored = true; return; } var saved = await ScriptWorkspaceFiles.LoadRecoveryAsync(recoveryPath, CancellationToken.None); if (disposed) return; documents.Clear(); documents.AddRange(saved.Documents); restored = true; RebuildTabs(saved.ActiveId); status.Text = "Recovered local script text. Execution trust has not been restored."; });
-        };
+        Loaded += async (_, _) => await Work(() => RestoreAsync(CancellationToken.None));
+    }
+    internal async Task RestoreAsync(CancellationToken ct)
+    {
+        if (restored || recoveryPath == null) return;
+        if (!File.Exists(recoveryPath)) { restored = true; return; }
+        var saved = await ScriptWorkspaceFiles.LoadRecoveryAsync(recoveryPath, ct); if (disposed) return;
+        documents.Clear(); documents.AddRange(saved.Documents); restored = true; RebuildTabs(saved.ActiveId);
+        status.Text = "Recovered detached drafts. Save As or reopen the source file; execution trust has not been restored.";
     }
     public void Configure(string path, Func<IReadOnlyList<AutomationSymbol>> metadata) { recoveryTimer.Stop(); recoveryPath = path; symbols = metadata; restored = !File.Exists(path); }
     public void NewDocument(string source = "")
@@ -80,16 +86,62 @@ public sealed class CSharpWorkspaceView : UserControl, IDisposable
     private async Task OpenAsync()
     {
         var dialog = new OpenFileDialog { Filter = "C# script|*.csx;*.cs" }; if (dialog.ShowDialog(Window.GetWindow(this)) != true) return;
-        var source = await ScriptWorkspaceFiles.ReadAsync(dialog.FileName, CancellationToken.None); NewDocument(source);
-        var index = documents.FindIndex(d => d.Id == activeId); documents[index] = documents[index] with { Name = Path.GetFileName(dialog.FileName), FilePath = dialog.FileName, SavedText = source }; Headers(); ScheduleRecovery();
+        var document = await ScriptWorkspaceFiles.OpenAsync(dialog.FileName, CancellationToken.None);
+        if (documents.Count >= 24) throw new InvalidOperationException("Close a script before opening more than 24 tabs.");
+        documents.Add(document); RebuildTabs(document.Id); ScheduleRecovery();
     }
     private async Task SaveAsync(bool saveAs)
     {
-        var document = documents.First(d => d.Id == activeId); var path = document.FilePath;
-        if (saveAs || path == null) { var dialog = new SaveFileDialog { Filter = "C# script|*.csx|C# source|*.cs", FileName = document.Name }; if (dialog.ShowDialog(Window.GetWindow(this)) != true) return; path = dialog.FileName; }
-        await ScriptWorkspaceFiles.SaveAsync(path, document.Text, CancellationToken.None);
-        var index = documents.FindIndex(d => d.Id == document.Id); if (index < 0) return;
-        documents[index] = documents[index] with { FilePath = path, Name = Path.GetFileName(path), SavedText = document.Text }; Headers(); ScheduleRecovery();
+        if (fileOperation) return;
+        fileOperation = true;
+        try
+        {
+            var document = documents.First(d => d.Id == activeId); var path = saveAs ? null : document.FilePath;
+            ScriptFileConflictException? overwrite = null;
+            while (true)
+            {
+                if (path == null)
+                {
+                    var dialog = new SaveFileDialog { Filter = "C# script|*.csx|C# source|*.cs", FileName = document.Name, OverwritePrompt = false };
+                    if (dialog.ShowDialog(Window.GetWindow(this)) != true) return; path = dialog.FileName;
+                }
+                try
+                {
+                    var saved = await ScriptWorkspaceFiles.SaveAsync(document, path, CancellationToken.None, overwrite);
+                    var index = documents.FindIndex(d => d.Id == document.Id); if (index < 0) return;
+                    documents[index] = saved with { Text = documents[index].Text }; Headers(); ScheduleRecovery(); status.Text = "Saved script."; return;
+                }
+                catch (ScriptFileConflictException conflict)
+                {
+                    switch (ReviewConflict(conflict))
+                    {
+                        case "Reload":
+                            var reloaded = await ScriptWorkspaceFiles.OpenAsync(path, CancellationToken.None);
+                            var index = documents.FindIndex(d => d.Id == document.Id); if (index < 0) return;
+                            // Keep any edits made while the reload was reading the file.
+                            if (documents[index].Text != document.Text) throw new InvalidOperationException("Script text changed during reload; reload canceled.");
+                            documents[index] = reloaded with { Id = document.Id }; RebuildTabs(activeId); ScheduleRecovery(); return;
+                        case "Save As": path = null; overwrite = null; break;
+                        case "Overwrite": overwrite = conflict; break;
+                        default: return;
+                    }
+                }
+            }
+        }
+        finally { fileOperation = false; }
+    }
+    private string? ReviewConflict(ScriptFileConflictException conflict)
+    {
+        var window = new Window { Owner = Window.GetWindow(this), Title = "Script file conflict", Width = 620, SizeToContent = SizeToContent.Height, WindowStartupLocation = WindowStartupLocation.CenterOwner, ResizeMode = ResizeMode.NoResize };
+        var panel = new StackPanel { Margin = new Thickness(16) }; window.Content = panel;
+        panel.Children.Add(new TextBlock { Text = conflict.FilePath + "\n\nThe destination changed or this draft is detached. Reload discards this draft's text and reads the file. Save As chooses another destination. Overwrite replaces the file with this draft only if the reviewed disk version still matches.", TextWrapping = TextWrapping.Wrap });
+        string? choice = null; var buttons = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) }; panel.Children.Add(buttons);
+        foreach (var label in new[] { "Reload", "Save As", "Overwrite", "Cancel" })
+        {
+            var button = new Button { Content = label, Margin = new Thickness(4), Padding = new Thickness(10, 5, 10, 5), IsCancel = label == "Cancel", IsDefault = label == "Cancel", IsEnabled = label != "Reload" || conflict.ObservedHash != null };
+            button.Click += (_, _) => { choice = label; window.Close(); }; buttons.Children.Add(button);
+        }
+        window.ShowDialog(); return choice;
     }
     private async Task CloseDocumentAsync()
     {
@@ -106,7 +158,7 @@ public sealed class CSharpWorkspaceView : UserControl, IDisposable
         loading = true; try { activeId = id; editor.ReadOnly = false; editor.Text = documents.First(d => d.Id == id).Text; tabs.SelectedItem = tabs.Items.Cast<TabItem>().First(t => (string)t.Tag == id); Headers(); } finally { loading = false; }
         TextChanged?.Invoke(this, EventArgs.Empty); ScheduleRecovery();
     }
-    private void Headers() { foreach (TabItem tab in tabs.Items) { var d = documents.First(v => v.Id == (string)tab.Tag); tab.Header = d.Name + (d.IsDirty ? " •" : ""); } }
+    private void Headers() { foreach (TabItem tab in tabs.Items) { var d = documents.First(v => v.Id == (string)tab.Tag); tab.Header = d.Name + (d.IsRecovered ? " [Recovered · detached]" : "") + (d.IsDirty ? " •" : ""); tab.ToolTip = d.IsRecovered ? "Advisory source: " + (d.RecoveredFrom ?? "unsaved draft") : d.FilePath; } }
     private void Complete() { completionSource = Text; completionOffset = editor.SelectionStart; completions.ItemsSource = language.Complete(completionSource, completionOffset, symbols()); completions.SelectedIndex = 0; completions.IsDropDownOpen = true; }
     private void InsertCompletion()
     {

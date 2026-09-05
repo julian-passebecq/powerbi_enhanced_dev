@@ -1,4 +1,6 @@
 using System.IO;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -24,6 +26,7 @@ public sealed class AIContextExportWindow : Window
     private readonly TabControl pages = new();
     private ContextExportPlan? plan;
     private CancellationTokenSource? pending;
+    private long configurationVersion;
     private readonly StackPanel settings = new();
     public ContextExportPlan? CurrentPlan => plan;
     public AIContextExportWindow(ContextModel model, IReadOnlyList<string> treeSelection, IContextSampler? sampler, IReadOnlyList<ContextEvidence>? evidence = null)
@@ -40,7 +43,7 @@ public sealed class AIContextExportWindow : Window
         bar.Children.Add(reviewed); bar.Children.Add(Button("Export ZIP…", ExportAsync));
         DockPanel.SetDock(status, Dock.Bottom); root.Children.Add(status);
         settings.Children.Add(Note(ContextExporter.PrivacyNotice)); settings.Children.Add(selected);
-        settings.Children.Add(Button("Use current tree selection", () => { selected.IsChecked = true; foreach (var o in objects) o.Include = treeSelection.Contains(o.Id); objectGrid.Items.Refresh(); return Task.CompletedTask; }));
+        settings.Children.Add(Button("Use current tree selection", () => { UseTreeSelection(treeSelection); return Task.CompletedTask; }));
         settings.Children.Add(Note("Include selects metadata. In full-model mode, unchecking a table excludes its children. In selected mode, checked objects select roots; required dependencies appear explicitly in the file review. Sample selects individual columns; table row counts enable sampling."));
         var options = new WrapPanel(); foreach (var c in new[] { roles, automation, bpa, metrics, tests, workspace }) options.Children.Add(c); settings.Children.Add(options);
         settings.Children.Add(sample); settings.Children.Add(sampleReview);
@@ -51,14 +54,22 @@ public sealed class AIContextExportWindow : Window
         var review = new System.Windows.Controls.Grid(); review.RowDefinitions.Add(new() { Height = new GridLength(180) }); review.RowDefinitions.Add(new()); review.Children.Add(files); System.Windows.Controls.Grid.SetRow(content, 1); review.Children.Add(content); pages.Items.Add(new TabItem { Header = "Exact file review", Content = review });
         files.SelectionChanged += (_, _) => { if (files.SelectedItem is ContextFileReview f && plan != null) { var text = plan.ReadText(f.Path); content.Text = text.Length <= 1000000 ? text : text.Substring(0, 1000000) + "\n[Preview truncated at 1,000,000 characters; narrow the export for complete review.]"; } };
         root.Children.Add(pages); Content = root;
-        foreach (var check in new[] { sample, sampleReview, roles, automation, selected, bpa, metrics, tests, workspace }) check.Click += (_, _) => Invalidate();
+        foreach (var check in new[] { sample, sampleReview, roles, automation, selected, bpa, metrics, tests, workspace })
+        { check.Checked += (_, _) => Invalidate(); check.Unchecked += (_, _) => Invalidate(); check.Indeterminate += (_, _) => Invalidate(); }
         foreach (var box in new[] { maximumBytes, maximumRows, maximumCells }) box.TextChanged += (_, _) => Invalidate();
+        foreach (var choice in objects.Cast<ExportChoice>().Concat(tables)) choice.PropertyChanged += (_, _) => Invalidate();
         objectGrid.CellEditEnding += (_, _) => Invalidate(); tableGrid.CellEditEnding += (_, _) => Invalidate();
         Closing += (_, _) => pending?.Cancel();
     }
-    private void Invalidate() { plan = null; reviewed.IsChecked = false; files.ItemsSource = null; content.Text = ""; }
+    internal void UseTreeSelection(IReadOnlyList<string> selection)
+    {
+        Invalidate(); selected.IsChecked = true; foreach (var obj in objects) obj.Include = selection.Contains(obj.Id);
+    }
+    private void Invalidate()
+    { configurationVersion++; pending?.Cancel(); plan = null; reviewed.IsChecked = false; files.ItemsSource = null; content.Text = ""; }
     public async Task PrepareAsync()
     {
+        if (pending != null) throw new InvalidOperationException("Wait for the current context operation to finish.");
         objectGrid.CommitEdit(DataGridEditingUnit.Row, true); tableGrid.CommitEdit(DataGridEditingUnit.Row, true); Invalidate();
         if (sample.IsChecked == true && sampleReview.IsChecked != true) throw new InvalidOperationException("Review and authorize sample queries before fetching rows.");
         if (tables.Any(t => t.Rows < 0)) throw new InvalidOperationException("Sample row counts cannot be negative; use zero to exclude a table.");
@@ -72,11 +83,15 @@ public sealed class AIContextExportWindow : Window
             Samples = tables.Where(t => t.Rows > 0).Select(t => new SampleRequest(t.Table, objects.Where(o => o.Kind == "Column" && o.Table == t.Table && o.Sample).Select(o => o.Name).ToArray(), t.Rows, t.IncludeHidden, string.IsNullOrWhiteSpace(t.OrderColumn) ? null : t.OrderColumn)).ToArray(),
             Evidence = evidence.Where(e => categories.Contains(e.Category)).ToArray()
         };
-        pending?.Cancel(); using var cancellation = new CancellationTokenSource(); pending = cancellation; settings.IsEnabled = false; objectGrid.IsEnabled = false; tableGrid.IsEnabled = false;
+        var version = configurationVersion;
+        using var cancellation = new CancellationTokenSource(); pending = cancellation; settings.IsEnabled = false; objectGrid.IsEnabled = false; tableGrid.IsEnabled = false;
         try
         {
             status.Text = "Preparing bounded context files…";
-            plan = await Task.Run(() => ContextExporter.PrepareAsync(model, options, sampler, cancellation.Token), cancellation.Token);
+            var prepared = await Task.Run(() => ContextExporter.PrepareAsync(model, options, sampler, cancellation.Token), cancellation.Token);
+            cancellation.Token.ThrowIfCancellationRequested();
+            if (version != configurationVersion) throw new InvalidOperationException("Export settings changed; prepare a new review.");
+            plan = prepared;
             files.ItemsSource = plan.Review; files.SelectedIndex = 0; pages.SelectedIndex = 2;
             status.Text = $"{plan.Review.Count} files · conservative ZIP estimate {plan.EstimatedBytes:N0} bytes. Review the file list/content, then acknowledge sensitive content and Export ZIP.";
         }
@@ -84,9 +99,12 @@ public sealed class AIContextExportWindow : Window
     }
     private async Task ExportAsync()
     {
+        if (pending != null) throw new InvalidOperationException("Wait for the current context operation to finish.");
+        objectGrid.CommitEdit(DataGridEditingUnit.Row, true); tableGrid.CommitEdit(DataGridEditingUnit.Row, true);
         var reviewedPlan = plan ?? throw new InvalidOperationException("Prepare a current file review first."); if (reviewed.IsChecked != true) throw new InvalidOperationException("Review the exact files and acknowledge sensitive content first.");
         var name = string.Concat(model.Name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
         var dialog = new SaveFileDialog { Filter = "AI context ZIP|*.zip", FileName = name + ".pbibench-ai-context.zip" }; if (dialog.ShowDialog(this) != true) return;
+        if (!ReferenceEquals(reviewedPlan, plan) || reviewed.IsChecked != true) throw new InvalidOperationException("Export settings changed; prepare and acknowledge a new review.");
         using var cancellation = new CancellationTokenSource(); pending = cancellation;
         try { await ContextExporter.WriteAsync(reviewedPlan, dialog.FileName, true, cancellation.Token); status.Text = "Exported the reviewed ZIP. No AI provider was contacted."; } finally { pending = null; }
     }
@@ -94,8 +112,26 @@ public sealed class AIContextExportWindow : Window
     private static CheckBox Check(string text) => new() { Content = text, Margin = new Thickness(4) };
     private static TextBlock Note(string text) => new() { Text = text, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(4) };
     private static DataGrid Grid(bool readOnly) => new() { IsReadOnly = readOnly, AutoGenerateColumns = true, CanUserAddRows = false, Margin = new Thickness(4) };
-    public sealed class ObjectChoice(ContextObject obj)
-    { public string Id => obj.Id; public string Kind => obj.Kind; public string? Table => obj.Table; public string Name => obj.Name; public bool Hidden => obj.Hidden; public bool Include { get; set; } = true; public bool Exclude { get; set; } public bool Sample { get; set; } = obj.Kind == "Column" && !obj.Hidden; }
-    public sealed class TableChoice(string name)
-    { public string Table => name; public int Rows { get; set; } public bool IncludeHidden { get; set; } public string OrderColumn { get; set; } = ""; }
+    public abstract class ExportChoice : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void Set<T>(ref T field, T value, [CallerMemberName] string? property = null)
+        { if (EqualityComparer<T>.Default.Equals(field, value)) return; field = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property)); }
+    }
+    public sealed class ObjectChoice(ContextObject obj) : ExportChoice
+    {
+        private bool include = true, exclude, sample = obj.Kind == "Column" && !obj.Hidden;
+        public string Id => obj.Id; public string Kind => obj.Kind; public string? Table => obj.Table; public string Name => obj.Name; public bool Hidden => obj.Hidden;
+        public bool Include { get => include; set => Set(ref include, value); }
+        public bool Exclude { get => exclude; set => Set(ref exclude, value); }
+        public bool Sample { get => sample; set => Set(ref sample, value); }
+    }
+    public sealed class TableChoice(string name) : ExportChoice
+    {
+        private int rows; private bool includeHidden; private string orderColumn = "";
+        public string Table => name;
+        public int Rows { get => rows; set => Set(ref rows, value); }
+        public bool IncludeHidden { get => includeHidden; set => Set(ref includeHidden, value); }
+        public string OrderColumn { get => orderColumn; set => Set(ref orderColumn, value); }
+    }
 }

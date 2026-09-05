@@ -40,8 +40,48 @@ public sealed class LanguageTests
         {
             var a = new ScriptDocument(Guid.NewGuid().ToString(), "a.csx", "unsaved", SavedText: "old"); var b = new ScriptDocument(Guid.NewGuid().ToString(), "b.cs", "saved", SavedText: "saved");
             await ScriptWorkspaceFiles.SaveRecoveryAsync(path, new(new[] { a, b }, a.Id), default); var saved = await ScriptWorkspaceFiles.LoadRecoveryAsync(path, default);
-            Assert.Equal(a.Id, saved.ActiveId); Assert.True(saved.Documents[0].IsDirty); Assert.False(saved.Documents[1].IsDirty); Assert.DoesNotContain("trust", File.ReadAllText(path).ToLowerInvariant());
+            Assert.Equal(a.Id, saved.ActiveId); Assert.All(saved.Documents, d => { Assert.True(d.IsDirty); Assert.True(d.IsRecovered); Assert.Null(d.FilePath); Assert.Null(d.PersistedHash); }); Assert.DoesNotContain("trust", File.ReadAllText(path).ToLowerInvariant());
         } finally { File.Delete(path); }
+    }
+    public static IEnumerable<object[]> EscapedNames()
+    {
+        foreach (var kind in new[] { "Table", "Column", "Measure" })
+            foreach (var pair in new[] {
+                ("Sales Ledger", "Sales Ledger"), ("Say \"Hi\" now", "Say \\\"Hi\\\" now"),
+                (@"C:\Sales\日", @"C:\\Sales\\日"), ("Value [gross]", "Value [gross]"),
+                ("Chiffre Zürich 日本 🧮", "Chiffre Zürich 日本 🧮"), ("Line\n\t\r\u0001\u2028end", @"Line\n\t\r\u0001\u2028end") })
+                yield return new object[] { kind, pair.Item1, pair.Item2 };
+    }
+    [Theory] [MemberData(nameof(EscapedNames))]
+    public void CompletionInsertsEscapedLiteralAndPreservesSurroundingScript(string kind, string name, string escaped)
+    {
+        const string table = "Sales \"EU\" \\ [日本]";
+        var receiver = kind == "Table" ? "Model.Tables[\"" : "Model.Tables[\"Sales \\\"EU\\\" \\\\ [日本]\"]." + kind + "s[\"";
+        var partial = escaped.Substring(0, escaped.Length - 1);
+        var prefix = "var obj = " + receiver + partial;
+        var source = prefix + "\"]; // keep suffix";
+        var completion = Assert.Single(new CSharpLanguageService().Complete(source, prefix.Length, new[] {
+            new AutomationSymbol(kind, name, kind == "Table" ? null : table), new AutomationSymbol("Column", name, "Other") }));
+        Assert.Equal(escaped, completion.Text);
+        Assert.Equal(name, JsonSerializer.Deserialize<string>("\"" + completion.Text + "\""));
+        Assert.Equal("var obj = " + receiver + escaped + "\"]; // keep suffix",
+            source.Substring(0, completion.ReplaceStart!.Value) + completion.Text + source.Substring(completion.ReplaceStart.Value + completion.ReplaceLength));
+        // A caret inside a partially typed escape (including a trailing backslash) must still replace the complete prefix.
+        for (var length = 0; length <= escaped.Length; length++)
+        {
+            var typed = receiver + escaped.Substring(0, length);
+            var item = Assert.Single(new CSharpLanguageService().Complete(typed, typed.Length, new[] { new AutomationSymbol(kind, name, kind == "Table" ? null : table) }));
+            Assert.Equal(escaped, item.Text); Assert.Equal(receiver.Length, item.ReplaceStart); Assert.Equal(length, item.ReplaceLength);
+        }
+    }
+    [Fact] public void EscapedTableReceiverRetainsTableMembersAndCompletionIsBounded()
+    {
+        var source = "Model.Tables[\"Say \\\"Hi\\\" \\\\ [日]\"].";
+        var members = new CSharpLanguageService().Complete(source, source.Length, Array.Empty<AutomationSymbol>());
+        Assert.Contains(members, c => c.Text == "AddMeasure"); Assert.DoesNotContain(members, c => c.Text == "SummarizeBy");
+        source = "Model.Tables[\"";
+        Assert.Equal(200, new CSharpLanguageService().Complete(source, source.Length, Enumerable.Range(0, 400).Select(i => new AutomationSymbol("Table", "Table " + i)).ToArray()).Count);
+        Assert.Throws<ArgumentException>(() => new CSharpLanguageService().Complete(new string('x', 1024 * 1024 + 1), 0, Array.Empty<AutomationSymbol>()));
     }
     [Fact] public async Task MacroMetadataIsBackwardCompatibleAndRetainsLane()
     {

@@ -105,7 +105,7 @@ foreach ($packageFile in $packageFiles) {
 }
 $packageManifest | Sort-Object Package | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $notices 'packaged-notices.json') -Encoding utf8
 @'
-PbiBench V11.1 portable build
+PbiBench V11.1.1 portable build
 
 Launch PbiBench.exe on Windows with .NET Framework 4.8 installed.
 Apps / Tools launches fabric-toolbox/PbiBench.FabricToolbox.exe in its separate process.

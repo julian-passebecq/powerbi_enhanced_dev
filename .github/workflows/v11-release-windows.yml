@@ -1,0 +1,38 @@
+name: V11 Windows Release module gate
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release-modules:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Release portable tests (recovery, export, provenance and boundaries)
+        run: dotnet test tests/PbiBench.V11.Tests/PbiBench.V11.Tests.csproj -c Release -f net10.0 --nologo --logger "trx;LogFileName=v11-net10.trx" --results-directory artifacts/ci-release
+      - name: Release net48 module tests (no TE2 runtime required)
+        run: dotnet test tests/PbiBench.V11.Tests/PbiBench.V11.Tests.csproj -c Release -f net48 --nologo --logger "trx;LogFileName=v11-net48.trx" --results-directory artifacts/ci-release
+      - name: Release Fabric Toolbox build
+        run: dotnet build src/PbiBench.FabricToolbox/PbiBench.FabricToolbox.csproj -c Release --nologo
+      - name: Check Toolbox output isolation
+        shell: pwsh
+        run: |
+          $forbidden = Get-ChildItem src/PbiBench.FabricToolbox/bin/Release/net10.0-windows -File -Recurse | Where-Object { $_.Name -match '^(TabularEditor|TOMWrapper|PbiBench\.(App|ModelEditor|Semantic))(\.|$)' }
+          if ($forbidden) { throw 'Fabric Toolbox contains Semantic IDE / TE2 runtime dependencies.' }
+      - name: Preserve test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v11-windows-release-test-results
+          path: artifacts/ci-release/*.trx
+          if-no-files-found: warn
+      # Hosted scope: portable dual-target modules and the isolated Toolbox build.
+      # No private credentials, live Power BI/Fabric, TE2 bootstrap, main WPF/native
+      # tests, GUI smoke or package claim. The local Release gate owns those checks.

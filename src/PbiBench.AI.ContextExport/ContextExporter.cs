@@ -46,20 +46,43 @@ public static class ContextExporter
         var objects = model.Objects.Where(o => included.Contains(o.Id)).OrderBy(o => o.Id, StringComparer.Ordinal).ToArray();
         var rels = model.Relationships.Where(r => !excluded.Contains(r.Id) && included.Contains(r.FromColumnId) && included.Contains(r.ToColumnId)).OrderBy(r => r.Id, StringComparer.Ordinal).ToArray();
         var files = new SortedDictionary<string, byte[]>(StringComparer.Ordinal); long total = 4096;
+        var redactor = new Redactor(); long recordedReplacements = 0;
+        var redactions = new SortedDictionary<string, long>(StringComparer.Ordinal);
+        string Clean(string? value) => redactor.Clean(value);
+        string Csv(IEnumerable<string> columns, IEnumerable<object?[]> rows, long maximumBytes = 32 * 1024 * 1024, CancellationToken token = default)
+            => ContextExporter.Csv(columns, rows, Clean, maximumBytes, token);
+        void TrackRedactions(string name)
+        {
+            var count = redactor.ReplacementCount - recordedReplacements;
+            if (count > 0) redactions[name] = count;
+            recordedReplacements = redactor.ReplacementCount;
+        }
         void Text(string name, string value)
         {
+            TrackRedactions(name);
             ct.ThrowIfCancellationRequested(); var bytes = Encoding.UTF8.GetBytes(value); total += bytes.Length + 512;
             if (total > options.MaximumBytes) throw new InvalidDataException("Context exceeds the selected ZIP size cap. Narrow scope or samples."); files.Add(name, bytes);
         }
-        void Data(string name, object value)
+        void Data(string name, object value, bool manifest = false)
         {
             // Redact string VALUES before writing JSON; regex over serialized JSON can corrupt escaping.
             using var raw = new BoundedMemoryStream(options.MaximumBytes);
             JsonSerializer.Serialize(raw, new { schemaVersion = 1, data = value }, Json);
             raw.Position = 0; using var doc = JsonDocument.Parse(raw);
             using var clean = new BoundedMemoryStream(options.MaximumBytes);
-            using (var writer = new Utf8JsonWriter(clean, new JsonWriterOptions { Indented = true })) WriteClean(doc.RootElement, writer, ct);
-            Text(name, Encoding.UTF8.GetString(clean.ToArray()));
+            using (var writer = new Utf8JsonWriter(clean, new JsonWriterOptions { Indented = true })) WriteClean(doc.RootElement, writer, Clean, ct);
+            if (manifest)
+            {
+                TrackRedactions(name);
+                using var cleaned = JsonDocument.Parse(clean.ToArray());
+                using var final = new BoundedMemoryStream(options.MaximumBytes);
+                JsonSerializer.Serialize(final, new { schemaVersion = 2, data = cleaned.RootElement.GetProperty("data"),
+                    redaction = new { schemaVersion = 1, applied = redactor.ReplacementCount > 0, replacementCount = redactor.ReplacementCount,
+                        files = redactions, unit = "Path/credential pattern replacements across exported string values; repeated occurrences count separately",
+                        anonymized = false, notice = "Conservative redaction is not anonymization; sensitive content may remain." } }, Json);
+                Text(name, Encoding.UTF8.GetString(final.ToArray()));
+            }
+            else Text(name, Encoding.UTF8.GetString(clean.ToArray()));
         }
         Data("model/model-summary.json", new { model.Name, model.CompatibilityLevel, objects });
         Text("model/tables.csv", Csv(new[] { "Name", "StorageMode", "Description", "Hidden" }, objects.Where(o => o.Kind == "Table").Select(o => new object?[] { o.Name, o.StorageMode, o.Description, o.Hidden })));
@@ -108,13 +131,14 @@ public static class ContextExporter
                 sampling.Add(new { table = sample.Table, file = path, requestedRows = sample.Rows, actualRows = result.Rows.Count, columns = sample.Columns, method = "FirstN", orderColumn = sample.OrderColumn ?? sample.Columns[0], ties = "Client row cap; order within ties is unspecified", anonymized = false });
             }
         }
-        Data("manifest.json", new { format = "PbiBench.AI.Context", model.Name, scope = options.SelectedScope ? "Selected" : "Model", requested, included = included.OrderBy(x => x, StringComparer.Ordinal), excluded = excluded.OrderBy(x => x, StringComparer.Ordinal), options.IncludeRoles, options.IncludeAutomation, options.IncludeSamples, samples = sampling, maximumBytes = options.MaximumBytes, omissions = new[] { "Source and partition expressions (including calculated table definitions)", "Connections, credentials, annotations, role membership and machine paths", "Unavailable row counts and evidence are not inferred", "Explicit exclusions can leave unresolved DAX dependencies" } });
         Text("AI_README.md", "# " + Clean(model.Name) + "\n\nCompatibility: " + model.CompatibilityLevel + "\n\n" + PrivacyNotice + "\n\n" +
             "Scope: " + (options.SelectedScope ? "Selected objects plus dependency context" : "Full model") + ". Exact inclusions, exclusions, samples and omissions are in manifest.json. Descriptive text has conservative path/credential redaction; this is not anonymization.\n\n" +
-            string.Join("\n", objects.Where(o => o.Kind == "Table").Select(t => "- " + Clean(t.Name) + " (" + t.StorageMode + "); row count unknown")) +
+            string.Join("\n", objects.Where(o => o.Kind == "Table").Select(t => "- " + Clean(t.Name) + " (" + Clean(t.StorageMode) + "); row count unknown")) +
             "\n\n## Measure inventory\n" + string.Join("\n", objects.Where(o => o.Kind == "Measure").Select(m => "- " + Clean(m.Table + " / " + m.DisplayFolder + " / " + m.Name))) +
             "\n\nRelationships with cardinality/filter direction: model/relationships.csv. Calculation groups and items: model/calculation-groups.json. UDFs: model/functions.dax. Optional warnings/evidence: quality/ and workspace/.\n\n" +
             "Use the attached semantic metadata as authoritative for object names and relationships. Treat sampled rows as examples only, not complete data. Do not invent columns or measures that are absent from the model. When proposing DAX, state which existing objects it depends on.\n");
+        // Last content file so the manifest includes its own redactions and every preceding file's counts.
+        Data("manifest.json", new { format = "PbiBench.AI.Context", model.Name, scope = options.SelectedScope ? "Selected" : "Model", requested, included = included.OrderBy(x => x, StringComparer.Ordinal), excluded = excluded.OrderBy(x => x, StringComparer.Ordinal), options.IncludeRoles, options.IncludeAutomation, options.IncludeSamples, samples = sampling, maximumBytes = options.MaximumBytes, omissions = new[] { "Source and partition expressions (including calculated table definitions)", "Connections, credentials, annotations, role membership and machine paths", "Unavailable row counts and evidence are not inferred", "Explicit exclusions can leave unresolved DAX dependencies" } }, manifest: true);
         Text("checksums.sha256", string.Join("\n", files.Select(f => Hash(f.Value) + "  " + f.Key)) + "\n");
         return new(files, options.MaximumBytes);
     }
@@ -140,27 +164,35 @@ public static class ContextExporter
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
     internal static string Hash(byte[] bytes) { using var sha = SHA256.Create(); return BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", "").ToLowerInvariant(); }
-    private static string Clean(string? text) => Regex.Replace(Regex.Replace(text ?? "", @"(?i)(?:[a-z]:[\\/]|\\\\)[^\s""<>]*", "[local-path-redacted]", RegexOptions.None, TimeSpan.FromSeconds(1)), @"(?i)\b(password|pwd|access[_ -]?token|api[_ -]?key|client[_ -]?secret)\s*[=:]\s*[^;\s""<>]+", "$1=[redacted]", RegexOptions.None, TimeSpan.FromSeconds(1));
-    private static string Csv(IEnumerable<string> columns, IEnumerable<object?[]> rows, long maximumBytes = 32 * 1024 * 1024, CancellationToken ct = default)
+    private sealed class Redactor
+    {
+        public long ReplacementCount { get; private set; }
+        public string Clean(string? text)
+        {
+            var paths = Regex.Replace(text ?? "", @"(?i)(?:[a-z]:[\\/]|\\\\)[^\s""<>]*", _ => { ReplacementCount++; return "[local-path-redacted]"; }, RegexOptions.None, TimeSpan.FromSeconds(1));
+            return Regex.Replace(paths, @"(?i)\b(password|pwd|access[_ -]?token|api[_ -]?key|client[_ -]?secret)\s*[=:]\s*[^;\s""<>]+", m => { ReplacementCount++; return m.Groups[1].Value + "=[redacted]"; }, RegexOptions.None, TimeSpan.FromSeconds(1));
+        }
+    }
+    private static string Csv(IEnumerable<string> columns, IEnumerable<object?[]> rows, Func<string?, string> clean, long maximumBytes, CancellationToken ct)
     {
         string Cell(object? value)
         {
             var text = value switch { null or DBNull => "", DateTime d => d.ToString("O", CultureInfo.InvariantCulture), DateTimeOffset d => d.ToString("O", CultureInfo.InvariantCulture), bool b => b ? "true" : "false", string s => s, IFormattable f => f.ToString(null, CultureInfo.InvariantCulture), _ => throw new InvalidDataException("Unsupported sample value type.") };
             if (text.Length > 262144) throw new InvalidDataException("A context cell exceeds 256 KiB.");
-            return "\"" + Clean(text).Replace("\"", "\"\"") + "\"";
+            return "\"" + clean(text).Replace("\"", "\"\"") + "\"";
         }
         var builder = new StringBuilder(string.Join(",", columns.Select(c => Cell(c))) + "\n");
         foreach (var row in rows) { ct.ThrowIfCancellationRequested(); builder.AppendLine(string.Join(",", row.Select(Cell))); if (builder.Length * 2L > maximumBytes) throw new InvalidDataException("CSV exceeds the conservative export memory cap."); }
         return builder.ToString().Replace("\r\n", "\n");
     }
-    private static void WriteClean(JsonElement value, Utf8JsonWriter writer, CancellationToken ct)
+    private static void WriteClean(JsonElement value, Utf8JsonWriter writer, Func<string?, string> clean, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         switch (value.ValueKind)
         {
-            case JsonValueKind.Object: writer.WriteStartObject(); foreach (var property in value.EnumerateObject()) { writer.WritePropertyName(property.Name); WriteClean(property.Value, writer, ct); } writer.WriteEndObject(); break;
-            case JsonValueKind.Array: writer.WriteStartArray(); foreach (var item in value.EnumerateArray()) WriteClean(item, writer, ct); writer.WriteEndArray(); break;
-            case JsonValueKind.String: writer.WriteStringValue(Clean(value.GetString())); break;
+            case JsonValueKind.Object: writer.WriteStartObject(); foreach (var property in value.EnumerateObject()) { writer.WritePropertyName(property.Name); WriteClean(property.Value, writer, clean, ct); } writer.WriteEndObject(); break;
+            case JsonValueKind.Array: writer.WriteStartArray(); foreach (var item in value.EnumerateArray()) WriteClean(item, writer, clean, ct); writer.WriteEndArray(); break;
+            case JsonValueKind.String: writer.WriteStringValue(clean(value.GetString())); break;
             default: value.WriteTo(writer); break;
         }
     }

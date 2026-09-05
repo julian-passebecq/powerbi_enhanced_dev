@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "productVersion": "11.1.0",
-  "baselineCommit": "53813388fbf2a3d7075572fd0a33be207faeccdf",
+  "productVersion": "11.1.1",
+  "baselineCommit": "47954aaf8876671eff879bbd0b809660f444e1fe",
   "components": [
     {
       "id": "semantic.model-editor.te2",
@@ -162,13 +162,15 @@
       "ownerProject": "PbiBench.CSharp.LanguageService",
       "sourceType": "pbibench-original",
       "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
-      "pin": "11.1.0",
+      "pin": "11.1.1",
       "localAdapter": "src/PbiBench.CSharp.LanguageService/CSharpLanguageService.cs",
       "license": "unknown-needs-review (original repository code)",
       "updateLane": "csharp-language",
       "localPatches": [],
       "protectingTests": [
-        "tests/PbiBench.V11.Tests/LanguageTests.cs"
+        "tests/PbiBench.V11.Tests/LanguageTests.cs",
+        "tests/PbiBench.V11.Tests/ScriptFileTests.cs",
+        "tests/PbiBench.App.Tests/V11WorkspaceTests.cs"
       ]
     },
     {
@@ -177,13 +179,14 @@
       "ownerProject": "PbiBench.AI.ContextExport / PbiBench.Semantic / PbiBench.App",
       "sourceType": "pbibench-original",
       "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
-      "pin": "11.1.0",
+      "pin": "11.1.1",
       "localAdapter": "src/PbiBench.AI.ContextExport/ContextExporter.cs",
       "license": "unknown-needs-review (original repository code)",
       "updateLane": "ai-interchange",
       "localPatches": [],
       "protectingTests": [
-        "tests/PbiBench.V11.Tests/ExportTests.cs"
+        "tests/PbiBench.V11.Tests/ExportTests.cs",
+        "tests/PbiBench.App.Tests/V11WorkspaceTests.cs"
       ]
     },
     {

@@ -67,6 +67,39 @@ public sealed class ExportTests
         var plan = await ContextExporter.PrepareAsync(model, new(), null, default);
         foreach (var file in plan.Review.Where(f => f.Path.EndsWith(".json"))) { using var doc = JsonDocument.Parse(plan.ReadText(file.Path)); Assert.DoesNotContain("topsecret", plan.ReadText(file.Path)); Assert.DoesNotContain("private", plan.ReadText(file.Path)); }
     }
+    [Fact] public async Task ManifestCountsRedactionsPerFileIncludingItselfWithoutRetainingOriginals()
+    {
+        var model = Model() with { Name = "password=fixture-secret" };
+        model = model with { Objects = model.Objects.Select(o => o.Kind == "Table" && o.Name == "Sales" ? o with { Description = @"Path C:\private\model and pwd=another-secret;" } : o).ToArray() };
+        var plan = await ContextExporter.PrepareAsync(model, new(), null, default);
+        using var manifest = JsonDocument.Parse(plan.ReadText("manifest.json"));
+        Assert.Equal(2, manifest.RootElement.GetProperty("schemaVersion").GetInt32());
+        var redaction = manifest.RootElement.GetProperty("redaction"); Assert.Equal(1, redaction.GetProperty("schemaVersion").GetInt32());
+        Assert.True(redaction.GetProperty("applied").GetBoolean()); Assert.False(redaction.GetProperty("anonymized").GetBoolean());
+        var files = redaction.GetProperty("files");
+        Assert.Equal(3, files.GetProperty("model/model-summary.json").GetInt32());
+        Assert.Equal(2, files.GetProperty("model/tables.csv").GetInt32());
+        Assert.Equal(1, files.GetProperty("AI_README.md").GetInt32()); Assert.Equal(1, files.GetProperty("manifest.json").GetInt32());
+        Assert.Equal(7, redaction.GetProperty("replacementCount").GetInt64());
+        Assert.Equal(redaction.GetProperty("replacementCount").GetInt64(), files.EnumerateObject().Sum(p => p.Value.GetInt64()));
+        foreach (var file in plan.Review)
+        { var text = plan.ReadText(file.Path); Assert.DoesNotContain("fixture-secret", text); Assert.DoesNotContain("another-secret", text); Assert.DoesNotContain("private", text); }
+        Assert.Equal(plan.Review, (await ContextExporter.PrepareAsync(model, new(), null, default)).Review);
+    }
+    [Fact] public async Task NoRedactionIsExplicitAndSamplesEvidenceAndDaxAreCountedWhenIncluded()
+    {
+        var clean = await ContextExporter.PrepareAsync(Model(), new(), null, default);
+        using (var manifest = JsonDocument.Parse(clean.ReadText("manifest.json")))
+        { var redaction = manifest.RootElement.GetProperty("redaction"); Assert.False(redaction.GetProperty("applied").GetBoolean()); Assert.Equal(0, redaction.GetProperty("replacementCount").GetInt64()); Assert.Empty(redaction.GetProperty("files").EnumerateObject()); }
+        var model = Model(); model = model with { Objects = model.Objects.Select(o => o.Kind == "Measure" ? o with { Expression = "1 // api_key=dax-secret" } : o).ToArray() };
+        var options = new ContextExportOptions { IncludeSamples = true, Samples = new[] { new SampleRequest("Sales", new[] { "Amount" }, 1) },
+            Evidence = new[] { new ContextEvidence("BPA", Id("Table", "Sales"), "Finding", "Warning", "pwd=evidence-secret") } };
+        var plan = await ContextExporter.PrepareAsync(model, options, new Sampler { Value = "password=sample-secret" }, default);
+        using var doc = JsonDocument.Parse(plan.ReadText("manifest.json")); var counts = doc.RootElement.GetProperty("redaction").GetProperty("files");
+        Assert.Equal(1, counts.GetProperty("model/measures.dax").GetInt32()); Assert.Equal(1, counts.GetProperty("quality/bpa.json").GetInt32());
+        Assert.Equal(1, counts.GetProperty(Assert.Single(plan.Review, f => f.Path.StartsWith("samples/")).Path).GetInt32());
+        Assert.All(plan.Review, file => Assert.DoesNotContain("-secret", plan.ReadText(file.Path)));
+    }
     [Fact] public async Task CancellationAndSizeLimitsRejectWithoutCommitting()
     {
         using var ct = new CancellationTokenSource(); ct.Cancel(); await Assert.ThrowsAnyAsync<OperationCanceledException>(() => ContextExporter.PrepareAsync(Model(), new(), null, ct.Token));
@@ -76,7 +109,8 @@ public sealed class ExportTests
     }
     [Fact] public async Task ManifestChecksumsAndZipAreDeterministic()
     {
-        var a = await ContextExporter.PrepareAsync(Model(), new() { IncludeAutomation = true }, null, default); var b = await ContextExporter.PrepareAsync(Model(), new() { IncludeAutomation = true }, null, default);
+        var model = Model() with { Name = "Fixture password=redacted-value" };
+        var a = await ContextExporter.PrepareAsync(model, new() { IncludeAutomation = true }, null, default); var b = await ContextExporter.PrepareAsync(model, new() { IncludeAutomation = true }, null, default);
         Assert.Equal(a.Review, b.Review); Assert.Contains("writableProperties", a.ReadText("automation/safe-script-capabilities.json"));
         var first = Path.GetTempFileName(); var second = Path.GetTempFileName();
         try
@@ -90,7 +124,7 @@ public sealed class ExportTests
     }
     private sealed class Sampler : IContextSampler
     {
-        public int Calls; public bool WrongColumns;
-        public Task<SampleResult> SampleAsync(SampleRequest request, CancellationToken cancellationToken) { Calls++; return Task.FromResult(new SampleResult(WrongColumns ? new[] { "Other" } : request.Columns, new[] { new object?[] { 12.5m } })); }
+        public int Calls; public bool WrongColumns; public object Value = 12.5m;
+        public Task<SampleResult> SampleAsync(SampleRequest request, CancellationToken cancellationToken) { Calls++; return Task.FromResult(new SampleResult(WrongColumns ? new[] { "Other" } : request.Columns, new[] { new object?[] { Value } })); }
     }
 }
