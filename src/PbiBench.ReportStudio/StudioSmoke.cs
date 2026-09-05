@@ -16,12 +16,13 @@ internal static class StudioSmoke
         foreach (var source in Directory.EnumerateFiles(fixture, "*", SearchOption.AllDirectories)) { var target = Path.Combine(root, Path.GetRelativePath(fixture, source)); Directory.CreateDirectory(Path.GetDirectoryName(target)!); File.Copy(source, target); }
         await window.OpenAsync(Path.Combine(root, "Sales.pbip")); var validator = new ReportValidator(); var engine = new ReportChangeEngine(validator); var actions = new ReportActions(engine);
         var initial = window.CurrentReport!;
+        window.VerifyNavigation();
         if (validator.Validate(initial).Count > 0) throw new InvalidDataException(string.Join("\n", validator.Validate(initial)));
         var catalog = await ReportLineage.ReadLocalModelAsync(initial.SemanticModelPath, default);
         if (!ReportLineage.Build(initial, catalog.Fields, catalog.Complete).Any(u => u.Status == "Resolved")) throw new InvalidDataException("Fixture lineage did not resolve.");
-        var checks = new List<string> { "Separate modern WPF process launched", "PBIP tree / wireframe / inspector populated", "Offline schema validation", "Local measure → visual lineage" };
+        var checks = new List<string> { "Separate modern WPF process launched", "PBIP tree / wireframe / inspector populated", "Offline schema validation", "Local measure → visual lineage", "Search / page / tree / lineage selection synchronization and cached snapshot", "Zoom 100% / fit page" };
         var file = initial.Pages[0].Visuals[0].File;
-        foreach (var create in new Func<ReportIndex, ReportChangePlan>[] { r => actions.SetTitle(r, file, "Reviewed revenue"), r => actions.Annotate(r, file, "Review", "Verified"), r => actions.DuplicateVisual(r, file, r.Pages[0].Id), r => actions.DuplicatePage(r, r.Pages[0].Id, "Reviewed copy"), r => actions.ReplaceReference(r, new("Sales", "Revenue", "Measure"), new("Sales", "Revenue adjusted", "Measure")) })
+        foreach (var create in new Func<ReportIndex, ReportChangePlan>[] { r => actions.SetTitle(r, file, "Reviewed revenue"), r => actions.Annotate(r, file, "Review", "Verified"), r => actions.DuplicateVisual(r, file, r.Pages[0].Id, 20, 20), r => actions.DuplicatePage(r, r.Pages[0].Id, "Reviewed copy"), r => actions.ReplaceReference(r, new("Sales", "Revenue", "Measure"), new("Sales", "Revenue adjusted", "Measure")), r => actions.BatchVisualProperties(r, new[] { file }, true, false, "Batch review"), r => actions.ApplyDisplayNames(r, new(new[] { new DisplayNameMapping(new("Sales", "Revenue", "Measure"), "Revenue label", r.Name, "overview", "revenue") })) })
         {
             var plan = create(window.CurrentReport!); if (!plan.CanApply) throw new InvalidDataException(string.Join("\n", plan.Validation));
             window.ShowPlan(plan); await window.Dispatcher.InvokeAsync(window.UpdateLayout, DispatcherPriority.Render);
@@ -30,7 +31,7 @@ internal static class StudioSmoke
             var restore = await engine.PreviewRestoreAsync(plan.Root, manifest, default); window.ShowPlan(restore); await window.ApplySmokePlanAsync();
             if (window.CurrentReport!.Files.Count != initial.Files.Count || initial.Files.Any(p => window.CurrentReport.Files[p.Key].Hash != p.Value.Hash)) throw new InvalidDataException("Restore did not reproduce original bytes.");
         }
-        checks.Add("All five actions restored original byte hashes");
+        checks.Add("All seven actions restored original byte hashes");
         window.FocusObject("overview", "revenue"); await window.Dispatcher.InvokeAsync(window.UpdateLayout, DispatcherPriority.Render);
         var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32); bitmap.Render(window);
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap)); using (var stream = File.Create(Path.ChangeExtension(output, ".png"))) encoder.Save(stream);

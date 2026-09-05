@@ -1,0 +1,33 @@
+Start from current main of `julian-passebecq/powerbi_enhanced_dev`.
+
+Audited baseline: `1e02628f7b35af0e5b92c0452f86d3b102562cc2`.
+
+Read this V2 Pass 2 pack completely.
+
+Do not redesign Pass 1. Implement the next depth pass:
+
+P0:
+- make hosted CI actually run PbiBench.V2.Tests + Report Studio build/isolation;
+- fix the local TMDL semantic catalog indentation/completeness bug;
+- fix C# Gallery provenance so implementation origin is distinct from reference/inspiration;
+- remove/redefine the stale future-report-tooling catalog entry;
+- update V2 Pass 1 verification with truthful post-push CI evidence.
+
+Functionality:
+- deepen Report Studio search/navigation/wireframe/lineage synchronization;
+- add safe Pass-2 report actions;
+- add semantic-model -> report impact review before risky refactors;
+- expand the C# Gallery with a few advanced reviewable templates;
+- add a read-only Fabric report getDefinition snapshot flow in Fabric Toolbox and hand the local snapshot to Report Studio.
+
+Preserve:
+- Semantic IDE = net48 + TE2 2.28;
+- Report Studio = separate modern process, no TE2/Fabric auth;
+- Fabric Toolbox = separate modern process, owns Fabric auth;
+- no silent model+report cross-layer transaction;
+- no remote report updateDefinition in this pass.
+
+Use targeted tests during edits and one final impacted Release gate before push. Let hosted CI and the external reviewer handle post-push validation.
+
+Commit:
+`v2-pass2 - Report engineering depth, impact review and V2 CI`

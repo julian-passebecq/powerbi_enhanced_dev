@@ -20,6 +20,14 @@ public partial class MainWindow
             if (card.Id == "clean") { values["Find"] = "Revenue"; values["Replace"] = "Reviewed Revenue"; }
             if (card.Id == "format") values["Format string"] = "0.0000";
             var recipe = PowerBiGallery.Generate(card, new[] { new AutomationSymbol(kind, obj.Name, kind == "Table" ? null : table.Name, true, column.DataType.ToString()) }, values);
+            if (card.Id == "dynamic-format" && handler.CompatibilityLevel < 1601)
+            {
+                var rejected = false;
+                try { _ = new ScriptPreviewService(handler).PreviewRecipe(recipe, new[] { obj }); }
+                catch (InvalidOperationException) { rejected = true; }
+                Check(rejected && service.Fingerprint() == before, "Dynamic-format gallery refuses incompatible models without upgrading or editing", checks);
+                continue;
+            }
             var preview = new ScriptPreviewService(handler).PreviewRecipe(recipe, new[] { obj });
             Check(preview.CanApply && service.Fingerprint() == before, "Gallery " + card.Id + " produces an isolated affected-object preview", checks);
             preview.Apply(handler); Check(service.Fingerprint() != before, "Gallery " + card.Id + " applies real model metadata", checks);

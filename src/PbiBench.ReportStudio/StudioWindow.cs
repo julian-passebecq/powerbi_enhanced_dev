@@ -9,14 +9,14 @@ using PbiBench.Pbir;
 
 namespace PbiBench.ReportStudio;
 
-public sealed class StudioWindow : Window
+public sealed partial class StudioWindow : Window
 {
     private readonly CancellationTokenSource lifetime = new();
     private readonly ReportValidator validator = new();
     private readonly ReportChangeEngine engine;
     private readonly ReportActions actions;
     private readonly TreeView tree = new();
-    private readonly Canvas canvas = new() { Background = Brushes.White, ClipToBounds = true };
+    private readonly Canvas canvas = new() { Background = Brushes.White, ClipToBounds = true, Width = 1280, Height = 720 };
     private readonly TextBox input = new() { Width = 500, Padding = new Thickness(6), VerticalContentAlignment = VerticalAlignment.Center }, raw = ReadOnly(), inspector = ReadOnly(), diff = ReadOnly(), disk = ReadOnly();
     private readonly DataGrid changes = Grid(), validation = Grid(), lineage = Grid();
     private readonly ComboBox gallery = new() { MinWidth = 210, DisplayMemberPath = "Title" };
@@ -56,7 +56,7 @@ public sealed class StudioWindow : Window
         body.RowDefinitions.Add(new() { Height = new GridLength(3, GridUnitType.Star) }); body.RowDefinitions.Add(new() { Height = new GridLength(2, GridUnitType.Star), MinHeight = 210 });
         body.ColumnDefinitions.Add(new() { Width = new GridLength(235) }); body.ColumnDefinitions.Add(new() { Width = new GridLength(1, GridUnitType.Star) }); body.ColumnDefinitions.Add(new() { Width = new GridLength(340) });
         Place(body, tree, 0, 0);
-        var wireframe = new DockPanel { Margin = new Thickness(8, 0, 8, 8) }; wireframe.Children.Add(new Viewbox { Stretch = Stretch.Uniform, Child = canvas }); Place(body, wireframe, 0, 1);
+        var wireframe = CreateNavigation(); Place(body, wireframe, 0, 1);
         var details = new TabControl(); details.Items.Add(new TabItem { Header = "Inspector", Content = inspector }); details.Items.Add(new TabItem { Header = "JSON · read-only", Content = raw }); Place(body, details, 0, 2);
         Place(body, bottom, 1, 0); System.Windows.Controls.Grid.SetColumnSpan(bottom, 3);
         var actionPanel = new DockPanel(); var actionBar = Bar(gallery); DockPanel.SetDock(actionBar, Dock.Top); actionPanel.Children.Add(actionBar);
@@ -64,11 +64,14 @@ public sealed class StudioWindow : Window
         var parameterPanel = new StackPanel { Orientation = Orientation.Horizontal }; parameterPanel.Children.Add(parameters); parameterPanel.Children.Add(actionInfo); DockPanel.SetDock(parameterPanel, Dock.Top); actionPanel.Children.Add(parameterPanel);
         var split = new System.Windows.Controls.Grid(); split.ColumnDefinitions.Add(new() { Width = new GridLength(310) }); split.ColumnDefinitions.Add(new()); Place(split, changes, 0, 0); Place(split, diff, 0, 1); actionPanel.Children.Add(split);
         bottom.Items.Add(new TabItem { Header = "Actions / Changes", Content = actionPanel }); bottom.Items.Add(new TabItem { Header = "Validation", Content = validation }); bottom.Items.Add(new TabItem { Header = "Lineage", Content = lineage }); bottom.Items.Add(new TabItem { Header = "Git / Disk", Content = disk });
+        bottom.Items.Add(new TabItem { Header = "Visual selection · Ctrl / Shift", Content = visualSelection });
+        visualSelection.SelectionChanged += (_, _) => { if (!synchronizing) Invalidate(); };
         gallery.ItemsSource = ReportActionGallery.All; gallery.SelectionChanged += (_, _) => ConfigureAction(); gallery.SelectedIndex = 0;
-        tree.SelectedItemChanged += (_, _) => { if (tree.SelectedItem is TreeViewItem item && item.Tag is string file) SelectFile(file); };
+        tree.SelectedItemChanged += (_, _) => { if (!synchronizing && tree.SelectedItem is TreeViewItem item && item.Tag is string file) SelectFile(file); };
         changes.SelectionChanged += (_, _) => diff.Text = (changes.SelectedItem as ReportFileChange)?.ExactDiff ?? "";
         changes.AutoGeneratingColumn += (_, e) => { if (e.PropertyName is not ("Path" or "Operation")) e.Cancel = true; };
-        lineage.MouseDoubleClick += (_, _) => { if (lineage.SelectedItem is ReportUsage usage) SelectFile(usage.File); };
+        lineage.SelectionChanged += (_, _) => { if (!synchronizing && lineage.SelectedItem is ReportUsage usage) SelectFile(usage.File); };
+        validation.SelectionChanged += (_, _) => { if (!synchronizing && validation.SelectedItem is ReportIssue issue) SelectFile(issue.File); };
         reviewed.Checked += (_, _) => apply.IsEnabled = !busy && plan?.CanApply == true; reviewed.Unchecked += (_, _) => apply.IsEnabled = false;
         apply.Click += async (_, _) => await RunAsync(ApplyAsync);
         Closed += (_, _) => { lifetime.Cancel(); lifetime.Dispose(); };
@@ -91,13 +94,33 @@ public sealed class StudioWindow : Window
     public async Task OpenAsync(string path)
     {
         Invalidate(); var revision = ++loadRevision;
+        var candidates = await ReportIndex.CandidatesAsync(path, lifetime.Token);
+        if (candidates.Count > 1) { var chosen = ChooseReport(candidates); if (chosen == null) return; path = chosen; }
+        var previousFile = selectedFile;
         var loaded = await ReportIndex.OpenAsync(path, lifetime.Token);
         var catalog = await ReportLineage.ReadLocalModelAsync(loaded.SemanticModelPath, lifetime.Token);
         var issues = await Task.Run(() => validator.Validate(loaded), lifetime.Token);
         if (revision != loadRevision) return;
         report = loaded; model = catalog; input.Text = loaded.ProjectFile ?? loaded.Root; selectedPage = null; selectedVisual = null; selectedFile = null;
-        tree.Items.Clear(); var root = Node(loaded.Name, "definition/report.json"); root.IsExpanded = true; tree.Items.Add(root);
-        foreach (var page in loaded.Pages) { var p = Node(page.Name, page.File); root.Items.Add(p); foreach (var visual in page.Visuals) p.Items.Add(Node(visual.Type + " · " + visual.Id, visual.File)); }
+        view = new(loaded, catalog, issues); synchronizing = true;
+        pageSelector.ItemsSource = loaded.Pages; visualSelection.ItemsSource = loaded.Pages.SelectMany(p => p.Visuals).ToArray();
+        synchronizing = false; BuildTree();
+        validation.ItemsSource = issues; lineage.ItemsSource = view.Usages;
+        SelectFile(previousFile != null && loaded.Files.ContainsKey(previousFile) ? previousFile : loaded.Pages.FirstOrDefault()?.File ?? (loaded.Enhanced ? "definition/report.json" : "report.json"));
+        status.Text = loaded.Name + " · " + loaded.Pages.Count + " pages · " + loaded.Pages.Sum(p => p.Visuals.Count) + " visuals · " + issues.Count + " validation issues · " + catalog.Notice;
+        await RefreshDiskAsync();
+    }
+    private void BuildTree()
+    {
+        var loaded = report; if (loaded == null || view == null) return;
+        synchronizing = true; tree.Items.Clear(); treeNodes.Clear(); var root = Node(loaded.Name, loaded.Enhanced ? "definition/report.json" : "report.json"); root.IsExpanded = true; tree.Items.Add(root);
+        foreach (var page in loaded.Pages)
+        {
+            var visuals = page.Visuals.Where(v => view.Matches(page, v, search.Text)).ToArray();
+            if (visuals.Length == 0 && !view.Matches(page, null, search.Text)) continue;
+            var p = Node(page.Name, page.File); p.IsExpanded = true; root.Items.Add(p);
+            foreach (var visual in visuals) p.Items.Add(Node(visual.Type + " · " + (visual.Title.Length == 0 ? visual.Id : visual.Title), visual.File));
+        }
         foreach (var group in new[] { "bookmarks", "filters", "reportExtensions" })
         {
             var node = new TreeViewItem { Header = group };
@@ -106,24 +129,22 @@ public sealed class StudioWindow : Window
             root.Items.Add(node);
         }
         var resources = new TreeViewItem { Header = "Resources (" + loaded.Resources.Count + ")" }; foreach (var resource in loaded.Resources) resources.Items.Add(new TreeViewItem { Header = resource }); root.Items.Add(resources);
-        validation.ItemsSource = issues; lineage.ItemsSource = ReportLineage.Build(loaded, catalog.Fields, catalog.Complete);
-        SelectFile(loaded.Pages.FirstOrDefault()?.File ?? "definition/report.json");
-        status.Text = loaded.Name + " · " + loaded.Pages.Count + " pages · " + loaded.Pages.Sum(p => p.Visuals.Count) + " visuals · " + issues.Count + " validation issues · " + catalog.Notice;
-        await RefreshDiskAsync();
+        synchronizing = false;
     }
-    private static TreeViewItem Node(string label, string file) => new() { Header = label, Tag = file };
+    private TreeViewItem Node(string label, string file)
+    { var node = new TreeViewItem { Header = label + view?.Badges(file), Tag = file }; treeNodes[file] = node; return node; }
     private void SelectFile(string file)
     {
         if (report == null || !report.Files.TryGetValue(file, out var definition)) return;
-        Invalidate(); selectedFile = file;
+        if (selectedFile != file) Invalidate(); selectedFile = file;
         selectedPage = report.Pages.FirstOrDefault(p => p.File == file || p.Visuals.Any(v => v.File == file)); selectedVisual = selectedPage?.Visuals.FirstOrDefault(v => v.File == file);
         raw.Text = definition.Text;
-        var usages = ReportLineage.Build(report, model?.Fields, model?.Complete == true).Where(u => u.File == file).ToArray();
+        var usages = view?.ForFile(file) ?? Array.Empty<ReportUsage>();
         inspector.Text = file + "\n\nSchema: " + (definition.Schema ?? "Unknown") + "\nPBIR version: " + report.Version + "\nSHA-256: " + definition.Hash + "\n\n" +
             (selectedVisual == null ? selectedPage?.Name ?? report.Name : JsonSerializer.Serialize(selectedVisual, new JsonSerializerOptions { WriteIndented = true })) + "\n\nSemantic references\n" +
             string.Join("\n", usages.Select(u => u.Kind + " · " + u.Table + "[" + u.Name + "] · " + u.Status));
         if (definition.ParseError == null) { var json = definition.Json(); inspector.Text += "\n\nFilters\n" + json["filterConfig"] + "\n\nAnnotations\n" + json["annotations"]; }
-        DrawPage();
+        SynchronizeSelection(); DrawPage();
     }
     public void FocusObject(string? pageId, string? visualId)
     {
@@ -133,21 +154,22 @@ public sealed class StudioWindow : Window
     private void DrawPage()
     {
         canvas.Children.Clear(); canvas.Width = Math.Max(1, selectedPage?.Width ?? 1280); canvas.Height = Math.Max(1, selectedPage?.Height ?? 720);
-        foreach (var visual in selectedPage?.Visuals ?? Array.Empty<ReportVisual>())
+        foreach (var visual in selectedPage?.Visuals.Where(v => view?.Matches(selectedPage, v, search.Text) == true) ?? Array.Empty<ReportVisual>())
         {
-            var references = report == null ? "" : string.Join("\n", ReportLineage.Build(report).Where(u => u.File == visual.File).Select(u => u.Table + "[" + u.Name + "]").Distinct().Take(4));
+            var references = string.Join("\n", (view?.ForFile(visual.File) ?? Array.Empty<ReportUsage>()).Select(u => u.Table + "[" + u.Name + "]").Distinct().Take(4));
             var button = new Button { Width = Math.Max(1, visual.Width), Height = Math.Max(1, visual.Height), Opacity = visual.Hidden ? 0.4 : 1,
                 Background = visual == selectedVisual ? Brush(219, 235, 252) : Brush(239, 243, 249), BorderBrush = Brush(97, 126, 151), BorderThickness = new Thickness(visual == selectedVisual ? 3 : 1),
-                Content = new TextBlock { Text = visual.Type + "\n" + (visual.Title.Length == 0 ? visual.Id : visual.Title) + "\nz=" + visual.Z + (visual.Hidden ? " · hidden" : "") + "\n" + references, FontSize = 22, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(8) }, ToolTip = visual.Id };
+                Content = new TextBlock { Text = visual.Type + view?.Badges(visual.File) + "\n" + (visual.Title.Length == 0 ? visual.Id : visual.Title) + "\nz=" + visual.Z + "\n" + references, FontSize = 22, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(8) }, ToolTip = visual.Id };
             button.Click += (_, _) => SelectFile(visual.File); Canvas.SetLeft(button, visual.X); Canvas.SetTop(button, visual.Y); canvas.Children.Add(button);
         }
+        UpdateZoom();
     }
     private void Invalidate() { plan = null; reviewed.IsChecked = false; apply.IsEnabled = false; changes.ItemsSource = null; diff.Clear(); }
     private void ConfigureAction()
     {
         Invalidate(); parameters.Children.Clear(); fields.Clear(); if (gallery.SelectedItem is not ReportActionCard card) return;
         actionInfo.Text = card.Selection + " · " + card.Purpose + "\nOriginal PbiBench action · Microsoft public PBIR schemas · Local preview + backup";
-        string[] names = card.Id switch { "duplicate-page" => new[] { "Page name" }, "title" => new[] { "Title" }, "annotation" => new[] { "Name", "Value" }, "map-field" => new[] { "Kind (Measure/Column)", "From table", "From field", "To table", "To field" }, "copy-visual" => new[] { "Target report path", "Target page ID" }, _ => Array.Empty<string>() };
+        string[] names = card.Id switch { "duplicate-page" => new[] { "Page name" }, "title" => new[] { "Title" }, "annotation" => new[] { "Name", "Value" }, "map-field" => new[] { "Kind (Measure/Column)", "From table", "From field", "To table", "To field" }, "copy-visual" => new[] { "Target report path", "Target page ID", "Offset X", "Offset Y" }, "duplicate-visual" => new[] { "Offset X", "Offset Y" }, "batch" => new[] { "Hidden (keep/true/false)", "Title show (keep/true/false)", "Title (empty=keep)" }, "bookmark-rename" or "bookmark-duplicate" => new[] { "Bookmark name" }, _ => Array.Empty<string>() };
         foreach (var name in names) { var field = new TextBox { Width = 220, MaxLength = name == "Value" ? 2048 : 512, Margin = new Thickness(3) }; if (name.StartsWith("Kind", StringComparison.Ordinal)) field.Text = "Measure"; field.TextChanged += (_, _) => Invalidate(); fields[name] = field; parameters.Children.Add(Bar(new TextBlock { Text = name, Width = 140, Margin = new Thickness(3) }, field)); }
     }
     private async Task PreviewAsync()
@@ -158,14 +180,24 @@ public sealed class StudioWindow : Window
         switch (card.Id)
         {
             case "duplicate-page": prepared = actions.DuplicatePage(current, (selectedPage ?? throw new InvalidOperationException("Select a page.")).Id, Value("Page name")); break;
-            case "duplicate-visual": prepared = actions.DuplicateVisual(current, (selectedVisual ?? throw new InvalidOperationException("Select a visual.")).File, selectedPage!.Id); break;
-            case "copy-visual": prepared = actions.CopyVisual(current, (selectedVisual ?? throw new InvalidOperationException("Select a visual.")).File, await ReportIndex.OpenAsync(Value("Target report path"), lifetime.Token), Value("Target page ID")); break;
+            case "duplicate-visual": prepared = actions.DuplicateVisual(current, (selectedVisual ?? throw new InvalidOperationException("Select a visual.")).File, selectedPage!.Id, Offset("Offset X"), Offset("Offset Y")); break;
+            case "copy-visual": prepared = actions.CopyVisual(current, (selectedVisual ?? throw new InvalidOperationException("Select a visual.")).File, await ReportIndex.OpenAsync(Value("Target report path"), lifetime.Token), Value("Target page ID"), Offset("Offset X"), Offset("Offset Y")); break;
+            case "batch": prepared = actions.BatchVisualProperties(current, visualSelection.SelectedItems.Cast<ReportVisual>().Select(v => v.File), OptionalBool(Value("Hidden (keep/true/false)")), OptionalBool(Value("Title show (keep/true/false)")), string.IsNullOrEmpty(Value("Title (empty=keep)")) ? null : Value("Title (empty=keep)")); break;
+            case "bookmark-rename": case "bookmark-duplicate": prepared = actions.EditBookmark(current, selectedFile ?? "", Value("Bookmark name"), card.Id == "bookmark-duplicate"); break;
+            case "formatting-evidence": diff.Text = ReportActions.FormattingEvidence(current, selectedVisual?.File ?? throw new InvalidOperationException("Select a visual.")); return;
+            case "display-export":
+                var export = new SaveFileDialog { Filter = "Display names|*.json", FileName = "pbibench-display-names.json" };
+                if (export.ShowDialog(this) == true) await DisplayNameManifest.Extract(current).SaveAsync(export.FileName, lifetime.Token); return;
+            case "display-apply":
+                var import = new OpenFileDialog { Filter = "Display names|*.json", FileName = "pbibench-display-names.json" };
+                if (import.ShowDialog(this) != true) return; prepared = actions.ApplyDisplayNames(current, await DisplayNameManifest.ReadAsync(import.FileName, lifetime.Token)); break;
             case "title": prepared = actions.SetTitle(current, (selectedVisual ?? throw new InvalidOperationException("Select a visual.")).File, Value("Title")); break;
             case "annotation": prepared = actions.Annotate(current, selectedFile ?? "definition/report.json", Value("Name"), Value("Value")); break;
             case "map-field":
                 var target = new SemanticField(Value("To table"), Value("To field"), Value("Kind (Measure/Column)"));
                 if (model?.Fields.Contains(target) != true) throw new InvalidOperationException("Select a target field found in the local semantic model. Unverified mappings are read-only in this gallery.");
-                prepared = actions.ReplaceReference(current, new(Value("From table"), Value("From field"), target.Kind), target); break;
+                var from = new SemanticField(Value("From table"), Value("From field"), target.Kind);
+                prepared = actions.ReplaceReference(current, from, target); actionInfo.Text = "Mapping impact: " + view!.Impact(from); break;
             case "restore":
                 var dialog = new OpenFileDialog { Filter = "Report backup manifest|manifest.json", InitialDirectory = Path.Combine(current.Root, ".pbibench", "report-backups") };
                 if (dialog.ShowDialog(this) != true) return; prepared = await engine.PreviewRestoreAsync(current.Root, dialog.FileName, lifetime.Token); break;

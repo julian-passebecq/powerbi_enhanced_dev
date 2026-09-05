@@ -62,7 +62,7 @@ Automation, Data Exploration, QA, workspace logic, AI export, CLI, etc. evolve u
 
 `module_catalog.json` is the current runtime-readable ownership/version manifest. Feature Map joins module IDs to this catalog and shows lifecycle, capability version, runtime/process and update lane. `provenance.json` remains the source, license and upstream pin ledger. `FEATURE_CATALOG.md` joins all three source catalogs deterministically.
 
-Module versions describe independently evolving capability revisions. Shared product assemblies still use product build versions; a module can span a portable library and its net48-only integration UI. Catalog framework lists record the supported runtimes across those components. Separate-process Toolbox keeps its own assembly/product version (0.2.0).
+Module versions describe independently evolving capability revisions. Shared product assemblies still use product build versions; a module can span a portable library and its net48-only integration UI. Catalog framework lists record the supported runtimes across those components. Separate-process Toolbox keeps its own assembly/product version (0.3.0).
 
 Active, Selective, Independent, Incubating, On demand and Later are development lifecycles, not prohibitions. Isolate useful work in its owning module/update lane so it can continue without forcing unrelated upgrades. New UI/process modules must declare their owners, contracts, tests and dependency boundaries before integration.
 

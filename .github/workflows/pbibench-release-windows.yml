@@ -1,4 +1,4 @@
-name: V11 Windows Release module gate
+name: PbiBench Windows Release gate
 on:
   push:
     branches: [main]
@@ -23,18 +23,21 @@ jobs:
         run: dotnet build src/PbiBench.FabricToolbox/PbiBench.FabricToolbox.csproj -c Release --nologo
       - name: Release Fabric Toolbox WPF tests (offline)
         run: dotnet test tests/PbiBench.FabricToolbox.Tests/PbiBench.FabricToolbox.Tests.csproj -c Release --nologo --logger "trx;LogFileName=toolbox-net10.trx" --results-directory artifacts/ci-release
-      - name: Check Toolbox output isolation
-        shell: pwsh
-        run: |
-          $forbidden = Get-ChildItem src/PbiBench.FabricToolbox/bin/Release/net10.0-windows -File -Recurse | Where-Object { $_.Name -match '^(TabularEditor|TOMWrapper|PbiBench\.(App|ModelEditor|Semantic))(\.|$)' }
-          if ($forbidden) { throw 'Fabric Toolbox contains Semantic IDE / TE2 runtime dependencies.' }
+      - name: Release V2 tests
+        run: dotnet test tests/PbiBench.V2.Tests/PbiBench.V2.Tests.csproj -c Release -f net10.0 --nologo --logger "trx;LogFileName=v2-net10.trx" --results-directory artifacts/ci-release
+      - name: Release Report Studio build
+        run: dotnet build src/PbiBench.ReportStudio/PbiBench.ReportStudio.csproj -c Release --nologo
+      - name: Isolated process outputs
+        run: ./scripts/test-process-isolation.ps1 -Configuration Release
+      - name: Offline Report Studio WPF smoke
+        run: ./scripts/invoke-report-smoke.ps1 -Configuration Release
       - name: Preserve test evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v11-windows-release-test-results
-          path: artifacts/ci-release/*.trx
+          name: pbibench-windows-release-evidence
+          path: |
+            artifacts/ci-release/*.trx
+            artifacts/ci-release/report-smoke*
           if-no-files-found: warn
-      # Hosted scope: portable dual-target modules and the isolated Toolbox build and offline WPF tests.
-      # No private credentials, live Power BI/Fabric, TE2 bootstrap, main WPF/native
-      # tests, GUI smoke or package claim. The local Release gate owns those checks.
+      # Offline coverage only; no hosted live TE2/Desktop/XMLA/Fabric claim.

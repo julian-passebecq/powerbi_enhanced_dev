@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "productVersion": "2.1.0",
-  "baselineCommit": "bbb29c3ab7adb2e7b9c04bf71b618354847e3e92",
+  "productVersion": "2.2.0",
+  "baselineCommit": "1e02628f7b35af0e5b92c0452f86d3b102562cc2",
   "modules": [
     {
       "id": "semantic-ide",
       "displayName": "Semantic IDE / TE2++",
       "kind": "InProcess",
       "lifecycle": "Active",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "entryPoint": "PbiBench.exe",
       "targetFrameworks": [
         "net48"
@@ -86,7 +86,7 @@
       "displayName": "C# automation",
       "kind": "Library",
       "lifecycle": "Active",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "entryPoint": "Automate / C# workspaces",
       "targetFrameworks": [
         "net10.0",
@@ -152,7 +152,8 @@
       ],
       "protectingTests": [
         "tests/PbiBench.V11.Tests/FabricOperationsTests.cs",
-        "tests/PbiBench.Adapters.Tests/FabricTransportTests.cs"
+        "tests/PbiBench.Adapters.Tests/FabricTransportTests.cs",
+        "tests/PbiBench.V11.Tests/FabricReportSnapshotTests.cs"
       ]
     },
     {
@@ -160,7 +161,7 @@
       "displayName": "Fabric Toolbox",
       "kind": "SeparateProcess",
       "lifecycle": "Independent",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "entryPoint": "fabric-toolbox/PbiBench.FabricToolbox.exe",
       "targetFrameworks": [
         "net10.0-windows"
@@ -187,7 +188,8 @@
       ],
       "protectingTests": [
         "tests/PbiBench.FabricToolbox.Tests/ToolboxTests.cs",
-        "tests/PbiBench.V11.Tests/ModuleCatalogTests.cs"
+        "tests/PbiBench.V11.Tests/ModuleCatalogTests.cs",
+        "tests/PbiBench.V11.Tests/FabricReportSnapshotTests.cs"
       ]
     },
     {
@@ -345,33 +347,11 @@
       ]
     },
     {
-      "id": "future-report-tooling",
-      "displayName": "Future report tooling",
-      "kind": "Lab",
-      "lifecycle": "Later",
-      "version": "0.0.0",
-      "entryPoint": "Planned report module",
-      "targetFrameworks": [
-        "planned"
-      ],
-      "ownerProjects": [
-        "planned"
-      ],
-      "updateLane": "report-tooling",
-      "upstreamDependencies": [],
-      "contracts": [
-        "Report selection handoff (planned)"
-      ],
-      "dependsOnModules": [],
-      "forbiddenDependencies": [],
-      "protectingTests": []
-    },
-    {
       "id": "pbir",
       "displayName": "PBIP / PBIR contracts and change plans",
       "kind": "Library",
       "lifecycle": "Active",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "entryPoint": "PbiBench.Pbir.dll",
       "targetFrameworks": [
         "net10.0",
@@ -396,7 +376,9 @@
       ],
       "protectingTests": [
         "tests/PbiBench.V2.Tests/ReportTests.cs",
-        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
+        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs",
+        "tests/PbiBench.V2.Tests/ReportDepthTests.cs",
+        "tests/PbiBench.V2.Tests/SemanticCatalogTests.cs"
       ]
     },
     {
@@ -404,7 +386,7 @@
       "displayName": "Report Studio",
       "kind": "SeparateProcess",
       "lifecycle": "Independent",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "entryPoint": "report-studio/PbiBench.ReportStudio.exe",
       "targetFrameworks": [
         "net10.0-windows"
@@ -431,7 +413,9 @@
       ],
       "protectingTests": [
         "tests/PbiBench.V2.Tests/ReportTests.cs",
-        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
+        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs",
+        "tests/PbiBench.V2.Tests/ReportDepthTests.cs",
+        "tests/PbiBench.V2.Tests/SemanticCatalogTests.cs"
       ]
     },
     {
@@ -439,7 +423,7 @@
       "displayName": "Local semantic / report lineage",
       "kind": "Library",
       "lifecycle": "Active",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "entryPoint": "PbiBench.Pbir.dll",
       "targetFrameworks": [
         "net10.0",
@@ -464,7 +448,9 @@
       ],
       "protectingTests": [
         "tests/PbiBench.V2.Tests/ReportTests.cs",
-        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
+        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs",
+        "tests/PbiBench.V2.Tests/ReportDepthTests.cs",
+        "tests/PbiBench.V2.Tests/SemanticCatalogTests.cs"
       ]
     },
     {
@@ -472,7 +458,7 @@
       "displayName": "Bravo",
       "kind": "ExternalProcess",
       "lifecycle": "OnDemand",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "entryPoint": "Bravo.exe",
       "targetFrameworks": [
         "external"
@@ -497,7 +483,7 @@
       "displayName": "Power BI Desktop",
       "kind": "ExternalProcess",
       "lifecycle": "OnDemand",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "entryPoint": "PBIDesktop.exe",
       "targetFrameworks": [
         "external"
@@ -522,7 +508,7 @@
       "displayName": "VS Code",
       "kind": "ExternalProcess",
       "lifecycle": "OnDemand",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "entryPoint": "Code.exe",
       "targetFrameworks": [
         "external"

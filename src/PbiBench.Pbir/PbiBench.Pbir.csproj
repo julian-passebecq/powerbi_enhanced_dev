@@ -1,12 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><TargetFrameworks>net10.0;net48</TargetFrameworks><Version>2.1.0</Version></PropertyGroup>
+  <PropertyGroup><TargetFrameworks>net10.0;net48</TargetFrameworks><Version>2.2.0</Version></PropertyGroup>
   <ItemGroup><ProjectReference Include="../PbiBench.Core/PbiBench.Core.csproj" /></ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <PackageReference Include="JsonSchema.Net" Version="7.3.1" />
+    <EmbeddedResource Include="../../schemas/pbir-write-policy.json" LogicalName="PbiBench.Pbir.WritePolicy" />
     <EmbeddedResource Include="../../schemas/microsoft/**/*.json" LogicalName="PbiBenchSchemas/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
-    <Compile Remove="ReportChanges.cs;ReportActions.cs;ReportValidation.cs" />
+    <Compile Remove="ReportChanges.cs;ReportActions.cs;ReportValidation.cs;PbirWritePolicy.cs;ReportViewSnapshot.cs;ReportActions.Depth.cs;ReportActions.DisplayNames.cs" />
   </ItemGroup>
 </Project>

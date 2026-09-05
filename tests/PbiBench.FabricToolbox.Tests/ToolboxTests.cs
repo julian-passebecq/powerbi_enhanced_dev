@@ -1,4 +1,5 @@
 using System.Net;
+using System.IO;
 using System.Net.Http;
 using System.Reflection;
 using System.Windows.Controls;
@@ -12,6 +13,30 @@ namespace PbiBench.FabricToolbox.Tests;
 
 public sealed class ToolboxTests
 {
+    [Fact] public Task ReportSnapshotRequiresExplicitRetrievalAndLeavesAuthInToolbox() => Sta(async () =>
+    {
+        var root = Path.Combine(Path.GetTempPath(), "toolbox-snapshot-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(root);
+        using var handler = new SnapshotResponses(); var window = new ToolboxWindow(new HttpClient(handler), new Auth());
+        try
+        {
+            var report = Inventory()[1]; window.SetInventory(new[] { report }); Field<DataGrid>(window, "items").SelectedIndex = 0;
+            Assert.Equal(0, handler.Calls);
+            var result = await window.RetrieveReportSnapshotAsync(report, Path.Combine(root, "new-report"), default);
+            Assert.Equal(1, handler.Calls); Assert.Equal("PBIR-Legacy", result.Format); Assert.Contains(result.Directory, Field<TextBlock>(window, "snapshotNotice").Text);
+            Assert.DoesNotContain("fixture-token", File.ReadAllText(result.ManifestFile));
+            Assert.DoesNotContain(AppDomain.CurrentDomain.GetAssemblies(), a => a.GetName().Name is "TabularEditor" or "TOMWrapper" or "PbiBench.Semantic");
+        }
+        finally { window.Close(); Directory.Delete(root, true); }
+    });
+    private sealed class SnapshotResponses : HttpMessageHandler
+    {
+        public int Calls;
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Calls++; Assert.Equal(HttpMethod.Post, request.Method); Assert.EndsWith("/reports/33333333-3333-3333-3333-333333333333/getDefinition", request.RequestUri!.AbsolutePath);
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"definition\":{\"format\":\"PBIR-Legacy\",\"parts\":[{\"path\":\"definition.pbir\",\"payload\":\"e30=\",\"payloadType\":\"InlineBase64\"},{\"path\":\"report.json\",\"payload\":\"e30=\",\"payloadType\":\"InlineBase64\"}]}}") });
+        }
+    }
     [Fact] public Task OpeningFilteringInspectingAndLinkingItemsDoNotSendRequests() => Sta(async () =>
     {
         using var handler = new Responses(); var window = new ToolboxWindow(new HttpClient(handler), new Auth());

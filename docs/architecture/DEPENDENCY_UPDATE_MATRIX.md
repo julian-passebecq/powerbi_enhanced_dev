@@ -20,5 +20,5 @@
 - TE2 remains 2.28.0 / `75f10e331b8de0dda5c213180b9b8867b4a38191`; existing patches unchanged.
 - C# assistance: original `PbiBench.CSharp.LanguageService` 11.1.0; no Roslyn dependency. UI reuses existing FCTB 2.16.24. Its LGPL-3.0 notice/source provenance stays in the upstream packaging lane. Protect with portable V11 language tests and native/WPF scripting checks.
 - Export: original `PbiBench.AI.ContextExport` 11.1.0, version-1 ZIP/schema, using Core's existing System.Text.Json 9.0.9 on net48 and framework JSON on net10. Protect scope/redaction/bounds/cancellation/checksums and native capture.
-- Toolbox: original net10.0-windows application 0.2.0, using unchanged Microsoft.Identity.Client 4.84.2 and Microsoft.Data.SqlClient 6.1.6 (MIT verified from local package nuspec). It ships in `fabric-toolbox/` with its own dependency/runtime manifests.
+- Toolbox: original net10.0-windows application 0.3.0, using unchanged Microsoft.Identity.Client 4.84.2 and Microsoft.Data.SqlClient 6.1.6 (MIT verified from local package nuspec). It ships in `fabric-toolbox/` with its own dependency/runtime manifests.
 - Runtime feature pins are embedded from `provenance.json`. Existing `docs/TE2_NUGET_LICENSE_INVENTORY.json` and extracted package notices remain the dependency-level license inventory; TE2's MIT grant does not replace those notices.

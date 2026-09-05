@@ -50,10 +50,23 @@ public partial class MainWindow
                 RequireModel();
                 if (card.Id == "profile") { GoTo("Data"); return; }
                 if (card.Id == "references") { GoTo("QA"); ScanBpa(this, new RoutedEventArgs()); return; }
+                if (card.Id == "translations") { OpenAuthoringTool("Translations", true); return; }
+                if (card.Id == "annotation")
+                {
+                    var preview = new PbiBench.Semantic.ModelAuthoring.SemanticAnnotationService(editor.Handler!).Preview(editor.Selection.Select(o => new PbiBench.Semantic.ModelAuthoring.SemanticAnnotationRequest(o, values["Name"], values["Value"])));
+                    AuthoringReview.Show(this, preview, () => editor.Handler, () => Run(UpdateSessionAsync)); return;
+                }
+                if (card.Id == "inactive")
+                {
+                    var text = string.Join("\n", editor.Handler!.Model.Relationships.Where(r => !r.IsActive).Select(r => r is SingleColumnRelationship relation ? relation.FromTable.Name + "[" + relation.FromColumn.Name + "] → " + relation.ToTable.Name + "[" + relation.ToColumn.Name + "] · " + relation.Name : r.Name)) + "\n\nMeasures mentioning USERELATIONSHIP (advisory):\n" +
+                        string.Join("\n", editor.Handler.Model.AllMeasures.Where(m => (m.Expression ?? "").IndexOf("USERELATIONSHIP", StringComparison.OrdinalIgnoreCase) >= 0).Select(m => SemanticModelService.ObjectPath(m)));
+                    PreviewDialog.Show(this, "Inactive relationship usage", "Read-only local metadata. Inspect DAX to confirm the relationship used.", new[] { new PreviewRow("Model", "Inactive relationship evidence", "", text, "No changes") }, false, "Read-only"); return;
+                }
                 var options = new AutomationOptions { AllMeasuresWhenSelectionEmpty = false };
                 if (card.Id == "measure-table") options.MeasureTableName = values["Table name"];
                 ReviewPreview(automation!.Preview(card.Id == "measure-table" ? AutomationActionId.CreateMeasureTable : AutomationActionId.FormatMeasures, editor.Selection, options));
-            })) });
+            }), source => { automationWorkspace.SelectedIndex = 1; scriptAutomation.InsertGalleryDraft(source); }, settingsDirectory) });
+        editor.SelectionChanged += (_, _) => ((PowerBiGalleryView)((TabItem)automationWorkspace.Items[2]).Content).RefreshContext();
         backgroundTasksView = new BackgroundTasksView(backgroundTasks);
         OutputTabs.Items.Add(new TabItem { Header = "Background tasks", Content = backgroundTasksView });
         BpaCategory.Items.Clear(); BpaCategory.Items.Add(new ComboBoxItem { Content = "All categories" });
@@ -62,6 +75,7 @@ public partial class MainWindow
     }
     private void RefreshQualityModel()
     {
+        RefreshReportImpactGuard();
         var handler = editor.Handler; var server = editor.Server; var database = server == null ? null : editor.Database;
         var fingerprint = handler == null ? null : new SemanticModelService(handler).Fingerprint();
         if (!ReferenceEquals(handler, qualityHandler) || fingerprint != qualityFingerprint || server != qualityServer || database != qualityDatabase)

@@ -68,6 +68,22 @@ public sealed class CSharpAutomationTests
         Assert.False(Directory.Exists(Path.Combine(settings, "TrustedScriptSnapshots"))); Assert.Equal(before, new SemanticModelService(handler).Fingerprint());
         // Detached recovery snapshots remain drafts; none are execution approvals.
     });
+    [Fact] public Task AdvancedGalleryDraftsCompileButInsertionNeverGrantsTrustOrRuns() => Sta(() =>
+    {
+        using var handler = new TabularModelHandler(1702); var table = handler.Model.AddTable("Sales"); var measure = table.AddMeasure("Revenue", "1");
+        var before = new SemanticModelService(handler).Fingerprint();
+        using var view = new ScriptAutomationView(() => handler, () => new[] { measure }, () => { });
+        foreach (var card in PowerBiGallery.All.Where(c => c.ExecutionMode == GalleryExecutionMode.TrustedDraft))
+        {
+            var source = PowerBiGallery.GenerateDraft(card, new[] { new AutomationSymbol("Measure", measure.Name, table.Name, true) }, new Dictionary<string, string>());
+            var diagnostics = TrustedScriptRunner.Validate(source); Assert.DoesNotContain(diagnostics, d => !d.IsWarning);
+            Field<CheckBox>(view, "trust").IsChecked = true; view.InsertGalleryDraft(source);
+            Assert.Equal(source.Replace("\r\n", "\n"), Field<CSharpWorkspaceView>(view, "trustedSource").Text.Replace("\r\n", "\n"));
+            Assert.False(Field<CheckBox>(view, "trust").IsChecked); Assert.Null(Field<string?>(view, "compiledTrustedSource"));
+            Assert.Equal(before, new SemanticModelService(handler).Fingerprint());
+        }
+        return Task.CompletedTask;
+    });
     private static T Field<T>(object owner, string name) => (T)owner.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(owner)!;
     private static Task Sta(Func<Task> action)
     {

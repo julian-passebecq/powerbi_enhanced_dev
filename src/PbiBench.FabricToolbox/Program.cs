@@ -53,9 +53,11 @@ public sealed partial class ToolboxWindow : Window
         this.http = http; this.auth = auth; catalog = new(http, auth); sql = new(auth); operations = new FabricOperationsService(http, auth);
         Title = "PbiBench Fabric Toolbox"; Width = 1160; Height = 780; MinWidth = 800; MinHeight = 550;
         var root = new DockPanel { Margin = new Thickness(18) }; DockPanel.SetDock(status, Dock.Bottom); root.Children.Add(status); root.Children.Add(pages); Content = root;
-        Add("Home", Note("Fabric Toolbox V0.2\n\nSearch workspace items, inspect identifiers, export filtered inventory, and review recent job instances in Operations. Use OneLake / Data for bounded SQL source previews.\n\nSign in explicitly in Settings. Operations refresh is read-only and manual; no job starts, retries or cancellations are submitted. Tokens stay in memory."));
+        Add("Home", Note("Fabric Toolbox V0.3\n\nSearch workspace items, inspect identifiers, export filtered inventory, and review recent job instances in Operations. Use OneLake / Data for bounded SQL source previews.\n\nSign in explicitly in Settings. Operations refresh is read-only and manual; no job starts, retries or cancellations are submitted. Tokens stay in memory."));
         var explorer = new DockPanel(); var bar = Bar(Button("Load workspaces", async ct => { workspaces.ItemsSource = await catalog.ListWorkspacesAsync(ct); }), workspaces,
-            Button("Load all items", LoadItemsAsync), Button("Browse source", BrowseAsync), Button("Export selection to Semantic IDE…", ExportSelectionAsync));
+            Button("Load all items", LoadItemsAsync), Button("Browse source", BrowseAsync), Button("Export selection to Semantic IDE…", ExportSelectionAsync),
+            Button("Get report definition…", GetReportSnapshotAsync), Button("Open last report snapshot", _ => { OpenReportSnapshot(); return Task.CompletedTask; }));
+        DockPanel.SetDock(snapshotNotice, Dock.Bottom); explorer.Children.Add(snapshotNotice);
         DockPanel.SetDock(bar, Dock.Top); explorer.Children.Add(bar); ConfigureInventory(explorer); Add("Workspaces", explorer);
         workspaces.SelectionChanged += (_, _) => ClearWorkspace();
         var source = new DockPanel(); var sourceBar = new StackPanel(); DockPanel.SetDock(sourceBar, Dock.Top); source.Children.Add(sourceBar); sourceBar.Children.Add(sourceInfo);
@@ -68,7 +70,7 @@ public sealed partial class ToolboxWindow : Window
         var settings = new StackPanel(); settings.Children.Add(Note("Tenant GUID")); settings.Children.Add(tenant); settings.Children.Add(Note("Public-client app GUID · http://localhost redirect")); settings.Children.Add(client);
         var authBar = new WrapPanel(); foreach (var audience in new[] { FabricAudience.Fabric, FabricAudience.OneLake, FabricAudience.Sql }) authBar.Children.Add(Button("Authorize " + audience, ct => auth.SignInAsync(new(tenant.Text.Trim(), client.Text.Trim()), audience, ct)));
         authBar.Children.Add(Button("Sign out", async ct => { await auth.SignOutAsync(ct); workspaces.ItemsSource = null; ClearWorkspace(); })); settings.Children.Add(authBar);
-        settings.Children.Add(Note("Ownership: PbiBench.FabricToolbox 0.2.0. Transport/auth/SQL: shared PbiBench.Fabric; Microsoft.Identity.Client 4.84.2, Microsoft.Data.SqlClient 6.1.6. Independent Fabric update lane.\n\nUse a .pbifabric.json handoff in Semantic IDE Apps / Tools → Import Fabric selection. The file carries selection identifiers only and cannot authorize a write.")); Add("Settings / About", settings);
+        settings.Children.Add(Note("Ownership: PbiBench.FabricToolbox 0.3.0. Transport/auth/SQL: shared PbiBench.Fabric; Microsoft.Identity.Client 4.84.2, Microsoft.Data.SqlClient 6.1.6. Independent Fabric update lane.\n\nUse a .pbifabric.json handoff in Semantic IDE Apps / Tools → Import Fabric selection. The file carries selection identifiers only and cannot authorize a write.")); Add("Settings / About", settings);
         var cancel = new Button { Content = "Cancel current request", Margin = new Thickness(4), HorizontalAlignment = HorizontalAlignment.Left }; cancel.Click += (_, _) => pending?.Cancel(); DockPanel.SetDock(cancel, Dock.Bottom); root.Children.Insert(1, cancel);
         Closed += (_, _) => { pending?.Cancel(); http.Dispose(); };
     }

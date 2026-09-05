@@ -1,0 +1,15 @@
+{
+  "policyVersion": 1,
+  "schemaBundleCommit": "83ce11373faada0d01e76264a5cceb0ba70003e6",
+  "supportedContracts": [
+    {
+      "definitionVersion": "4.0",
+      "definitionSchemas": [
+        "https://developer.microsoft.com/json-schemas/fabric/item/report/definitionProperties/1.0.0/schema.json",
+        "https://developer.microsoft.com/json-schemas/fabric/item/report/definitionProperties/2.0.0/schema.json"
+      ],
+      "metadataVersion": "2.0.0",
+      "metadataSchema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/versionMetadata/1.0.0/schema.json"
+    }
+  ]
+}

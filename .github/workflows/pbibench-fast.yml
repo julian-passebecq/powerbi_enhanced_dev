@@ -1,12 +1,15 @@
-name: V11 portable and Fabric fast gate
+name: PbiBench fast gate
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   portable-and-toolbox:
     runs-on: windows-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -15,6 +18,7 @@ jobs:
       - run: dotnet test tests/PbiBench.V11.Tests/PbiBench.V11.Tests.csproj -f net10.0 --nologo
       - run: dotnet build src/PbiBench.FabricToolbox/PbiBench.FabricToolbox.csproj --nologo
       - run: dotnet test tests/PbiBench.FabricToolbox.Tests/PbiBench.FabricToolbox.Tests.csproj --nologo
-      # Intentionally excludes the pinned TE2 build, net48 native tests, main WPF
-      # compile/smoke and packaging. scripts/invoke-v11-gate.ps1 runs those locally
-      # with the prebuilt pinned upstream toolchain. No live integration claim.
+      - run: dotnet test tests/PbiBench.V2.Tests/PbiBench.V2.Tests.csproj -f net10.0 --nologo
+      - run: dotnet build src/PbiBench.ReportStudio/PbiBench.ReportStudio.csproj --nologo
+      - run: ./scripts/test-process-isolation.ps1 -Configuration Debug
+      # Offline coverage only; no hosted live TE2/Desktop/XMLA/Fabric claim.

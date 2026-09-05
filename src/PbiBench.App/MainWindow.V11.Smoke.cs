@@ -53,7 +53,7 @@ public partial class MainWindow
             try
             {
                 featureWindow.Show(); await PaintAsync();
-                Check(featureWindow.Map.VisibleRows.Count == 23 && featureWindow.Pages.Items.Count == 2, "Apps / Tools About opens the offline Feature Map and preserves Provenance", checks);
+                Check(featureWindow.Map.VisibleRows.Count == FeatureCatalog.Bundled().Features.Count && featureWindow.Pages.Items.Count == 2, "Apps / Tools About opens the offline Feature Map and preserves Provenance", checks);
                 featureWindow.Map.SelectFilter(FeatureMapFilter.Labs);
                 Check(featureWindow.Map.VisibleRows.Count == 4 && featureWindow.Map.VisibleRows.All(r => r.Status is "Labs" or "Future"), "Feature Map shows incubating and future areas with evolvable lifecycles", checks);
                 featureWindow.Map.SelectFilter(FeatureMapFilter.Te3Gaps);

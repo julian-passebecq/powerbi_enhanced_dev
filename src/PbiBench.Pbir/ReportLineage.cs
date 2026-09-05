@@ -55,27 +55,6 @@ public static class ReportLineage
         }
         Visit(root, "", new(StringComparer.Ordinal)); return result;
     }
-    public static Task<LocalSemanticCatalog> ReadLocalModelAsync(string? modelPath, CancellationToken ct) => Task.Run(() =>
-    {
-        if (modelPath == null || !Directory.Exists(modelPath)) return new LocalSemanticCatalog(Array.Empty<SemanticField>(), false, "No local semantic model. Remote references remain unverified; authentication belongs to Fabric Toolbox.");
-        var fields = new List<SemanticField>(); var complete = true; var tableCount = 0;
-        // Read only table declaration files. Expressions and partition/source text are never exported.
-        foreach (var path in Disk.Enumerate(modelPath, ct).Where(p => p.EndsWith(".tmdl", StringComparison.OrdinalIgnoreCase) && p.Replace('\\', '/').IndexOf("/tables/", StringComparison.OrdinalIgnoreCase) >= 0))
-        {
-            string? table = null; var tableIndent = -1;
-            foreach (var line in Disk.ReadText(path).Split('\n'))
-            {
-                ct.ThrowIfCancellationRequested();
-                var match = Regex.Match(line.TrimEnd('\r'), @"^(\s*)(table|column|measure)\s+('(?:[^']|'')*'|[^=\r\n]+?)(?:\s*=.*)?\s*$", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
-                if (!match.Success) continue;
-                var indent = match.Groups[1].Value.Length; var kind = match.Groups[2].Value; var name = match.Groups[3].Value.Trim();
-                if (name.StartsWith("'", StringComparison.Ordinal) && name.EndsWith("'", StringComparison.Ordinal)) name = name.Substring(1, name.Length - 2).Replace("''", "'");
-                if (kind == "table" && indent == 0) { table = name; tableIndent = indent; tableCount++; }
-                else if (table != null && indent == tableIndent + 1) fields.Add(new(table, name, kind == "measure" ? "Measure" : "Column"));
-                else if (kind is "measure" or "column") complete = false;
-            }
-        }
-        // TMDL indentation can use tabs or spaces. Unsupported layouts are explicitly partial instead of declaring absent fields broken.
-        return new LocalSemanticCatalog(Array.AsReadOnly(fields.Distinct().ToArray()), complete && tableCount > 0, tableCount > 0 ? (complete ? "Local TMDL declarations indexed." : "Partial TMDL declaration index; absence is unverified.") : "No supported local TMDL tables found.");
-    }, ct);
+    public static Task<LocalSemanticCatalog> ReadLocalModelAsync(string? modelPath, CancellationToken ct) =>
+        Task.Run(() => TmdlDeclarationReader.Read(modelPath, ct), ct);
 }

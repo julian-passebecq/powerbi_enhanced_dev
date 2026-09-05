@@ -81,7 +81,7 @@ public sealed class ReportChangeEngine(ReportValidator validator)
             foreach (var change in plan.Changes)
             {
                 var target = CheckTarget(plan.Root, change.Path); AssertHash(target, change.BeforeHash);
-                Atomic(target, change.AfterBytes); applied.Add(change);
+                Atomic(target, change.AfterBytes, change.BeforeHash); applied.Add(change);
             }
             var after = await ReportIndex.OpenAsync(plan.Root, CancellationToken.None).ConfigureAwait(false);
             foreach (var file in plan.Changes) AssertHash(CheckTarget(plan.Root, file.Path), file.AfterHash);
@@ -93,7 +93,7 @@ public sealed class ReportChangeEngine(ReportValidator validator)
         {
             var failures = new List<Exception> { error };
             foreach (var change in applied.AsEnumerable().Reverse())
-                try { var target = CheckTarget(plan.Root, change.Path); AssertHash(target, change.AfterHash); Atomic(target, change.BeforeBytes); }
+                try { var target = CheckTarget(plan.Root, change.Path); AssertHash(target, change.AfterHash); Atomic(target, change.BeforeBytes, change.AfterHash); }
                 catch (Exception rollback) { failures.Add(rollback); }
             if (failures.Count > 1) throw new AggregateException("Rollback encountered a changed/locked file. Review the durable backup: " + manifest, failures);
             throw;
@@ -131,7 +131,7 @@ public sealed class ReportChangeEngine(ReportValidator validator)
     }
     private static void AssertHash(string path, string? hash)
     { if ((File.Exists(path) ? Disk.Hash(Disk.Read(path)) : null) != hash) throw new InvalidOperationException("Stale file; preview again: " + Path.GetFileName(path)); }
-    private static void Atomic(string path, byte[]? bytes)
+    private static void Atomic(string path, byte[]? bytes, string? expectedHash = null)
     {
         Disk.CheckLinks(path);
         if (bytes == null) { File.Delete(path); return; }
@@ -139,7 +139,15 @@ public sealed class ReportChangeEngine(ReportValidator validator)
         try
         {
             using (var stream = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough)) { stream.Write(bytes, 0, bytes.Length); stream.Flush(true); }
-            Disk.CheckLinks(path); if (File.Exists(path)) File.Replace(temp, path, null); else File.Move(temp, path);
+            for (var attempt = 0; ; attempt++)
+            {
+                // Windows scanners can briefly deny delete-sharing. Retry only those failures,
+                // retaining the exact reviewed precondition at every attempt.
+                Disk.CheckLinks(path); AssertHash(path, expectedHash);
+                try { if (File.Exists(path)) File.Replace(temp, path, null); else File.Move(temp, path); break; }
+                catch (IOException error) when (attempt < 4 && (error.HResult & 0xffff) is 32 or 33 or 1175 or 1176)
+                { Thread.Sleep(25 * (attempt + 1)); }
+            }
         }
         finally { if (File.Exists(temp)) File.Delete(temp); }
     }

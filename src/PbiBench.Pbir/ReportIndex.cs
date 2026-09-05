@@ -71,6 +71,18 @@ public sealed class ReportIndex
     internal static JsonNode? At(JsonNode? node, params string[] path) { foreach (var key in path) node = (node as JsonObject)?[key]; return node; }
     private static double Number(JsonObject? node, string key, double fallback = 0) => double.TryParse(node?[key]?.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var value) && !double.IsNaN(value) && !double.IsInfinity(value) ? value : fallback;
     public static Task<ReportIndex> OpenAsync(string input, CancellationToken ct) => Task.Run(() => Open(input, ct), ct);
+    public static Task<IReadOnlyList<string>> CandidatesAsync(string input, CancellationToken ct) => Task.Run<IReadOnlyList<string>>(() =>
+    {
+        ct.ThrowIfCancellationRequested(); var full = System.IO.Path.GetFullPath(input);
+        if (File.Exists(full) && full.EndsWith(".pbip", StringComparison.OrdinalIgnoreCase))
+        {
+            var project = Disk.Parse(Disk.ReadText(full));
+            return Array.AsReadOnly((project["artifacts"] as JsonArray ?? new()).Select(a => At(a, "report", "path")?.ToString()).Where(p => p != null)
+                .Select(p => Disk.Resolve(System.IO.Path.GetDirectoryName(full)!, p!)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
+        }
+        if (Directory.Exists(full) && !File.Exists(System.IO.Path.Combine(full, "definition.pbir"))) return Discover(full, ct);
+        return Array.AsReadOnly(new[] { full });
+    }, ct);
     private static ReportIndex Open(string input, CancellationToken ct)
     {
         var full = System.IO.Path.GetFullPath(input); string? project = null;
@@ -94,7 +106,7 @@ public sealed class ReportIndex
         foreach (var path in Disk.Enumerate(full, ct))
         {
             var relative = path.Substring(full.TrimEnd('\\', '/').Length + 1).Replace('\\', '/');
-            if (relative == "definition.pbir" || relative.StartsWith("definition/", StringComparison.Ordinal) && relative.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            if (relative is "definition.pbir" or "report.json" || relative.StartsWith("definition/", StringComparison.Ordinal) && relative.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             {
                 var bytes = Disk.Read(path); total += bytes.Length;
                 if (total > 64 * 1024 * 1024) throw new InvalidDataException("Report definitions exceed 64 MiB.");

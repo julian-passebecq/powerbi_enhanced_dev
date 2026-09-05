@@ -56,6 +56,12 @@ public sealed class ScriptAutomationView : UserControl, IDisposable
         safeSource.NewDocument(RecipeCSharpGenerator.Generate(recipe).Source); trust.IsChecked = false; compiledTrustedSource = null;
         status.Text = "Gallery C# inserted for review. Nothing has run; Preview uses the bounded Safe interpreter.";
     }
+    public void InsertGalleryDraft(string source)
+    {
+        recipeDraft = null; ShowTool("Trusted Legacy"); trustedSource.IsReadOnly = false;
+        trustedSource.NewDocument(source); trust.IsChecked = false; compiledTrustedSource = null;
+        status.Text = "Gallery draft inserted as text only. Review exact source, compile and separately acknowledge trust. Nothing has run.";
+    }
 
     public ScriptAutomationView(Func<TabularModelHandler?> currentHandler, Func<IReadOnlyList<TabularNamedObject>> selection, Action changed, BackgroundTaskQueue? backgroundTasks = null, string? settingsDirectory = null)
     {

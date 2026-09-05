@@ -6,12 +6,30 @@ namespace PbiBench.V2.Tests;
 
 public sealed class GalleryAndToolsTests
 {
+    [Fact] public void GalleryDepthHasExplicitModesProvenanceAndBoundedDrafts()
+    {
+        Assert.Equal(20, PowerBiGallery.All.Count);
+        var drafts = PowerBiGallery.All.Where(c => c.ExecutionMode == GalleryExecutionMode.TrustedDraft).ToArray(); Assert.Equal(3, drafts.Length);
+        foreach (var card in drafts)
+        {
+            Assert.Equal(GalleryVerification.Preview, card.Verification); Assert.Null(card.ReferenceUrl);
+            var source = PowerBiGallery.GenerateDraft(card, new[] { new AutomationSymbol("Measure", "M\"[", "T'", true) }, new Dictionary<string, string>());
+            Assert.Contains("TRUSTED DRAFT ONLY", source);
+            Assert.Throws<ArgumentException>(() => PowerBiGallery.Generate(card, Array.Empty<AutomationSymbol>(), new Dictionary<string, string>()));
+            Assert.Throws<ArgumentException>(() => PowerBiGallery.GenerateDraft(card, Array.Empty<AutomationSymbol>(), new Dictionary<string, string> { [card.Parameters[0].Name] = new string('x', 1000) }));
+        }
+        var dynamic = PowerBiGallery.All.Single(c => c.Id == "dynamic-format");
+        Assert.Contains("1601", PowerBiGallery.CompatibilityReason(dynamic, new[] { new AutomationSymbol("Measure", "M", "T", true) }, 1600));
+        Assert.Equal("FormatStringExpression", PowerBiGallery.Generate(dynamic, new[] { new AutomationSymbol("Measure", "M", "T", true) }, new Dictionary<string, string>()).Steps.Single().Property);
+    }
     [Fact] public void CuratedGalleryIsNativeFirstAndEveryRecipeGeneratesBoundedSource()
     {
         Assert.True(PowerBiGallery.All.Count >= 10); Assert.True(PowerBiGallery.All.Count(c => c.Mode == "SAFE RECIPE") >= 6);
         foreach (var card in PowerBiGallery.All)
         {
-            Assert.NotEmpty(card.Risk); Assert.NotEmpty(card.License); Assert.StartsWith("https://", card.Source);
+            Assert.NotEmpty(card.Risk); Assert.NotEmpty(card.License);
+            if (card.ReferenceUrl != null) Assert.StartsWith("https://", card.ReferenceUrl);
+            if (card.ImplementationOrigin == ImplementationOrigin.PbiBenchNative) Assert.Null(card.ReferenceUrl);
             if (card.Mode != "SAFE RECIPE") continue;
             var kind = card.Selection.Split('/')[0];
             var recipe = PowerBiGallery.Generate(card, new[] { new AutomationSymbol(kind, "A_\"B", kind == "Table" ? null : "T'able", true, "Decimal") }, new Dictionary<string, string>());

@@ -32,12 +32,22 @@ Or create a portable folder with `./scripts/package-pass1.ps1 -Configuration Rel
 
 `Ctrl+K` opens workspace commands. `Ctrl+O` opens a model. `Ctrl+S` saves the model or the current DAX scratch query. Closing/replacing a dirty model requires the existing TE2 discard decision.
 
-## Scope and boundaries
+## V2 Pass 2 workflow
+
+- **Apps / Tools → Report Studio** opens PBIP/PBIR in a separate modern process. Search by page/visual/semantic field, use the page selector and zoom, then inspect lineage and schema badges. Multi-report projects offer a chooser.
+- In Report Studio, select visuals with Ctrl/Shift in **Visual selection** for batch visibility/title changes. Configure an action, inspect the exact files/diff, mark it reviewed and apply. Every write has a durable backup and a separate reviewed restore. Bookmark edits use tested schema versions; table/matrix formatting is detector-only.
+- **Semantic View → Report Usage** opens selected-field usages in Report Studio. Native semantic rename/delete/refactor checks fresh report impact first. **Ctrl+P → Report impact** exports a semantic catalog or imports display-name annotation mappings. TOM and PBIR changes remain separate transactions.
+- **Automate → Power BI C# Gallery** has 20 entries, search/categories/favorites/recent, provenance and selection compatibility. Advanced calculation-group/selector templates only insert draft text; trust and execution remain separate.
+- **Fabric Toolbox → Workspaces → Get report definition** explicitly retrieves a selected Report into a new local snapshot and opens Report Studio. Credentials stay in Toolbox. Legacy reports remain read-only; no remote report update is added.
+
+See `docs/V2_PASS2_IMPLEMENTATION.md` for supported versions, bounds and source evidence, and `docs/V2_PASS2_VERIFICATION.md` for validation. Use `scripts/invoke-v2-gate.ps1` for the impacted Release gate.
+
+## Original foundation and retained boundaries
 
 - Seven actions are implemented: format measures, explicit SUM measures, create/use a measure table, SummarizeBy None, display folders, description templates and a Last Refresh scaffold. New calculated/refresh tables contain metadata and require an explicit subsequent data refresh.
 - All new automation is local until the user saves/deploys. Native remote save/deploy paths review their model JSON or exact TMSL through an `ApprovedChangePlan` before writing. Arbitrary C# scripts remain trusted, unsandboxed TE2 code; these callbacks are not a security sandbox for user-authored code.
-- DAX Studio remains a separate process. Deep timings, query plans, data preview/query execution inside PbiBench, Fabric administration, PBIR authoring and AI are later passes.
+- DAX Studio remains a separate process for deep timings and query plans. Report Studio and Fabric Toolbox remain separate processes; the Pass-2 report flow is local engineering and read-only Fabric retrieval.
 - The relationship layout is deliberately basic; table roles are inferred from relationship cardinality. DAX formatting is conservative and token-preserving, with no online formatter call.
 - See `docs/BASELINE_V6.md`, `docs/TE2_INTEGRATION_PATCH_V6.md` and `docs/TE2_LICENSE_INVENTORY_V6.md` for upstream provenance, the small integration patch and retained notices.
 
-The original handoff documents remain the implementation contract. See `docs/PASS1_DELIVERY_V6.md` for actual verification and remaining manual acceptance checks.
+The original handoff documents describe the retained foundation. See `docs/PASS1_DELIVERY_V6.md` for its historical verification and `docs/V2_PASS2_VERIFICATION.md` for this pass.

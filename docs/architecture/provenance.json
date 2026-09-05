@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "productVersion": "2.1.0",
-  "baselineCommit": "bbb29c3ab7adb2e7b9c04bf71b618354847e3e92",
+  "productVersion": "2.2.0",
+  "baselineCommit": "1e02628f7b35af0e5b92c0452f86d3b102562cc2",
   "components": [
     {
       "id": "semantic.model-editor.te2",
@@ -195,13 +195,14 @@
       "ownerProject": "PbiBench.FabricToolbox",
       "sourceType": "pbibench-original",
       "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
-      "pin": "0.2.0",
+      "pin": "0.3.0",
       "localAdapter": "src/PbiBench.FabricToolbox/Program.cs",
       "license": "unknown-needs-review (original repository code)",
       "updateLane": "fabric",
       "localPatches": [],
       "protectingTests": [
-        "scripts/invoke-v11-gate.ps1"
+        "scripts/invoke-v2-gate.ps1",
+        "tests/PbiBench.FabricToolbox.Tests/ToolboxTests.cs"
       ]
     },
     {
@@ -665,7 +666,7 @@
       "ownerProject": "PbiBench.ReportStudio",
       "sourceType": "original",
       "upstream": "PbiBench",
-      "pin": "2.1.0",
+      "pin": "2.2.0",
       "localAdapter": "src/PbiBench.ReportStudio/StudioWindow.cs",
       "license": "Original PbiBench",
       "updateLane": "report-studio",
@@ -691,17 +692,18 @@
     },
     {
       "id": "automation.gallery",
-      "feature": "Curated Power BI automation patterns",
+      "feature": "20 original/native gallery entries and text-only advanced drafts",
       "ownerProject": "PbiBench.CSharp.LanguageService",
       "sourceType": "original",
-      "upstream": "TabularEditor/Scripts; official C# Script Library (curation reference only)",
-      "pin": "3430e5a474f9975a630819ccb0abeb265697364c",
+      "upstream": "PbiBench implementations; optional TabularEditor/Scripts pattern reference for selected recipes only",
+      "pin": "2.2.0 (implementation); optional references are not copied code",
       "localAdapter": "src/PbiBench.CSharp.LanguageService/PowerBiGallery.cs",
       "license": "Original PbiBench; reference repository MIT; no upstream script code copied",
       "updateLane": "csharp-language",
       "localPatches": [],
       "protectingTests": [
-        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
+        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs",
+        "tests/PbiBench.App.Tests/CSharpAutomationTests.cs"
       ]
     },
     {
@@ -732,6 +734,22 @@
       "localPatches": [],
       "protectingTests": [
         "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
+      ]
+    },
+    {
+      "id": "fabric.report-snapshot",
+      "feature": "Explicit read-only Fabric report getDefinition snapshots",
+      "ownerProject": "PbiBench.Fabric / PbiBench.FabricToolbox",
+      "sourceType": "pbibench-original",
+      "upstream": "Microsoft Fabric Report public API",
+      "pin": "API v1 verified 2026-09-05",
+      "localAdapter": "src/PbiBench.Fabric/FabricReportSnapshotService.cs",
+      "localPatches": [],
+      "license": "Original repository code; no upstream code copied",
+      "updateLane": "fabric",
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/FabricReportSnapshotTests.cs",
+        "tests/PbiBench.FabricToolbox.Tests/ToolboxTests.cs"
       ]
     }
   ]

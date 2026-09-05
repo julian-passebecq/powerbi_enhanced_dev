@@ -1,0 +1,19 @@
+{
+  "name": "PbiBench V2 Pass 2",
+  "baselineCommit": "1e02628f7b35af0e5b92c0452f86d3b102562cc2",
+  "targetVersion": "2.2.0",
+  "imagesIncluded": false,
+  "files": [
+    "ACCEPTANCE_GATE.md",
+    "AUDIT_V2_PASS1.md",
+    "CI_AND_CATALOG_FIXES.md",
+    "CSHARP_GALLERY_PASS2.md",
+    "FABRIC_REPORT_SNAPSHOT.md",
+    "MASTER_PROMPT_V2_PASS2.md",
+    "PACK_MANIFEST.json",
+    "PASTE_THIS_TO_CODEX.txt",
+    "PUBLIC_API_BASELINE.md",
+    "README_FIRST.md",
+    "REPORT_STUDIO_AND_IMPACT.md"
+  ]
+}

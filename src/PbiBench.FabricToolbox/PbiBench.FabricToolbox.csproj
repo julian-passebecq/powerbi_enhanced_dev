@@ -1,4 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF><Version>0.2.0</Version></PropertyGroup>
-  <ItemGroup><ProjectReference Include="../PbiBench.Fabric/PbiBench.Fabric.csproj" /></ItemGroup>
+  <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF><Version>0.3.0</Version></PropertyGroup>
+  <ItemGroup><ProjectReference Include="../PbiBench.Fabric/PbiBench.Fabric.csproj" /><ProjectReference Include="../PbiBench.DaxStudio/PbiBench.DaxStudio.csproj" /></ItemGroup>
 </Project>

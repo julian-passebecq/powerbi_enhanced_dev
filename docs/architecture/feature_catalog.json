@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "productVersion": "2.1.0",
-  "baselineCommit": "bbb29c3ab7adb2e7b9c04bf71b618354847e3e92",
+  "productVersion": "2.2.0",
+  "baselineCommit": "1e02628f7b35af0e5b92c0452f86d3b102562cc2",
   "comparison": {
     "product": "Tabular Editor 3",
     "verifiedVersion": "3.26.3",
@@ -88,7 +88,7 @@
       "name": "C# semantic automation",
       "status": "Core",
       "uiLocation": "Automate / Safe C# Preview / Trusted Legacy",
-      "summary": "13 curated native/recipe entries, exact source insertion and existing Safe/Trusted hosts.",
+      "summary": "20 curated entries: native routes, Safe Recipes and three advanced text-only drafts; implementation provenance is separate from references.",
       "implementation": "Safe Preview, TE2 Problems navigation, context macros and semantic snippets.",
       "provenanceIds": [
         "automation.trusted",
@@ -101,7 +101,7 @@
         "automation.gallery"
       ],
       "limitations": [
-        "Safe Preview accepts a restricted grammar. Trusted scripts remain unrestricted; no debugger or project system."
+        "Advanced templates are Preview TrustedDrafts: generation/insertion only; compile and trust remain separate. User macros never become Verified Gallery entries."
       ],
       "te3": {
         "comparison": "Partial",
@@ -477,15 +477,16 @@
       "name": "Report Studio / PBIR engineering",
       "status": "Core",
       "uiLocation": "Apps / Tools > Report Studio",
-      "summary": "Inspect local reports, preview exact file changes, validate, apply and restore.",
+      "summary": "Search and navigate reports with cached lineage; preview bounded batch, offset copy, bookmark and display-name changes; validate, back up, apply and restore.",
       "implementation": "Separate .NET 10 WPF process over a pure offline PBIP/PBIR index and change-plan library.",
       "provenanceIds": [
         "report.pbip-pbir",
         "report.studio"
       ],
       "limitations": [
-        "Enhanced PBIR only for writes; unknown schemas are read-only. Wireframe is not a Power BI renderer.",
-        "Atomic per-file writes with durable backups and guarded rollback; close Desktop during disk edits."
+        "Local PBIR only; writes require the explicit pinned version/schema policy. PBIR-Legacy and unknown contracts remain read-only.",
+        "Bookmark edits currently support tested bookmark/1.0.0 and bookmarksMetadata/1.0.0. Table/matrix formatting is detector/preview only.",
+        "Wireframes describe metadata; Power BI Desktop remains the report renderer."
       ],
       "te3": {
         "comparison": "No direct equivalent",
@@ -516,7 +517,7 @@
       },
       "lifecycle": "OnDemand",
       "moduleIds": [
-        "future-report-tooling"
+        "semantic-ide"
       ]
     },
     {
@@ -524,13 +525,14 @@
       "name": "Semantic / report lineage",
       "status": "Core",
       "uiLocation": "Semantic View > Report Usage; Report Studio > Lineage",
-      "summary": "Trace columns and measures to pages/visuals and report references back to fields.",
-      "implementation": "Structured PBIR query traversal with explicit broken and unverified references.",
+      "summary": "Trace fields to report usages and review fresh disk impact before native semantic rename/delete/refactor; exchange metadata-only catalogs and display-name annotations.",
+      "implementation": "Relative-block TMDL, immutable semantic catalogs, structural report references and cancellable TE2 events.",
       "provenanceIds": [
         "report.lineage"
       ],
       "limitations": [
-        "Local TMDL declaration index; unsupported layouts and unavailable remote models remain unverified."
+        "Partial/unavailable models and imported catalog absence stay unverified. Live model association can be unverified.",
+        "TOM and PBIR changes require separate plans and recovery; impact handoffs authorize no writes."
       ],
       "te3": {
         "comparison": "N/A",
@@ -566,6 +568,34 @@
         "bravo-bridge",
         "powerbi-bridge",
         "vscode-bridge"
+      ]
+    },
+    {
+      "id": "fabric-report-snapshot",
+      "name": "Fabric report snapshots",
+      "status": "Core",
+      "uiLocation": "Fabric Toolbox > Workspaces > Get report definition",
+      "summary": "Explicitly retrieve a Report public definition into a new local snapshot and open it in Report Studio.",
+      "implementation": "Bounded getDefinition, trusted LRO, strict paths/Base64, hashed manifest and new-directory snapshot publication.",
+      "provenanceIds": [
+        "fabric.report-snapshot"
+      ],
+      "limitations": [
+        "No report updateDefinition. Fabric authentication stays in Toolbox; snapshots and Report Studio receive no authentication headers or token cache.",
+        "Read-only API retrieval can require Report.ReadWrite.All/Item.ReadWrite.All permissions. Persisted report filters may be present; encrypted sensitivity labels can prevent retrieval.",
+        "PBIR-Legacy snapshots are read-only in Report Studio."
+      ],
+      "te3": {
+        "comparison": "N/A",
+        "capability": "Not compared",
+        "sourceUrl": null
+      },
+      "lifecycle": "Active",
+      "moduleIds": [
+        "fabric-toolbox",
+        "fabric-services",
+        "report-studio",
+        "pbir"
       ]
     }
   ]

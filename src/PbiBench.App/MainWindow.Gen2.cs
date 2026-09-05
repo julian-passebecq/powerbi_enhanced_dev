@@ -24,6 +24,7 @@ public partial class MainWindow
     private void InitializeGen2()
     {
         foreach (var tool in CompanionTools.Catalog) RefreshTool(tool.Id);
+        Closed += (_, _) => reportImpactGuard?.Dispose();
         daxWorkspace!.AddWorkbenchCommand("Analyze in DAX Studio", () => LaunchDaxStudio(this, new RoutedEventArgs()));
         daxWorkspace.AddWorkbenchCommand("Open in Bravo", () => LaunchCompanion("bravo"), () => ToolState("bravo"));
         daxWorkspace.AddWorkbenchCommand("Report Studio", () => LaunchCompanion("report-studio"), () => ToolState("report-studio"));
@@ -63,7 +64,8 @@ public partial class MainWindow
     {
         var revision = ++reportRevision; var reports = new List<ReportIndex>(); var models = new Dictionary<string, LocalSemanticCatalog>(StringComparer.OrdinalIgnoreCase);
         projectFile = inventory?.PbipFiles.Count == 1 ? inventory.PbipFiles[0] : null;
-        var candidates = inventory?.PbirFiles.Where(p => Path.GetFileName(p).Equals("definition.pbir", StringComparison.OrdinalIgnoreCase)).Take(50).ToArray() ?? Array.Empty<string>();
+        var candidates = inventory?.PbirFiles.Where(p => Path.GetFileName(p).Equals("definition.pbir", StringComparison.OrdinalIgnoreCase)).ToArray() ?? Array.Empty<string>();
+        reportImpactPaths = Array.AsReadOnly(candidates);
         if (reportFile == null || !candidates.Contains(reportFile, StringComparer.OrdinalIgnoreCase)) reportFile = candidates.Length == 1 ? candidates[0] : null;
         foreach (var path in candidates)
         {
@@ -93,11 +95,13 @@ public partial class MainWindow
             diagram.SetSemanticRows((currentFindings ?? Array.Empty<PbiBench.Automation.BpaFinding>()).Select(f => new { Area = "BPA", Object = f.ObjectPath, Issue = f.Reason }).Concat(all.Where(u => u.Status == "Broken reference").Select(u => new { Area = "Report", Object = u.Report + "/" + u.Page + "/" + u.Visual, Issue = u.Table + "[" + u.Name + "] · " + u.Status })).ToArray(), "Current BPA findings and broken local report references. Run BPA and refresh PBIP/Git to update evidence."); return;
         }
         var selected = editor.Selection; var usage = selected.Count == 0 ? all : all.Where(u => selected.Any(o => o is Table t ? t.Name == u.Table : o.Name == u.Name && (o as ITabularTableObject)?.Table.Name == u.Table && (o is Measure ? u.Kind == "Measure" : u.Kind == "Column"))).ToArray();
-        diagram.SetSemanticRows(usage, reportIndexes.Count == 0 ? "Open a PBIP project through PBIP / Git or Apps / Tools to index report usage." : usage.Length + " references for the current selection. Double-click to open the visual in Report Studio. Refresh PBIP/Git after external edits.");
+        diagram.SetSemanticRows(usage, reportIndexes.Count == 0 ? "Open a PBIP project through PBIP / Git or Apps / Tools to index report usage." : "Used in Reports (" + usage.Select(u => u.ReportRoot).Distinct(StringComparer.OrdinalIgnoreCase).Count() + ") · " + ReportOccurrenceImpact.From(usage) + ". Double-click to open in Report Studio. Refresh PBIP/Git after external edits.");
     }
     private void AddQuickOpenEntries(IDictionary<string, Action> entries)
     {
         entries["Apps · choose PBIP / report context"] = ChooseReportContext;
+        entries["Report impact · export semantic catalog"] = () => Run(ExportSemanticCatalogAsync);
+        entries["Report impact · import display-name annotations"] = () => Run(ImportDisplayNamesAsync);
         entries["Automate · Power BI C# Gallery"] = () => { GoTo("Automate"); automationWorkspace.SelectedIndex = 2; };
         foreach (var tool in CompanionTools.Catalog) { var id = tool.Id; entries["Apps · " + tool.Name] = () => LaunchCompanion(id); }
         if (editor.Handler != null) foreach (var symbol in DaxMetadataSnapshotProvider.Capture(editor.Handler).Symbols.Take(10000))

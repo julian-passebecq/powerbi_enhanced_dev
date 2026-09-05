@@ -27,7 +27,7 @@ public sealed class ReportValidator
     public IReadOnlyList<ReportIssue> Validate(ReportIndex report)
     {
         var issues = new List<ReportIssue>();
-        if (report.Version != "4.0") issues.Add(new("Error", "definition.pbir", "/version", "Unsupported PBIR format version: " + report.Version + ". Inspect read-only and update the PBIR lane before editing."));
+        if (!PbirWritePolicy.Supports(report)) issues.Add(new("Error", "definition.pbir", "/version", "Unsupported PBIR version/schema contract: " + report.Version + ". Read-only: add and regression-test this contract in schemas/pbir-write-policy.json with the pinned Microsoft bundle before editing."));
         if (!report.Enhanced) issues.Add(new("Error", "definition.pbir", "", "PBIR-Legacy is read-only. Save enhanced PBIR using Power BI Desktop."));
         foreach (var required in new[] { "definition.pbir", "definition/report.json", "definition/version.json", "definition/pages/pages.json" })
             if (!report.Files.ContainsKey(required)) issues.Add(new("Error", required, "", "Required PBIR file is missing."));
@@ -62,6 +62,20 @@ public sealed class ReportValidator
         }
         if (report.Files.TryGetValue("definition/pages/pages.json", out var pages) && pages.ParseError == null && pages.Json()["pageOrder"] is JsonArray order)
             foreach (var id in order.Select(n => n?.ToString())) if (id == null || !pageIds.Contains(id)) issues.Add(new("Error", pages.Path, "/pageOrder", "Page order refers to a missing page: " + id));
+        var bookmarkIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var bookmark in report.Files.Values.Where(f => f.Path.StartsWith("definition/bookmarks/", StringComparison.Ordinal) && f.Path.EndsWith(".bookmark.json", StringComparison.Ordinal) && f.ParseError == null))
+        {
+            var json = bookmark.Json(); var id = json["name"]?.ToString(); var expected = Path.GetFileName(bookmark.Path).Replace(".bookmark.json", "");
+            if (id == null || id != expected || !bookmarkIds.Add(id)) issues.Add(new("Error", bookmark.Path, "/name", "Bookmark ID differs from its filename or is duplicated."));
+            var active = ReportIndex.At(json, "explorationState", "activeSection")?.ToString();
+            if (active != null && !pageIds.Contains(active)) issues.Add(new("Error", bookmark.Path, "/explorationState/activeSection", "Bookmark refers to a missing page."));
+        }
+        if (report.Files.TryGetValue("definition/bookmarks/bookmarks.json", out var metadata) && metadata.ParseError == null && metadata.Json()["items"] is JsonArray items)
+        {
+            var references = items.OfType<JsonObject>().SelectMany(item => item["children"] is JsonArray children ? children.Select(n => n?.ToString()) : new[] { item["name"]?.ToString() }).ToArray();
+            if (references.Any(id => id == null || !bookmarkIds.Contains(id)) || references.Distinct().Count() != references.Length)
+                issues.Add(new("Error", metadata.Path, "/items", "Bookmark order contains a missing or duplicate bookmark."));
+        }
         return issues.AsReadOnly();
     }
 }

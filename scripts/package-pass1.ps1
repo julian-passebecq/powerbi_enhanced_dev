@@ -56,7 +56,7 @@ New-Item -ItemType Directory -Path (Join-Path $staging 'docs') | Out-Null
 Copy-Item -LiteralPath (Join-Path $repo 'docs/architecture') -Destination (Join-Path $staging 'docs/architecture') -Recurse
 Copy-Item -LiteralPath (Join-Path $repo 'docs/V11_IMPLEMENTATION.md') -Destination (Join-Path $staging 'docs/V11_IMPLEMENTATION.md')
 Copy-Item -LiteralPath (Join-Path $repo 'docs/V11_2_IMPLEMENTATION.md') -Destination (Join-Path $staging 'docs/V11_2_IMPLEMENTATION.md')
-foreach ($guide in @('V11_3_IMPLEMENTATION.md', 'FABRIC_TOOLBOX_V02.md', 'V2_PASS1_IMPLEMENTATION.md', 'V2_SOURCE_INDEX.md')) {
+foreach ($guide in @('V11_3_IMPLEMENTATION.md', 'FABRIC_TOOLBOX_V02.md', 'V2_PASS1_IMPLEMENTATION.md', 'V2_PASS2_IMPLEMENTATION.md', 'V2_SOURCE_INDEX.md')) {
     Copy-Item -LiteralPath (Join-Path $repo "docs/$guide") -Destination (Join-Path $staging "docs/$guide")
 }
 foreach ($guide in @('V9_CLI_REFERENCE.md', 'V9_AGENT_REFERENCE.md', 'V9_PROTOTYPES_REFERENCE.md', 'V9_MODEL_AUTHORING_REFERENCE.md', 'V9_DAX_AUTHORING_REFERENCE.md', 'V9_FABRIC_REFERENCE.md', 'V9_FABRIC_AUTHORING_REFERENCE.md', 'V9_REFRESH_REFERENCE.md', 'V9_WORKSPACE_REFERENCE.md', 'V9_SCRIPT_AUTOMATION_REFERENCE.md', 'V9_SEMANTIC_TESTS_REFERENCE.md', 'V9_VERTIPAQ_REFERENCE.md', 'V9_BPA_RULE_PACKS.md')) {
@@ -119,7 +119,7 @@ foreach ($packageFile in $packageFiles) {
 }
 $packageManifest | Sort-Object Package | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $notices 'packaged-notices.json') -Encoding utf8
 @'
-PbiBench Gen-2 2.1.0 portable build
+PbiBench Gen-2 2.2.0 portable build
 
 Launch PbiBench.exe on Windows with .NET Framework 4.8 installed.
 Apps / Tools launches fabric-toolbox/PbiBench.FabricToolbox.exe in its separate process.
