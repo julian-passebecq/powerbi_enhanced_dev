@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "productVersion": "11.1.1",
-  "baselineCommit": "47954aaf8876671eff879bbd0b809660f444e1fe",
+  "productVersion": "11.2.0",
+  "baselineCommit": "675a5026749094206339c312b7f190964953ce57",
   "components": [
     {
       "id": "semantic.model-editor.te2",
@@ -476,17 +476,19 @@
     },
     {
       "id": "platform.provenance",
-      "feature": "Runtime feature provenance / update ownership",
+      "feature": "Feature Map / runtime provenance / update ownership",
       "ownerProject": "PbiBench.Core / PbiBench.App",
       "sourceType": "pbibench-original",
       "upstream": "PbiBench original; public Microsoft APIs/formats where applicable",
-      "pin": "11.1.0",
+      "pin": "11.2.0",
       "localAdapter": "src/PbiBench.Core/Platform/ProvenanceCatalog.cs",
       "license": "unknown-needs-review (original repository code)",
       "updateLane": "provenance",
       "localPatches": [],
       "protectingTests": [
-        "tests/PbiBench.V11.Tests/PlatformTests.cs"
+        "tests/PbiBench.V11.Tests/PlatformTests.cs",
+        "tests/PbiBench.V11.Tests/FeatureCatalogTests.cs",
+        "tests/PbiBench.App.Tests/FeatureMapTests.cs"
       ]
     },
     {

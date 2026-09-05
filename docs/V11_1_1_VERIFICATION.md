@@ -1,6 +1,6 @@
 # V11.1.1 focused hardening verification — 2026-09-05
 
-Implemented locally from baseline `47954aaf8876671eff879bbd0b809660f444e1fe`. The attached audit supplied supporting findings; its commit/push directions were not treated as publication authorization. Changes remain uncommitted and unpushed.
+Implemented from baseline `47954aaf8876671eff879bbd0b809660f444e1fe` and published as commit [`675a5026749094206339c312b7f190964953ce57`](https://github.com/julian-passebecq/powerbi_enhanced_dev/commit/675a5026749094206339c312b7f190964953ce57). The local Release evidence below predates publication. The subsequent hosted results were confirmed on that exact commit during the V11.2 documentation update.
 
 ## Final Release gate
 
@@ -29,7 +29,9 @@ Focused development checks also passed: V11 tests on both targets and the 25-tes
 
 Regression coverage includes legacy/current recovery detachment, advisory source preservation, external edits with identical timestamps/lengths, raw-byte encoding fingerprints, deletion, stale/path-mismatched overwrite reviews, Save As, cancellation, locks, storage bounds, invalid recovery schemas, programmatic/manual export option invalidation and cancellation during sampling. Completion tests exercise tables/columns/measures with spaces, quotes, backslashes, brackets, Unicode and partial escapes; the WPF integration test compiles inserted source through existing TE2 without executing it. Redaction tests cover counts, zero-count metadata, original-value exclusion and deterministic ZIP/checksum output.
 
-The existing **V11 portable and Fabric fast gate** workflow is preserved. **V11 Windows Release module gate** adds Release net10/net48 V11 module tests, Toolbox build/output isolation and TRX upload. Hosted execution has not been observed because these changes have not been pushed. Hosted coverage excludes main WPF/native TE2 execution and packaging; this local Release gate covers those boundaries.
+The **V11 portable and Fabric fast gate** [run 33968940839](https://github.com/julian-passebecq/powerbi_enhanced_dev/actions/runs/33968940839) succeeded. The **V11 Windows Release module gate** [run 33968940844](https://github.com/julian-passebecq/powerbi_enhanced_dev/actions/runs/33968940844) also succeeded. Both runs used commit `675a5026749094206339c312b7f190964953ce57`.
+
+The hosted Release logs show 70 net10 tests and 70 net48 tests passed, with zero failures/skips; Fabric Toolbox built with zero warnings/errors; the Toolbox output isolation check passed and TRX evidence was uploaded. These hosted results are separate from the 227 local test executions and packaged smokes above. Hosted coverage excludes main WPF/native TE2 execution and packaging; the local Release gate covers those boundaries.
 
 Semantic IDE remains net48 with TE2 2.28.0 pinned at `75f10e331b8de0dda5c213180b9b8867b4a38191`, with the same two integration patches and licenses. Fabric Toolbox remains a separate net10.0-windows process. No Roslyn, debugger, embedded AI, PBIR, broad Fabric expansion or architectural migration was added.
 

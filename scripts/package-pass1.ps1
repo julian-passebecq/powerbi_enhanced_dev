@@ -48,6 +48,7 @@ Copy-Item -LiteralPath (Join-Path $repo 'examples/prototypes') -Destination (Joi
 New-Item -ItemType Directory -Path (Join-Path $staging 'docs') | Out-Null
 Copy-Item -LiteralPath (Join-Path $repo 'docs/architecture') -Destination (Join-Path $staging 'docs/architecture') -Recurse
 Copy-Item -LiteralPath (Join-Path $repo 'docs/V11_IMPLEMENTATION.md') -Destination (Join-Path $staging 'docs/V11_IMPLEMENTATION.md')
+Copy-Item -LiteralPath (Join-Path $repo 'docs/V11_2_IMPLEMENTATION.md') -Destination (Join-Path $staging 'docs/V11_2_IMPLEMENTATION.md')
 foreach ($guide in @('V9_CLI_REFERENCE.md', 'V9_AGENT_REFERENCE.md', 'V9_PROTOTYPES_REFERENCE.md', 'V9_MODEL_AUTHORING_REFERENCE.md', 'V9_DAX_AUTHORING_REFERENCE.md', 'V9_FABRIC_REFERENCE.md', 'V9_FABRIC_AUTHORING_REFERENCE.md', 'V9_REFRESH_REFERENCE.md', 'V9_WORKSPACE_REFERENCE.md', 'V9_SCRIPT_AUTOMATION_REFERENCE.md', 'V9_SEMANTIC_TESTS_REFERENCE.md', 'V9_VERTIPAQ_REFERENCE.md', 'V9_BPA_RULE_PACKS.md')) {
     Copy-Item -LiteralPath (Join-Path $repo "docs/$guide") -Destination (Join-Path $staging "docs/$guide")
 }
@@ -105,10 +106,12 @@ foreach ($packageFile in $packageFiles) {
 }
 $packageManifest | Sort-Object Package | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $notices 'packaged-notices.json') -Encoding utf8
 @'
-PbiBench V11.1.1 portable build
+PbiBench V11.2.0 portable build
 
 Launch PbiBench.exe on Windows with .NET Framework 4.8 installed.
 Apps / Tools launches fabric-toolbox/PbiBench.FabricToolbox.exe in its separate process.
+Apps / Tools > Feature Map / Provenance / About shows the offline product catalog.
+Open detailed catalog reads docs/architecture/FEATURE_CATALOG.md from this package.
 Fabric Toolbox requires the .NET 10 Windows Desktop runtime. Its dependencies stay in its own folder.
 Use Home > Open demo for the included synthetic example model.
 DAX Studio and Power BI Desktop are separate optional installed applications.

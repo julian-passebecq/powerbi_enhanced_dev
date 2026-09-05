@@ -1,0 +1,448 @@
+{
+  "schemaVersion": 1,
+  "productVersion": "11.2.0",
+  "baselineCommit": "675a5026749094206339c312b7f190964953ce57",
+  "comparison": {
+    "product": "Tabular Editor 3",
+    "verifiedVersion": "3.26.3",
+    "verifiedDate": "2026-09-05",
+    "sourceUrl": "https://docs.tabulareditor.com/en/references/downloads.html"
+  },
+  "features": [
+    {
+      "id": "semantic-ide",
+      "name": "TE2++ / Semantic IDE",
+      "status": "Core",
+      "focus": "Heavy focus",
+      "uiLocation": "Model",
+      "summary": "Semantic model editing and authoring.",
+      "implementation": "TE2/TOM editing inside the PbiBench shell.",
+      "provenanceIds": [
+        "semantic.model-editor.te2",
+        "dependency.tom"
+      ],
+      "limitations": [
+        "Keeps the TE2 WinForms foundation inside net48; broad workflow comparison does not imply equal depth."
+      ],
+      "te3": {
+        "comparison": "Comparable",
+        "capability": "Model editing / TOM Explorer",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "dax-ide",
+      "name": "DAX IDE / Query / authoring",
+      "status": "Core",
+      "focus": "Heavy focus",
+      "uiLocation": "DAX",
+      "summary": "Write and run routine DAX queries.",
+      "implementation": "Query tabs, language assistance and Microsoft engine execution.",
+      "provenanceIds": [
+        "dax.language",
+        "semantic.query",
+        "dependency.tom"
+      ],
+      "limitations": [
+        "Bounded language assistance; engine validation remains authoritative. Deep timings and plans use DAX Studio."
+      ],
+      "te3": {
+        "comparison": "Partial",
+        "capability": "DAX editor / querying",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "dax-authoring",
+      "name": "DAX Scripts / UDF / Calendar",
+      "status": "Core",
+      "focus": "Improve",
+      "uiLocation": "Model tools / DAX authoring / Metadata editors",
+      "summary": "Author reusable expressions and model metadata.",
+      "implementation": "Reviewed DAX scripts, UDF changes and calendar metadata editors.",
+      "provenanceIds": [
+        "semantic.authoring",
+        "semantic.metadata",
+        "dependency.tom"
+      ],
+      "limitations": [
+        "Authoring is bounded and compatibility-dependent; the model is not automatically upgraded."
+      ],
+      "te3": {
+        "comparison": "Partial",
+        "capability": "DAX scripts / UDFs / calendars",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "csharp-automation",
+      "name": "C# semantic automation",
+      "status": "Core",
+      "focus": "Improve selectively",
+      "uiLocation": "Automate / Safe C# Preview / Trusted Legacy",
+      "summary": "Automate model changes through distinct execution lanes.",
+      "implementation": "Safe Preview, TE2 trusted scripts, editor and recipe recorder.",
+      "provenanceIds": [
+        "automation.trusted",
+        "automation.safe",
+        "automation.recorder",
+        "csharp.language",
+        "editor.fctb"
+      ],
+      "limitations": [
+        "Safe Preview accepts a restricted grammar. Trusted scripts remain unrestricted; no debugger or project system."
+      ],
+      "te3": {
+        "comparison": "Partial",
+        "capability": "C# scripts / macros / recorder",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "data-exploration",
+      "name": "Data Preview / Profile / Pivot Lab",
+      "status": "Core",
+      "focus": "Improve",
+      "uiLocation": "Data",
+      "summary": "Inspect bounded model data and aggregations.",
+      "implementation": "Projected DAX previews, profiling and Pivot Lab queries.",
+      "provenanceIds": [
+        "data.preview",
+        "semantic.query",
+        "dependency.tom"
+      ],
+      "limitations": [
+        "Connected queries have row/cell caps; previews are not complete or representative data."
+      ],
+      "te3": {
+        "comparison": "Comparable",
+        "capability": "Table preview / PivotGrids",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "semantic-qa",
+      "name": "BPA / semantic QA",
+      "status": "Core",
+      "focus": "Improve",
+      "uiLocation": "QA / Semantic tests",
+      "summary": "Review modeling findings and semantic assertions.",
+      "implementation": "TE2 BPA plus original rule packs, fix previews and assertions.",
+      "provenanceIds": [
+        "semantic.model-editor.te2",
+        "bpa.packs",
+        "quality.tests"
+      ],
+      "limitations": [
+        "Rule coverage and assertion workflows differ. A clean report is not a correctness guarantee."
+      ],
+      "te3": {
+        "comparison": "Comparable",
+        "capability": "BPA / model checks",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "vertipaq",
+      "name": "VertiPaq / optimization",
+      "status": "Core",
+      "focus": "Improve",
+      "uiLocation": "VertiPaq / Optimization cockpit",
+      "summary": "Inspect model storage and optimization evidence.",
+      "implementation": "DMV/VPAX capture, storage signals and bounded benchmarks.",
+      "provenanceIds": [
+        "quality.vertipaq",
+        "dependency.tom"
+      ],
+      "limitations": [
+        "Available metrics depend on connection permissions and capture format; no embedded DAX Optimizer."
+      ],
+      "te3": {
+        "comparison": "Partial",
+        "capability": "VertiPaq Analyzer / optimization",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "model-diagram",
+      "name": "Model Diagram",
+      "status": "Core",
+      "focus": "Improve",
+      "uiLocation": "Model diagram",
+      "summary": "Inspect and edit model relationships.",
+      "implementation": "PbiBench relationship visualization and reviewed authoring.",
+      "provenanceIds": [
+        "semantic.diagram"
+      ],
+      "limitations": [
+        "Layout and analysis are deliberately basic; table roles are inferred."
+      ],
+      "te3": {
+        "comparison": "Comparable",
+        "capability": "Relationship diagrams",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "workspace",
+      "name": "PBIP / TMDL / Git / Workspace",
+      "status": "Core",
+      "focus": "Heavy focus",
+      "uiLocation": "PBIP / Git",
+      "summary": "Review semantic source and workspace changes.",
+      "implementation": "Disk/live/Git comparison and reviewed TMDL synchronization.",
+      "provenanceIds": [
+        "workspace.pbip",
+        "dependency.tom"
+      ],
+      "limitations": [
+        "Semantic artifacts only; Power BI Desktop remains the report renderer and author."
+      ],
+      "te3": {
+        "comparison": "Partial",
+        "capability": "TMDL / folder / Fabric Git",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "fabric-semantic",
+      "name": "Fabric semantic integration",
+      "status": "Core",
+      "focus": "Improve",
+      "uiLocation": "Fabric (Semantic IDE)",
+      "summary": "Bring Fabric sources into semantic modeling.",
+      "implementation": "Catalog/schema review and semantic source import.",
+      "provenanceIds": [
+        "fabric.semantic",
+        "fabric.services",
+        "fabric.handoff"
+      ],
+      "limitations": [
+        "Authentication and source capabilities apply; this is semantic integration, not tenant administration."
+      ],
+      "te3": {
+        "comparison": "Partial",
+        "capability": "Fabric semantic sources",
+        "sourceUrl": "https://docs.tabulareditor.com/en/references/roadmap.html"
+      }
+    },
+    {
+      "id": "fabric-toolbox",
+      "name": "Fabric Toolbox",
+      "status": "Companion",
+      "focus": "Develop independently",
+      "uiLocation": "Apps / Tools / Fabric Toolbox",
+      "summary": "Use Fabric utilities in their own application.",
+      "implementation": "Separate net10 Windows process using shared Fabric services.",
+      "provenanceIds": [
+        "fabric.toolbox",
+        "fabric.services"
+      ],
+      "limitations": [
+        "The independent process requires its own runtime and authentication. No broad admin expansion is implied."
+      ],
+      "te3": {
+        "comparison": "No direct equivalent",
+        "capability": "Separate Fabric utilities",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "ai-context-export",
+      "name": "AI Context Export",
+      "status": "Utility",
+      "focus": "Polish only",
+      "uiLocation": "Apps / Tools / AI Context Export",
+      "summary": "Prepare reviewed context for external AI tools.",
+      "implementation": "Provider-neutral ZIP with explicit scope, redaction and review.",
+      "provenanceIds": [
+        "ai.export"
+      ],
+      "limitations": [
+        "Samples stay off by default. Redaction is not anonymization; export does not invoke an AI provider."
+      ],
+      "te3": {
+        "comparison": "Different",
+        "capability": "AI assistance / context exchange",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "daxstudio",
+      "name": "DAX Studio bridge",
+      "status": "External",
+      "focus": "Keep",
+      "uiLocation": "DAX Studio / DAX query handoff",
+      "summary": "Send specialist DAX work to an external tool.",
+      "implementation": "Launches DAX Studio with query and connection context.",
+      "provenanceIds": [
+        "external.daxstudio"
+      ],
+      "limitations": [
+        "Requires separately installed DAX Studio. Its UI and source are not embedded or redistributed."
+      ],
+      "te3": {
+        "comparison": "Different",
+        "capability": "Connected DAX tools",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "cli-ci",
+      "name": "CLI / CI engine",
+      "status": "Utility",
+      "focus": "Keep",
+      "uiLocation": "cli/pbibench.exe / scripts",
+      "summary": "Use shared semantic services from automation.",
+      "implementation": "CLI commands and repeatable local/hosted validation.",
+      "provenanceIds": [
+        "cli",
+        "quality.tests"
+      ],
+      "limitations": [
+        "The official comparison documents TE CLI separately from the TE3 desktop app; command and platform coverage differ."
+      ],
+      "te3": {
+        "comparison": "Comparable",
+        "capability": "TE CLI (separate preview)",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "dataforge",
+      "name": "DataForge integration",
+      "status": "Companion",
+      "focus": "Freeze",
+      "uiLocation": "Apps / Tools / DataForge",
+      "summary": "Read versioned data/truth contracts.",
+      "implementation": "Companion launch and bounded contract reader.",
+      "provenanceIds": [
+        "dataforge",
+        "external.tools"
+      ],
+      "limitations": [
+        "Working integration is preserved; DataForge expansion is frozen."
+      ],
+      "te3": {
+        "comparison": "No direct equivalent",
+        "capability": "Data-generation companion",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "embedded-agent",
+      "name": "Embedded Agent",
+      "status": "Labs",
+      "focus": "Freeze",
+      "uiLocation": "Agent (existing optional workflow)",
+      "summary": "Review typed proposals from optional providers.",
+      "implementation": "Strict proposals and explicit preview with optional provider adapter.",
+      "provenanceIds": [
+        "agent.proposals",
+        "agent.online"
+      ],
+      "limitations": [
+        "Existing optional code is preserved and frozen. No additional providers, permissions or embedded assistant expansion."
+      ],
+      "te3": {
+        "comparison": "Different",
+        "capability": "AI Assistant",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "semantic-compiler",
+      "name": "Semantic compiler prototype",
+      "status": "Labs",
+      "focus": "Freeze",
+      "uiLocation": "Model tools / Compiler / packages / Semantic compiler",
+      "summary": "Explore a limited semantic intent format.",
+      "implementation": "Bounded YAML intent and reviewed measure proposals.",
+      "provenanceIds": [
+        "prototype.compiler"
+      ],
+      "limitations": [
+        "Experimental subset only; unsupported joins/filters block proposals. No equivalence proof or automatic source execution."
+      ],
+      "te3": {
+        "comparison": "Different",
+        "capability": "Semantic Bridge",
+        "sourceUrl": "https://docs.tabulareditor.com/en/references/roadmap.html"
+      }
+    },
+    {
+      "id": "dax-packages",
+      "name": "DAX package prototype",
+      "status": "Labs",
+      "focus": "Freeze",
+      "uiLocation": "Model tools / Compiler / packages / DAX packages",
+      "summary": "Review local reusable DAX definitions.",
+      "implementation": "Local PbiBench package manifest, pins and reviewed UDF changes.",
+      "provenanceIds": [
+        "prototype.packages"
+      ],
+      "limitations": [
+        "Local prototype is frozen. No feed, DAXLib manifest compatibility or executable install hooks."
+      ],
+      "te3": {
+        "comparison": "Partial",
+        "capability": "DAX Package Manager",
+        "sourceUrl": "https://docs.tabulareditor.com/en/tutorials/udfs.html"
+      }
+    },
+    {
+      "id": "dax-debugger",
+      "name": "DAX debugger",
+      "status": "Gap",
+      "focus": "Later",
+      "uiLocation": "Not available; Model tools / DAX Explain is separate",
+      "summary": "Track a known debugging capability gap.",
+      "implementation": "Not implemented; DAX Explain offers static guidance only.",
+      "provenanceIds": [],
+      "limitations": [
+        "No expression stepping or runtime filter-context debugger. This row is informational, not an implementation commitment."
+      ],
+      "te3": {
+        "comparison": "Gap",
+        "capability": "DAX debugger",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "pbir",
+      "name": "PBIR/report engineering",
+      "status": "Future",
+      "focus": "Freeze",
+      "uiLocation": "Not available; reports use Power BI Desktop",
+      "summary": "Record a parked report-engineering area.",
+      "implementation": "Report authoring is deferred; existing workspace detection remains.",
+      "provenanceIds": [],
+      "limitations": [
+        "No PBIR editor or report renderer is implemented. This pass preserves the existing semantic/workspace scope."
+      ],
+      "te3": {
+        "comparison": "No direct equivalent",
+        "capability": "Report authoring",
+        "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
+      }
+    },
+    {
+      "id": "knowledge",
+      "name": "Knowledge/tutorial features",
+      "status": "Future",
+      "focus": "Freeze",
+      "uiLocation": "Knowledge placeholder / existing reference docs",
+      "summary": "Record a parked knowledge-workspace area.",
+      "implementation": "Existing reference material; searchable tutorials are deferred.",
+      "provenanceIds": [],
+      "limitations": [
+        "Reference documents remain available. No new knowledge, tutorial or search subsystem is planned in this pass."
+      ],
+      "te3": {
+        "comparison": "N/A",
+        "capability": "Not compared",
+        "sourceUrl": null
+      }
+    }
+  ]
+}

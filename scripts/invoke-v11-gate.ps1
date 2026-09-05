@@ -1,11 +1,12 @@
-param([ValidateSet('Debug', 'Release')][string]$Configuration = 'Release', [switch]$SkipPackaging)
+param([ValidateSet('Debug', 'Release')][string]$Configuration = 'Release', [switch]$SkipPackaging,
+    [ValidateSet('V11', 'FeatureMap')][string]$Scope = 'V11')
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $dotnet = Join-Path $env:LOCALAPPDATA 'PbiBench/dotnet/dotnet.exe'
 if (-not (Test-Path -LiteralPath $dotnet)) { $dotnet = (Get-Command dotnet).Source }
 $env:DOTNET_ROOT = Split-Path $dotnet
 $env:PATH = "$env:DOTNET_ROOT;$env:PATH"
-$logs = Join-Path $repo ('artifacts/v11-gate-' + $Configuration + '-' + [Guid]::NewGuid().ToString('N'))
+$logs = Join-Path $repo ('artifacts/v11-gate-' + $Scope + '-' + $Configuration + '-' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $logs | Out-Null
 Start-Transcript -LiteralPath (Join-Path $logs 'gate.log') | Out-Null
 function Invoke-Dotnet([string[]]$Arguments) {
@@ -22,10 +23,16 @@ function Invoke-ChildSmoke([string]$Executable, [string]$Arguments, [string]$Res
 Push-Location $repo
 try {
     Invoke-Dotnet -Arguments @('build', 'PbiBench.slnx', '-c', $Configuration, '--nologo', '--verbosity', 'quiet')
-    Invoke-Dotnet -Arguments @('test', 'tests/PbiBench.V11.Tests/PbiBench.V11.Tests.csproj', '-c', $Configuration, '--no-build', '--nologo', '--logger', 'trx', '--results-directory', $logs)
-    Invoke-Dotnet -Arguments @('test', 'tests/PbiBench.Adapters.Tests/PbiBench.Adapters.Tests.csproj', '-c', $Configuration, '-f', 'net48', '--no-build', '--nologo', '--filter', 'FullyQualifiedName~TrustedScriptBoundaryTests|FullyQualifiedName~SafeScriptTests|FullyQualifiedName~FabricTransportTests|FullyQualifiedName~FabricSqlTests|FullyQualifiedName~ModelEditorBoundaryTests', '--logger', 'trx', '--results-directory', $logs)
-    Invoke-Dotnet -Arguments @('test', 'tests/PbiBench.Semantic.Tests/PbiBench.Semantic.Tests.csproj', '-c', $Configuration, '--no-build', '--nologo', '--filter', 'FullyQualifiedName~AIContextCaptureTests|FullyQualifiedName~ScriptPreviewTests', '--logger', 'trx', '--results-directory', $logs)
-    Invoke-Dotnet -Arguments @('test', 'tests/PbiBench.App.Tests/PbiBench.App.Tests.csproj', '-c', $Configuration, '--no-build', '--nologo', '--filter', 'FullyQualifiedName~V11WorkspaceTests|FullyQualifiedName~FabricWorkspaceViewTests', '--logger', 'trx', '--results-directory', $logs)
+    $moduleArguments = @('test', 'tests/PbiBench.V11.Tests/PbiBench.V11.Tests.csproj', '-c', $Configuration, '--no-build', '--nologo', '--logger', 'trx', '--results-directory', $logs)
+    if ($Scope -eq 'FeatureMap') { $moduleArguments += @('--filter', 'FullyQualifiedName~FeatureCatalogTests|FullyQualifiedName~PlatformTests') }
+    Invoke-Dotnet -Arguments $moduleArguments
+    if ($Scope -eq 'V11') {
+        Invoke-Dotnet -Arguments @('test', 'tests/PbiBench.Adapters.Tests/PbiBench.Adapters.Tests.csproj', '-c', $Configuration, '-f', 'net48', '--no-build', '--nologo', '--filter', 'FullyQualifiedName~TrustedScriptBoundaryTests|FullyQualifiedName~SafeScriptTests|FullyQualifiedName~FabricTransportTests|FullyQualifiedName~FabricSqlTests|FullyQualifiedName~ModelEditorBoundaryTests', '--logger', 'trx', '--results-directory', $logs)
+        Invoke-Dotnet -Arguments @('test', 'tests/PbiBench.Semantic.Tests/PbiBench.Semantic.Tests.csproj', '-c', $Configuration, '--no-build', '--nologo', '--filter', 'FullyQualifiedName~AIContextCaptureTests|FullyQualifiedName~ScriptPreviewTests', '--logger', 'trx', '--results-directory', $logs)
+    }
+    $appFilter = 'FullyQualifiedName~FeatureMapTests'
+    if ($Scope -eq 'V11') { $appFilter += '|FullyQualifiedName~V11WorkspaceTests|FullyQualifiedName~FabricWorkspaceViewTests' }
+    Invoke-Dotnet -Arguments @('test', 'tests/PbiBench.App.Tests/PbiBench.App.Tests.csproj', '-c', $Configuration, '--no-build', '--nologo', '--filter', $appFilter, '--logger', 'trx', '--results-directory', $logs)
     $app = Join-Path $repo "src/PbiBench.App/bin/$Configuration/net48/PbiBench.exe"
     $toolbox = Join-Path $repo "src/PbiBench.FabricToolbox/bin/$Configuration/net10.0-windows/PbiBench.FabricToolbox.exe"
     if (-not $SkipPackaging) {
@@ -43,7 +50,7 @@ try {
     $toolboxResult = Join-Path $logs 'toolbox-smoke.txt'
     Invoke-ChildSmoke $toolbox ('--smoke-test "' + $toolboxResult + '"') $toolboxResult
     if ((Get-Content -LiteralPath $toolboxResult -Raw) -notmatch '^Toolbox WPF launch:') { throw 'Fabric Toolbox smoke did not report a successful WPF launch.' }
-    [pscustomobject]@{ success = $true; configuration = $Configuration; packaged = -not $SkipPackaging; semanticExecutable = $app; toolboxExecutable = $toolbox; liveIntegration = $false } |
+    [pscustomobject]@{ success = $true; scope = $Scope; configuration = $Configuration; packaged = -not $SkipPackaging; semanticExecutable = $app; toolboxExecutable = $toolbox; liveIntegration = $false } |
         ConvertTo-Json | Set-Content -LiteralPath (Join-Path $logs 'gate-result.json') -Encoding utf8
-    Write-Host "V11 final impacted $Configuration gate passed. Packaged: $(-not $SkipPackaging). Evidence: $logs"
+    Write-Host "V11 $Scope impacted $Configuration gate passed. Packaged: $(-not $SkipPackaging). Evidence: $logs"
 } finally { Pop-Location; Stop-Transcript | Out-Null }

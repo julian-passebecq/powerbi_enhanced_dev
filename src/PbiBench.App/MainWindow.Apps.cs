@@ -39,13 +39,10 @@ public partial class MainWindow
             var handoff = await FabricSelectionHandoff.LoadAsync(dialog.FileName, lifetime.Token);
             window.Close(); GoTo("Fabric"); fabricWorkspace!.AcceptSelectionHandoff(handoff);
         }));
-        Action("ⓘ  Provenance / About", "Feature owners, implementation sources, exact dependency pins, local TE2 patches and update lanes.", () =>
-        {
-            var catalog = ProvenanceCatalog.Bundled(); var about = new Window { Owner = window, Title = "PbiBench " + catalog.ProductVersion + " · Provenance", Width = 1120, Height = 640, WindowStartupLocation = WindowStartupLocation.CenterOwner };
-            about.Content = new DataGrid { IsReadOnly = true, AutoGenerateColumns = true, CanUserAddRows = false, ItemsSource = catalog.Components.Select(c => new { c.Feature, c.OwnerProject, c.SourceType, c.Pin, c.License, c.UpdateLane, Patches = string.Join("; ", c.LocalPatches), Tests = string.Join("; ", c.ProtectingTests) }).ToArray() }; about.ShowDialog();
-        });
+        Action("ⓘ  Feature Map / Provenance / About", "Product areas, current focus and public TE3 comparisons; detailed ownership and provenance remain available.", () => CreateAboutWindow(window).ShowDialog());
         window.ShowDialog();
     });
+    internal static FeatureMapWindow CreateAboutWindow(Window owner) => new() { Owner = owner };
     internal AIContextExportWindow CreateAIExportWindow()
     {
         RequireModel(); var model = AIContextCapture.Capture(editor.Handler!, includeRoles: true); var evidence = new List<ContextEvidence>();

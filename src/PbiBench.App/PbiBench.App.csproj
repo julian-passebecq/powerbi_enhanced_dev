@@ -29,6 +29,7 @@
   <ItemGroup><None Include="../../examples/pass1-demo.bim" Link="examples/pass1-demo.bim" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
   <ItemGroup><None Include="../../examples/prototypes/**/*" Link="examples/prototypes/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
   <ItemGroup><Resource Include="Assets/PbiBench.ico" /></ItemGroup>
+  <ItemGroup><None Include="../../docs/architecture/**/*" Link="docs/architecture/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
   <Target Name="CopyTe2Runtime" AfterTargets="Build">
     <ItemGroup><Te2Runtime Include="../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*" Exclude="../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*.pdb;../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*.config" /></ItemGroup>
     <Copy SourceFiles="@(Te2Runtime)" DestinationFiles="@(Te2Runtime->'$(TargetDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" Condition="!Exists('$(TargetDir)%(Te2Runtime.RecursiveDir)%(Te2Runtime.Filename)%(Te2Runtime.Extension)')" />
