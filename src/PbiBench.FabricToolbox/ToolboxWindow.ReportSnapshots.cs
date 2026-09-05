@@ -1,9 +1,9 @@
+using PbiBench.ExternalTools;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
 using PbiBench.Core.Fabric;
-using PbiBench.DaxStudio;
 using PbiBench.Fabric;
 
 namespace PbiBench.FabricToolbox;

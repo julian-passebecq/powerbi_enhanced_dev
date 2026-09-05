@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "productVersion": "2.2.0",
-  "baselineCommit": "1e02628f7b35af0e5b92c0452f86d3b102562cc2",
+  "productVersion": "2.3.0",
+  "baselineCommit": "70493e1a63064a7e6d2ec98c285d187a556834a3",
   "comparison": {
     "product": "Tabular Editor 3",
     "verifiedVersion": "3.26.3",
@@ -596,6 +596,57 @@
         "fabric-services",
         "report-studio",
         "pbir"
+      ]
+    },
+    {
+      "id": "unified-shell",
+      "name": "Unified shell / Home",
+      "status": "Core",
+      "uiLocation": "Home / module rail",
+      "summary": "One product entry point with grouped navigation and local project context.",
+      "implementation": "Compact rail, Home cards, project context strip and independent child modules.",
+      "provenanceIds": [
+        "shell.unified",
+        "design.icons",
+        "tools.external"
+      ],
+      "limitations": [
+        "Child modules remain separate processes; no embedded child windows."
+      ],
+      "te3": {
+        "comparison": "N/A",
+        "capability": "PbiBench product workflow",
+        "sourceUrl": null
+      },
+      "lifecycle": "Active",
+      "moduleIds": [
+        "semantic-ide",
+        "design-system",
+        "external-tools"
+      ]
+    },
+    {
+      "id": "design-exchange",
+      "name": "Design Exchange",
+      "status": "Core",
+      "uiLocation": "Project / Design Exchange",
+      "summary": "Export model metadata and validate dashboard/theme JSON for local preview.",
+      "implementation": "Provider-neutral contracts, pinned offline theme validation and read-only proposed layouts.",
+      "provenanceIds": [
+        "design.exchange",
+        "design.theme-schema"
+      ],
+      "limitations": [
+        "No provider/network call, PBIR generation or report mutation; layout is design intent only."
+      ],
+      "te3": {
+        "comparison": "N/A",
+        "capability": "PbiBench product workflow",
+        "sourceUrl": null
+      },
+      "lifecycle": "Active",
+      "moduleIds": [
+        "design-exchange"
       ]
     }
   ]

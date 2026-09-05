@@ -70,7 +70,7 @@ public partial class MainWindow
     }
     private void ApplyPaneVisibility()
     {
-        var inspectorVisible = layoutState.InspectorVisible && activePage != "Home" && activePage != "PBIP / Git" && activePage != "DAX";
+        var inspectorVisible = layoutState.InspectorVisible && activePage != "Home" && activePage != "PBIP / Git" && activePage != "DAX" && activePage != "Design Exchange";
         InspectorPane.Visibility = InspectorSplitter.Visibility = inspectorVisible ? Visibility.Visible : Visibility.Collapsed;
         InspectorColumn.Width = new GridLength(inspectorVisible ? Math.Min(layoutState.InspectorWidth, Math.Max(210, ActualWidth - 775)) : 0);
         InspectorSplitterColumn.Width = new GridLength(inspectorVisible ? 5 : 0);
@@ -106,6 +106,7 @@ public partial class MainWindow
         if (RecentProjects.SelectedItem is not string path) return;
         if (!File.Exists(path) && !Directory.Exists(path)) throw new FileNotFoundException("This recent project has moved or is unavailable. Use Open to select its current location.", path);
         if (path.EndsWith(".pbip", StringComparison.OrdinalIgnoreCase) || Directory.Exists(path)) { GoTo("PBIP / Git"); await UpdateWorkspaceAsync(path); }
+        else if (path.EndsWith(".pbir", StringComparison.OrdinalIgnoreCase)) { reportFile = path; await UpdateWorkspaceAsync(Path.GetDirectoryName(Path.GetDirectoryName(path))); reportFile = path; LaunchCompanion("report-studio"); }
         else { GoTo("Model"); editor.Open(path); }
     });
     private void CommonMeasures(object sender, RoutedEventArgs e) { GoTo("Automate"); automationWorkspace.SelectedIndex = 0; ActionPicker.SelectedItem = AutomationService.Actions.First(a => a.Id == AutomationActionId.CreateSumMeasures); }

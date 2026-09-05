@@ -37,6 +37,8 @@ public sealed class FabricWorkspaceView : UserControl, IDisposable
     private long revision;
     private bool disposed, populating;
     public FabricTableSchema? SelectedSchema { get; private set; }
+    internal string? SelectedWorkspaceId => (workspaces.SelectedItem as FabricWorkspace)?.Id ?? handoff?.WorkspaceId;
+    internal string? SelectedItemId => (items.SelectedItem as FabricItem)?.Id ?? handoff?.ItemId;
     public AuthoringPreview? LastPreview { get; private set; }
     public FabricDataPreview? LastDataPreview { get; private set; }
     public string Status => status.Text;

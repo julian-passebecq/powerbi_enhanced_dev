@@ -1,0 +1,35 @@
+Start from current main of `julian-passebecq/powerbi_enhanced_dev`.
+
+Audited baseline:
+`70493e1a63064a7e6d2ec98c285d187a556834a3`
+
+Read this V2 Pass 3 pack completely.
+
+Pass 2 is successful. Do NOT redo its Report Studio / Fabric snapshot / impact work.
+
+Implement Pass 3:
+
+1. Make `PbiBench.exe` the obvious single product entry point with a modern, concise Home/Start Center and module navigation.
+2. Keep Report Studio and Fabric Toolbox as separate processes internally, but make them feel like PbiBench modules in one package.
+3. Refactor generic process/tool discovery out of `PbiBench.DaxStudio` into a neutral `PbiBench.ExternalTools` (or equivalent) dual-target library.
+   - Report Studio must not reference a DAX-Studio-specific project merely to launch Desktop/VS Code.
+   - DAX Studio remains only a specialist external bridge.
+4. Add a small provider-neutral `Design Exchange`:
+   - export `pbibench-model-context.json`
+   - import/validate `dashboard-spec.json`
+   - import/validate `theme.json`
+   - show semantic binding validity
+   - open the validated design in Report Studio
+   - no Claude/ChatGPT SDK or embedded AI.
+5. Anticipate Theme Forge only through JSON/file exchange. No Theme Forge API dependency.
+6. Apply a consistent light design system and a small pinned MIT Fluent UI System Icons SVG subset or original PbiBench vectors.
+   - Do not copy Data Goblin icons/assets/code.
+7. Keep DAX Studio functionality unchanged except for moving generic launcher infrastructure out of its module.
+8. Update module/provenance/feature catalogs and component manifests so actual project dependencies match declared module dependencies.
+9. Preserve hosted V2 CI and add tests for the ExternalTools boundary + Design Exchange.
+
+Use targeted tests during edits, then one final impacted Release gate before push.
+Leave post-push CI/audit to the external reviewer.
+
+Preferred commit:
+`v2-pass3 - Unified shell, design exchange and external-tools boundary`

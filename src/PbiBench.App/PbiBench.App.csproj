@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType><TargetFramework>net48</TargetFramework><UseWPF>true</UseWPF>
-    <AssemblyName>PbiBench</AssemblyName><AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Version>2.3.0</Version><AssemblyName>PbiBench</AssemblyName><AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets/PbiBench.ico</ApplicationIcon>
@@ -36,4 +36,4 @@
     <ItemGroup><Te2Runtime Include="../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*" Exclude="../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*.pdb;../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*.config" /></ItemGroup>
     <Copy SourceFiles="@(Te2Runtime)" DestinationFiles="@(Te2Runtime->'$(TargetDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" Condition="!Exists('$(TargetDir)%(Te2Runtime.RecursiveDir)%(Te2Runtime.Filename)%(Te2Runtime.Extension)')" />
   </Target>
-</Project>
+<ItemGroup><ProjectReference Include="../PbiBench.DesignSystem/PbiBench.DesignSystem.csproj" /><ProjectReference Include="../PbiBench.DesignExchange/PbiBench.DesignExchange.csproj" /><ProjectReference Include="../PbiBench.ExternalTools/PbiBench.ExternalTools.csproj" /></ItemGroup></Project>

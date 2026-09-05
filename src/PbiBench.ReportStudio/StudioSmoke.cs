@@ -35,6 +35,25 @@ internal static class StudioSmoke
         window.FocusObject("overview", "revenue"); await window.Dispatcher.InvokeAsync(window.UpdateLayout, DispatcherPriority.Render);
         var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32); bitmap.Render(window);
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap)); using (var stream = File.Create(Path.ChangeExtension(output, ".png"))) encoder.Save(stream);
+        var context = PbiBench.DesignExchange.ModelContext.Create(new PbiBench.AI.ContextExport.ContextModel("Sales", 1600,
+            new[] { new PbiBench.AI.ContextExport.ContextObject(PbiBench.AI.ContextExport.ContextModel.ObjectId("Table", null, "Sales"), "Table", "Sales"),
+                new PbiBench.AI.ContextExport.ContextObject(PbiBench.AI.ContextExport.ContextModel.ObjectId("Measure", "Sales", "Revenue"), "Measure", "Revenue", "Sales") },
+            Array.Empty<PbiBench.AI.ContextExport.ContextRelationship>(), Array.Empty<PbiBench.AI.ContextExport.ContextDependency>()));
+        var designRoot = Path.Combine(Path.GetDirectoryName(output)!, "design-fixture-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(designRoot);
+        var modelPath = Path.Combine(designRoot, "pbibench-model-context.json"); await context.SaveAsync(modelPath, default);
+        var spec = new PbiBench.DesignExchange.DashboardSpec(1, new("Commercial Performance", "Executive"), new[] {
+            new PbiBench.DesignExchange.DesignPage("summary", "Executive Summary", new(1280, 720), new[] {
+                new PbiBench.DesignExchange.DesignVisual("revenue", "card", new Dictionary<string, PbiBench.DesignExchange.DesignBinding> { ["value"] = new("Measure", "Sales", "Revenue") }, "Current revenue", "top"),
+                new PbiBench.DesignExchange.DesignVisual("trend", "line", new Dictionary<string, PbiBench.DesignExchange.DesignBinding> { ["value"] = new("Measure", "Sales", "Revenue") }, "Revenue trend", "middle")
+            }) }, context.ModelFingerprint);
+        var specPath = Path.Combine(designRoot, "dashboard-spec.json"); var themePath = Path.Combine(designRoot, "theme.json");
+        await File.WriteAllTextAsync(specPath, PbiBench.ExternalTools.ContractJson.Serialize(spec)); await File.WriteAllTextAsync(themePath, "{\"name\":\"PbiBench\",\"dataColors\":[\"#315DA8\",\"#626B78\",\"#89A5D0\"]}");
+        await window.OpenDesignAsync(modelPath, specPath, themePath); await window.Dispatcher.InvokeAsync(window.UpdateLayout, DispatcherPriority.Render);
+        if (window.DesignPreview?.VisualCount != 2 || !window.DesignPreview.Package.IsValid || window.CurrentPlan != null) throw new InvalidDataException("Design preview did not preserve the read-only boundary.");
+        if (initial.Files.Any(p => !File.ReadAllBytes(Path.Combine(initial.Root, p.Key)).SequenceEqual(p.Value.Bytes()))) throw new InvalidDataException("Design preview changed PBIR bytes.");
+        var previewBitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32); previewBitmap.Render(window);
+        var previewEncoder = new PngBitmapEncoder(); previewEncoder.Frames.Add(BitmapFrame.Create(previewBitmap)); using (var stream = File.Create(Path.ChangeExtension(output, ".design.png"))) previewEncoder.Save(stream);
+        checks.Add("Design handoff revalidates model/spec/theme, renders proposed layout and leaves every PBIR byte unchanged");
         await File.WriteAllTextAsync(output, JsonSerializer.Serialize(new { success = true, checks }, new JsonSerializerOptions { WriteIndented = true }));
     }
 }

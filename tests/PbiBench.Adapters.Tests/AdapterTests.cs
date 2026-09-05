@@ -1,3 +1,4 @@
+using PbiBench.ExternalTools;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using PbiBench.DaxStudio;

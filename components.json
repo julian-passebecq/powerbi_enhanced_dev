@@ -1,0 +1,11 @@
+{
+  "contractVersion": 1,
+  "productVersion": "2.3.0",
+  "externalToolsContractVersion": 1,
+  "pbirContractVersion": 1,
+  "components": [
+    { "id": "semantic-ide", "version": "2.3.0", "path": "PbiBench.exe" },
+    { "id": "report-studio", "version": "2.3.0", "path": "report-studio/PbiBench.ReportStudio.exe" },
+    { "id": "fabric-toolbox", "version": "0.4.0", "path": "fabric-toolbox/PbiBench.FabricToolbox.exe" }
+  ]
+}

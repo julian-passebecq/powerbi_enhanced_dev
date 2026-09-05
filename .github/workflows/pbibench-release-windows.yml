@@ -40,4 +40,10 @@ jobs:
             artifacts/ci-release/*.trx
             artifacts/ci-release/report-smoke*
           if-no-files-found: warn
+      - name: ExternalTools contract and boundary tests
+        run: dotnet test tests/PbiBench.ExternalTools.Tests/PbiBench.ExternalTools.Tests.csproj -c Release --nologo
+      - name: DesignExchange contract and boundary tests
+        run: dotnet test tests/PbiBench.DesignExchange.Tests/PbiBench.DesignExchange.Tests.csproj -c Release --nologo
+      - name: ReportStudio contract and boundary tests
+        run: dotnet test tests/PbiBench.ReportStudio.Tests/PbiBench.ReportStudio.Tests.csproj -c Release --nologo
       # Offline coverage only; no hosted live TE2/Desktop/XMLA/Fabric claim.

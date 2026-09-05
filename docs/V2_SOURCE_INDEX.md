@@ -15,3 +15,11 @@ Implementation baseline: `bbb29c3ab7adb2e7b9c04bf71b618354847e3e92`. All 12 supp
 The schema registry normalizes each schema's runtime `$id` to its actual pinned file URI because several upstream files repeat sibling/version IDs. The stored source files and validation constraints remain unchanged. Unknown versions are readable but cannot be approved for mutation. Updating the schema bundle is an explicit PBIP/PBIR lane change; refresh its pin, hash manifest and regression fixtures together.
 
 DAX Guide opens in the browser. In-app signature descriptions use PbiBench's existing original local catalog. DAX.do is conceptual inspiration only; no branding, CSS, icons, screenshots or source copied. No TE3 assets/code or non-commercial PBIR project code is included. Fabric authentication and remote operations remain in Fabric Toolbox.
+
+## Pass 3 additions
+
+- Neutral launch and handoff: `src/PbiBench.ExternalTools/` (original, no auth/UI/model dependency).
+- Provider-neutral contracts: `src/PbiBench.DesignExchange/` (existing metadata DTO reuse).
+- Microsoft report-theme schema: `schemas/report-theme.lock.json` (2.156, exact commit and SHA-256, retained MIT license).
+- Original vectors and light tokens: `src/PbiBench.DesignSystem/` (adjacent MIT license/inventory).
+- Product/package versions: `components.json`; exact graph: `docs/architecture/module_catalog.json`.

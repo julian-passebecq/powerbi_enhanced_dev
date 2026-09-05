@@ -1,4 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF><Version>0.3.0</Version></PropertyGroup>
-  <ItemGroup><ProjectReference Include="../PbiBench.Fabric/PbiBench.Fabric.csproj" /><ProjectReference Include="../PbiBench.DaxStudio/PbiBench.DaxStudio.csproj" /></ItemGroup>
-</Project>
+  <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF><Version>0.4.0</Version></PropertyGroup>
+  <ItemGroup><ProjectReference Include="../PbiBench.Fabric/PbiBench.Fabric.csproj" /><ProjectReference Include="../PbiBench.ExternalTools/PbiBench.ExternalTools.csproj" /></ItemGroup>
+<ItemGroup><ProjectReference Include="../PbiBench.DesignSystem/PbiBench.DesignSystem.csproj" /></ItemGroup><Target Name="RemoveObsoleteSpecialistBridge" AfterTargets="Build"><Delete Files="$(TargetDir)PbiBench.DaxStudio.dll;$(TargetDir)PbiBench.DaxStudio.pdb" /></Target></Project>

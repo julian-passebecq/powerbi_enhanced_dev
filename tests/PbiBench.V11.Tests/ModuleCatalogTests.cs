@@ -7,6 +7,30 @@ namespace PbiBench.V11.Tests;
 
 public sealed class ModuleCatalogTests
 {
+    [Fact] public void CatalogProjectGraphExactlyMatchesSourceAndDeclaredModuleClosure()
+    {
+        var root = Root(); var catalog = ModuleCatalog.Bundled(); var graph = catalog.ProjectGraph.ToDictionary(p => p.Path, StringComparer.Ordinal);
+        var projects = Directory.GetFiles(Path.Combine(root, "src"), "*.csproj", SearchOption.AllDirectories).Where(p => !p.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)).Select(p => p.Substring(root.Length + 1).Replace('\\', '/')).OrderBy(p => p).ToArray();
+        Assert.Equal(projects, graph.Keys.OrderBy(p => p));
+        var modules = catalog.Modules.ToDictionary(m => m.Id);
+        HashSet<string> ModuleClosure(string id)
+        { var seen = new HashSet<string>(); var pending = new Stack<string>(); pending.Push(id); while (pending.Count > 0) { var next = pending.Pop(); if (seen.Add(next)) foreach (var dep in modules[next].DependsOnModules) pending.Push(dep); } return seen; }
+        foreach (var project in graph.Values)
+        {
+            var file = Path.Combine(root, project.Path);
+            var actual = XDocument.Load(file).Descendants("ProjectReference").Select(e => Path.GetFullPath(Path.Combine(Path.GetDirectoryName(file)!, (string)e.Attribute("Include")!)).Substring(root.Length + 1).Replace('\\', '/')).OrderBy(p => p).ToArray();
+            Assert.Equal(actual, project.References.OrderBy(p => p));
+            var closure = ModuleClosure(project.ModuleId);
+            foreach (var target in actual) Assert.Contains(graph[target].ModuleId, closure);
+        }
+        Assert.Equal(new[] { "src/PbiBench.ExternalTools/PbiBench.ExternalTools.csproj" }, graph["src/PbiBench.DaxStudio/PbiBench.DaxStudio.csproj"].References);
+        foreach (var child in new[] { "ReportStudio", "FabricToolbox" })
+        {
+            var seen = new HashSet<string>(); var pending = new Stack<string>(); pending.Push("src/PbiBench." + child + "/PbiBench." + child + ".csproj");
+            while (pending.Count > 0) { var next = pending.Pop(); if (seen.Add(next)) foreach (var dep in graph[next].References) pending.Push(dep); }
+            Assert.DoesNotContain(seen, p => p.Contains("PbiBench.DaxStudio"));
+        }
+    }
     private static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     private static string Serialize(ModuleCatalog catalog) => JsonSerializer.Serialize(catalog, Json);
     private static string Root()
@@ -17,7 +41,7 @@ public sealed class ModuleCatalogTests
     }
     [Fact] public void AllFeaturesResolveVersionedModulesAndEmbeddedMetadataMatchesDisk()
     {
-        var catalog = ModuleCatalog.Bundled(); Assert.Equal(17, catalog.Modules.Count); Assert.Equal("2.2.0", catalog.ProductVersion);
+        var catalog = ModuleCatalog.Bundled(); Assert.Equal(22, catalog.Modules.Count); Assert.Equal("2.3.0", catalog.ProductVersion);
         Assert.Equal(Serialize(catalog), Serialize(ModuleCatalog.Parse(File.ReadAllText(Path.Combine(Root(), "docs/architecture/module_catalog.json")))));
         foreach (var module in catalog.Modules)
         {

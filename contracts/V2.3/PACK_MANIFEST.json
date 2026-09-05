@@ -1,0 +1,33 @@
+{
+  "name": "PbiBench V2 Pass 3 - Unified Product",
+  "baselineCommit": "70493e1a63064a7e6d2ec98c285d187a556834a3",
+  "targetVersion": "2.3.0",
+  "workstreams": [
+    "unified shell UX",
+    "ExternalTools neutral boundary",
+    "Design Exchange model/spec/theme JSON",
+    "shared design system/icons",
+    "project context and one-package component manifest"
+  ],
+  "explicitNoExpansion": [
+    "DAX Studio",
+    "Bravo",
+    "embedded AI/MCP",
+    "remote PBIR updateDefinition"
+  ],
+  "files": [
+    "ACCEPTANCE_GATE.md",
+    "AUDIT_V2_PASS2.md",
+    "DESIGN_EXCHANGE.md",
+    "DESIGN_SYSTEM_AND_ICONS.md",
+    "EXTERNAL_TOOLS_BOUNDARY.md",
+    "MASTER_PROMPT_V2_PASS3.md",
+    "PACK_MANIFEST.json",
+    "PASTE_THIS_TO_CODEX.txt",
+    "PROJECT_CONTEXT.md",
+    "README_FIRST.md",
+    "TESTING_DELEGATION.md",
+    "THEME_AND_DASHBOARD_SPEC.md",
+    "UNIFIED_SHELL_UX.md"
+  ]
+}

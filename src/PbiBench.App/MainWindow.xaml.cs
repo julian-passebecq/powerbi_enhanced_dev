@@ -62,8 +62,9 @@ public partial class MainWindow : Window
         InitializeConnectedWorkspaces();
         InitializeAgentWorkspace();
         InitializeGen2();
+        InitializeShell();
         ready = true;
-        GoTo(layoutState.SelectedPage);
+        GoTo("Home");
         RefreshDaxStudioStatus();
         Log("PbiBench ready. TE2 2.28.0 is integrated in this process. Bulk actions use preview and TE2 undo.");
         Loaded += (_, _) => Run(async () =>
@@ -175,11 +176,13 @@ public partial class MainWindow : Window
     }
     private void UpdateModelStatus()
     {
-        if (!ready || editor.Handler == null) return;
+        if (!ready) return;
+        if (editor.Handler == null) { ModelTitle.Text = "PbiBench"; ConnectionStatus.Text = "No model loaded · Open or connect to begin"; RefreshProjectStrip(); return; }
         var h = editor.Handler;
         ModelTitle.Text = h.Database.Name + (h.HasUnsavedChanges ? "  •" : "");
         InspectorModel.Text = h.Database.Name;
         InspectorDetails.Text = $"{h.Model.Tables.Count} tables\n{h.Model.AllMeasures.Count()} measures\n{h.Model.Relationships.Count} relationships\nCompatibility {h.CompatibilityLevel}\n\n{(h.HasUnsavedChanges ? "Unsaved local edits" : "No pending edits")}\nUndo: {h.UndoManager.UndoSteps} steps";
+        RefreshProjectStrip();
         ConnectionStatus.Text = h.IsConnected ? $"{(h.IsPbiDesktop ? "Power BI Desktop" : "XMLA")} · {editor.Server} · {editor.Database}" : $"Local · {editor.FilePath ?? "unsaved model"}";
     }
     private void UpdateSelection()
@@ -197,7 +200,7 @@ public partial class MainWindow : Window
     }
     private void NavigationChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (ready && Navigation.SelectedItem is ListBoxItem item) Run(() => ShowPage(item.Content.ToString()!));
+        if (ready && !selectingModule && Navigation.SelectedItem is ListBoxItem item) Run(() => NavigateModule((string)item.Tag));
     }
     internal void ShowPage(string page)
     {
@@ -229,14 +232,18 @@ public partial class MainWindow : Window
         if (InspectorPane.Visibility == Visibility.Visible && InspectorColumn.ActualWidth >= 210) layoutState.InspectorWidth = InspectorColumn.ActualWidth;
         if (OutputTabs.Visibility == Visibility.Visible && OutputRow.ActualHeight >= 80) layoutState.OutputHeight = OutputRow.ActualHeight;
         activePage = page; ApplyPaneVisibility();
-        foreach (var surface in new FrameworkElement[] { ModelSurface, HomePage, DaxPage, DataPage, AuthoringPage, automationWorkspace, DiagramPage, workspaceExperience, qualityWorkspace, fabricWorkspace!, refreshExperience, agentWorkspace!, LaterPage }) surface.Visibility = Visibility.Collapsed;
+        PrimaryCommands.Visibility = page is "Home" or "Design Exchange" ? Visibility.Collapsed : Visibility.Visible;
+        SecondaryCommands.Visibility = page is "Home" or "Design Exchange" or "DAX" or "Automate" ? Visibility.Collapsed : Visibility.Visible;
+        RefreshProjectStrip();
+        foreach (var surface in new FrameworkElement[] { ModelSurface, HomePage, DesignExchangeSurface, DaxPage, DataPage, AuthoringPage, automationWorkspace, DiagramPage, workspaceExperience, qualityWorkspace, fabricWorkspace!, refreshExperience, agentWorkspace!, LaterPage }) surface.Visibility = Visibility.Collapsed;
         FrameworkElement selected = page switch
         {
-            "Home" => HomePage, "Model" => ModelSurface, "DAX" => DaxPage, "Data" => DataPage, "Automate" => automationWorkspace,
+            "Design Exchange" => DesignExchangeSurface, "Home" => HomePage, "Model" => ModelSurface, "DAX" => DaxPage, "Data" => DataPage, "Automate" => automationWorkspace,
             "Model tools" => AuthoringPage, "Agent" => agentWorkspace!,
             "Model diagram" => DiagramPage, "PBIP / Git" => workspaceExperience, "QA" => qualityWorkspace, "Fabric" => fabricWorkspace!, "Deploy" => refreshExperience, _ => LaterPage
         };
         selected.Visibility = Visibility.Visible;
+        if (page == "Home") RefreshHomeStatus();
         if (page == "Model diagram") DrawDiagram();
         if (page == "Automate") UpdateSelection();
         if (page == "PBIP / Git") Run(() => UpdateWorkspaceAsync(workspaceRoot ?? editor.FilePath));
@@ -253,11 +260,13 @@ public partial class MainWindow : Window
     }
     private void GoTo(string page)
     {
-        if (page == "Model diagram") page = "Semantic View";
-        var item = Navigation.Items.Cast<ListBoxItem>().First(i => (string)i.Content == page);
-        if (ReferenceEquals(Navigation.SelectedItem, item)) ShowPage(page);
-        else Navigation.SelectedItem = item;
+        var group = page switch { "PBIP / Git" or "Design Exchange" => "Project", "Model tools" or "Data" or "Semantic View" or "Model diagram" or "QA" or "Fabric" or "Deploy" => "Model", "Agent" or "Knowledge" => "Tools", _ => page };
+        selectingModule = true;
+        Navigation.SelectedItem = Navigation.Items.Cast<ListBoxItem>().FirstOrDefault(i => (string)i.Tag == group);
+        selectingModule = false;
+        ShowPage(page);
     }
+
     private void OpenModel(object sender, RoutedEventArgs e) => Run(() => { GoTo("Model"); editor.OpenDialog(); });
     private void ConnectModel(object sender, RoutedEventArgs e) => Run(() => { GoTo("Model"); editor.Connect(); });
     private void SaveModel(object sender, RoutedEventArgs e) => Run(async () => { RequireModel(); editor.Save(); await UpdateSessionAsync(); });
@@ -371,8 +380,8 @@ public partial class MainWindow : Window
         {
             semanticWorkspaceRoot = null;
             bpaWorkspaceContext = null;
-            workspaceRoot = null; await UpdateReportIndexesAsync(null); GitHeader.Text = "Git · no project"; SourceStatus.Text = "No PBIP workspace";
-            WorkspaceDetails.Text = "Open a model from a PBIP project or choose a .pbip file."; GitDetails.Text = ""; GitFiles.ItemsSource = null; UpdateConnectedContext(); return;
+            workspaceRoot = null; projectGitBranch = null; await UpdateReportIndexesAsync(null); GitHeader.Text = "Git · no project"; SourceStatus.Text = "No PBIP workspace";
+            WorkspaceDetails.Text = "Open a model from a PBIP project or choose a .pbip file."; GitDetails.Text = ""; GitFiles.ItemsSource = null; UpdateConnectedContext(); RefreshProjectStrip(); return;
         }
         var inventory = await scanner.DetectAsync(path!, token);
         if (revision != statusRevision || token.IsCancellationRequested) return;
@@ -385,7 +394,7 @@ public partial class MainWindow : Window
             ?? (inventory?.SemanticModelFolders.Count == 1 ? inventory.SemanticModelFolders[0] : null);
         UpdateConnectedContext();
         await UpdateReportIndexesAsync(inventory);
-        GitHeader.Text = status.Summary;
+        projectGitBranch = status.Branch; GitHeader.Text = status.Summary; RefreshProjectStrip();
         SourceStatus.Text = inventory == null ? "No PBIP project detected\n" + status.Summary : $"PBIP · {inventory.Root}\nTMDL · {(inventory.HasTmdl ? "present" : "absent")}\nPBIR · {(inventory.HasPbir ? "present" : "absent")}\n{status.ChangedSemanticFiles.Count} changed semantic files";
         WorkspaceDetails.Text = inventory == null ? "No PBIP project detected at " + root : $"PBIP root: {inventory.Root}\nSemantic folders: {string.Join(", ", inventory.SemanticModelFolders)}\nTMDL: {inventory.HasTmdl} · PBIR: {inventory.HasPbir} · enhanced PBIR: {inventory.HasEnhancedPbir}\n{status.Summary}\n{string.Join("\\n", inventory.Warnings.Concat(status.Warnings))}";
         GitFiles.ItemsSource = status.Changes.OrderBy(c => c.IsSemantic ? 0 : c.Path.IndexOf(".Report/", StringComparison.OrdinalIgnoreCase) >= 0 ? 1 : 2).ThenBy(c => c.Path).Select(c => new { Area = c.IsSemantic ? "Model" : c.Path.IndexOf(".Report/", StringComparison.OrdinalIgnoreCase) >= 0 ? "Report" : "Project", c.Status, c.Path, c.OriginalPath }).ToArray();
@@ -413,7 +422,7 @@ public partial class MainWindow : Window
     private void ShowCommands()
     {
         var entries = Enum.GetValues(typeof(PbiBench.Core.Commands.WorkbenchCommandId)).Cast<PbiBench.Core.Commands.WorkbenchCommandId>().Where(commands.Contains).ToDictionary(id => id.ToString(), id => new Action(() => Run(() => commands.Execute(id))));
-        foreach (var page in Navigation.Items.Cast<ListBoxItem>().Select(i => i.Content.ToString()!)) entries["Workspace · " + page] = () => GoTo(page);
+        foreach (var page in Navigation.Items.Cast<ListBoxItem>().Select(i => (string)i.Tag)) entries["Workspace · " + page] = () => NavigateModule(page);
         AddAuthoringCommands(entries);
         AddQualityCommands(entries);
         AddConnectedCommands(entries);

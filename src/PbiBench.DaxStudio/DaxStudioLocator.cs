@@ -1,3 +1,4 @@
+using PbiBench.ExternalTools;
 namespace PbiBench.DaxStudio;
 
 public static class DaxStudioLocator
@@ -10,7 +11,7 @@ public static class DaxStudioLocator
     private static string? Find(string executable, string? configuredPath, string? siblingDirectory)
     {
         // An explicit invalid setting must never silently launch a different install.
-        if (!string.IsNullOrWhiteSpace(configuredPath)) return ExistingExecutable(configuredPath!);
+        if (!string.IsNullOrWhiteSpace(configuredPath)) return ExecutableDiscovery.ExistingExecutable(configuredPath!);
         var directories = new List<string?>
         {
             siblingDirectory,
@@ -20,28 +21,6 @@ public static class DaxStudioLocator
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DAX Studio")
         };
         directories.AddRange((Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator));
-        foreach (var directory in directories.Where(p => !string.IsNullOrWhiteSpace(p)))
-        {
-            try
-            {
-                var result = ExistingExecutable(Path.Combine(directory!.Trim().Trim('"'), executable));
-                if (result != null) return result;
-            }
-            catch (ArgumentException) { }
-            catch (NotSupportedException) { }
-        }
-        return null;
-    }
-
-    private static string? ExistingExecutable(string path)
-    {
-        try
-        {
-            var fullPath = Path.GetFullPath(Environment.ExpandEnvironmentVariables(path.Trim().Trim('"')));
-            return File.Exists(fullPath) && string.Equals(Path.GetExtension(fullPath), ".exe", StringComparison.OrdinalIgnoreCase) ? fullPath : null;
-        }
-        catch (ArgumentException) { return null; }
-        catch (NotSupportedException) { return null; }
-        catch (PathTooLongException) { return null; }
+        return ExecutableDiscovery.Find(executable, null, directories);
     }
 }

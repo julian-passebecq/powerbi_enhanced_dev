@@ -14,13 +14,15 @@ public static class Program
             string? Value(string key) { var i = Array.IndexOf(args, key); return i >= 0 && i + 1 < args.Length ? args[i + 1] : null; }
             try
             {
-                if (Value("--contract-version") is { } version && version != "1") throw new InvalidDataException("Unsupported Report Studio handoff version.");
                 if (Value("--smoke-test") is { } output)
                 {
                     await StudioSmoke.RunAsync(window, output); app.Shutdown(0); return;
                 }
-                var input = Value("--report") ?? args.FirstOrDefault(a => !a.StartsWith("-", StringComparison.Ordinal));
-                if (input != null) { await window.OpenAsync(input); window.FocusObject(Value("--page"), Value("--visual")); }
+                var handoff = PbiBench.ExternalTools.ModuleHandoff.Parse(args, reportModule: true);
+                if (handoff.Report != null) { await window.OpenAsync(handoff.Report); window.FocusObject(handoff.Page, handoff.Visual); }
+                if (handoff.ProjectContext != null) await window.AcceptProjectContextAsync(handoff.ProjectContext);
+                if (handoff.ModelContext != null) await window.OpenDesignAsync(handoff.ModelContext, handoff.DashboardSpec, handoff.Theme);
+
             }
             catch (Exception error)
             {

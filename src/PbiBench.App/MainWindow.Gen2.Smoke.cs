@@ -46,5 +46,6 @@ public partial class MainWindow
         var entries = new Dictionary<string, Action>(); AddQuickOpenEntries(entries);
         Check(entries.Keys.Any(k => k.Contains("Revenue")) && entries.ContainsKey("Automate · Power BI C# Gallery"), "Quick Open indexes real model objects and the curated gallery", checks);
         diagram.ShowSemanticMode("Model");
+        await RunPass3SmokeAsync(outputRoot, checks);
     }
 }

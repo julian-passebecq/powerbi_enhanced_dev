@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "productVersion": "2.2.0",
-  "baselineCommit": "1e02628f7b35af0e5b92c0452f86d3b102562cc2",
+  "productVersion": "2.3.0",
+  "baselineCommit": "70493e1a63064a7e6d2ec98c285d187a556834a3",
   "components": [
     {
       "id": "semantic.model-editor.te2",
@@ -99,11 +99,11 @@
     {
       "id": "external.tools",
       "feature": "Fabric/DataForge/Desktop/VS Code/Codex switcher",
-      "ownerProject": "PbiBench.App / PbiBench.DaxStudio",
+      "ownerProject": "PbiBench.App / PbiBench.ExternalTools",
       "sourceType": "original-process-bridge",
       "upstream": "User-installed companion executables",
       "pin": "detected-at-runtime",
-      "localAdapter": "src/PbiBench.DaxStudio/CompanionTools.cs",
+      "localAdapter": "src/PbiBench.ExternalTools/CompanionTools.cs",
       "license": "external-tool-terms (not redistributed)",
       "updateLane": "external-tools",
       "localPatches": [],
@@ -709,11 +709,11 @@
     {
       "id": "external.bravo",
       "feature": "Bravo live model launcher",
-      "ownerProject": "PbiBench.DaxStudio",
+      "ownerProject": "PbiBench.ExternalTools",
       "sourceType": "external",
       "upstream": "sql-bi/Bravo",
       "pin": "fbc2b12950ddb4344ae71f16de8861407c32050e",
-      "localAdapter": "src/PbiBench.DaxStudio/ExternalToolContext.cs",
+      "localAdapter": "src/PbiBench.ExternalTools/ExternalToolContext.cs",
       "license": "Original launcher; external Bravo MIT; no Bravo code or runtime embedded",
       "updateLane": "bravo",
       "localPatches": [],
@@ -724,11 +724,11 @@
     {
       "id": "external.project-tools",
       "feature": "Desktop and VS Code project launchers",
-      "ownerProject": "PbiBench.DaxStudio",
+      "ownerProject": "PbiBench.ExternalTools",
       "sourceType": "original",
       "upstream": "Microsoft public PBIP/PBIR and process startup contracts",
       "pin": "2026-09-05",
-      "localAdapter": "src/PbiBench.DaxStudio/ExternalToolContext.cs",
+      "localAdapter": "src/PbiBench.ExternalTools/ExternalToolContext.cs",
       "license": "Original PbiBench; companions separately installed",
       "updateLane": "powerbi-desktop / vscode",
       "localPatches": [],
@@ -750,6 +750,81 @@
       "protectingTests": [
         "tests/PbiBench.V11.Tests/FabricReportSnapshotTests.cs",
         "tests/PbiBench.FabricToolbox.Tests/ToolboxTests.cs"
+      ]
+    },
+    {
+      "id": "shell.unified",
+      "feature": "Unified shell and module navigation",
+      "ownerProject": "PbiBench.App",
+      "sourceType": "original",
+      "upstream": "PbiBench",
+      "pin": "2.3.0",
+      "localAdapter": "src/PbiBench.App/MainWindow.Shell.cs",
+      "license": "Original",
+      "updateLane": "shell",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.App.Tests/UnifiedShellTests.cs"
+      ]
+    },
+    {
+      "id": "tools.external",
+      "feature": "Neutral executable discovery and module handoff",
+      "ownerProject": "PbiBench.ExternalTools",
+      "sourceType": "original",
+      "upstream": "PbiBench",
+      "pin": "contract v1",
+      "localAdapter": "src/PbiBench.ExternalTools/CompanionTools.cs",
+      "license": "Original",
+      "updateLane": "external-tools",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.ExternalTools.Tests/BoundaryTests.cs"
+      ]
+    },
+    {
+      "id": "design.exchange",
+      "feature": "Provider-neutral model and dashboard contracts",
+      "ownerProject": "PbiBench.DesignExchange",
+      "sourceType": "original",
+      "upstream": "PbiBench",
+      "pin": "contract v1",
+      "localAdapter": "src/PbiBench.DesignExchange/DashboardSpec.cs",
+      "license": "Original",
+      "updateLane": "design-exchange",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.DesignExchange.Tests/ContractTests.cs"
+      ]
+    },
+    {
+      "id": "design.icons",
+      "feature": "Original vectors and shared light theme",
+      "ownerProject": "PbiBench.DesignSystem",
+      "sourceType": "original",
+      "upstream": "PbiBench original artwork",
+      "pin": "1.0.0 / 2026-09-05",
+      "localAdapter": "src/PbiBench.DesignSystem/PbiBenchTheme.cs",
+      "license": "MIT",
+      "updateLane": "design-exchange",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.App.Tests/UnifiedShellTests.cs"
+      ]
+    },
+    {
+      "id": "design.theme-schema",
+      "feature": "Power BI report-theme schema validation",
+      "ownerProject": "PbiBench.DesignExchange",
+      "sourceType": "third-party-schema",
+      "upstream": "microsoft/powerbi-desktop-samples",
+      "pin": "2.156 / 6ccd62e9d79c4b1b0662ba8955598492c35cc8c4",
+      "localAdapter": "src/PbiBench.DesignExchange/ThemeValidator.cs",
+      "license": "MIT",
+      "updateLane": "design-exchange",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.DesignExchange.Tests/ContractTests.cs"
       ]
     }
   ]

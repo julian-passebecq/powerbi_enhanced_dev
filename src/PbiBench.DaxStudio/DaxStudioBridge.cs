@@ -1,3 +1,4 @@
+using PbiBench.ExternalTools;
 using System.Text;
 
 namespace PbiBench.DaxStudio;

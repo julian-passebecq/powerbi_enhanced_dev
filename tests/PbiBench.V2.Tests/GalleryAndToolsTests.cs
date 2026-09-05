@@ -1,3 +1,4 @@
+using PbiBench.ExternalTools;
 using PbiBench.CSharp.LanguageService;
 using PbiBench.DaxStudio;
 using Xunit;
@@ -48,7 +49,7 @@ public sealed class GalleryAndToolsTests
         var path = Path.GetTempFileName();
         try
         {
-            var status = new CompanionStatus(CompanionTools.Catalog.Single(t => t.Id == "bravo"), path, "test"); var fake = new Capture();
+            var status = new ExternalToolStatus(CompanionTools.Catalog.Single(t => t.Id == "bravo"), path, "test"); var fake = new Capture();
             new CompanionTools(fake).Launch(status, new ToolContext("localhost:51234", "Model \"name\""));
             Assert.Equal(new[] { "--server=localhost:51234", "--database=Model \"name\"" }, fake.Request!.Arguments);
             Assert.False(ExternalToolContext.Evaluate(status, new()).Enabled);
@@ -62,7 +63,7 @@ public sealed class GalleryAndToolsTests
         try
         {
             var exe = Path.Combine(root, "tool.exe"); File.WriteAllText(exe, ""); var pbip = Path.Combine(root, "project.pbip"); File.WriteAllText(pbip, "{}"); var pbir = Path.Combine(root, "definition.pbir"); File.WriteAllText(pbir, "{}");
-            CompanionStatus Status(string id) => new(CompanionTools.Catalog.Single(t => t.Id == id), exe, "test");
+            ExternalToolStatus Status(string id) => new(CompanionTools.Catalog.Single(t => t.Id == id), exe, "test");
             var context = new ToolContext(ProjectDirectory: root, ProjectFile: pbip, ReportFile: pbir, PageId: "page1", VisualId: "visual1");
             Assert.Equal(new[] { pbip }, ExternalToolContext.Evaluate(Status("powerbi"), context).Arguments);
             Assert.Equal(new[] { pbir }, ExternalToolContext.Evaluate(Status("powerbi"), context with { ProjectFile = null }).Arguments);

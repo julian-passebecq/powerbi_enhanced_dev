@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/microsoft/powerbi-desktop-samples",
+  "commit": "6ccd62e9d79c4b1b0662ba8955598492c35cc8c4",
+  "schemaVersion": "2.156 / 5.75",
+  "license": "MIT",
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "dea9265341829002e2c23a7372393eb2ed6e26085fb623f38a4ba0af833f30a6"
+    },
+    {
+      "path": "reportThemeSchema-2.156.json",
+      "sha256": "09f465e7c4e40b3d4d7d61ff2edd59b09282c9fbf8d3825a1c8005452be947a5"
+    }
+  ]
+}

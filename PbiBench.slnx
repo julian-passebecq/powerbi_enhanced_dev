@@ -1,4 +1,10 @@
 <Solution>
+  <Project Path="tests/PbiBench.ReportStudio.Tests/PbiBench.ReportStudio.Tests.csproj" />
+  <Project Path="src/PbiBench.DesignSystem/PbiBench.DesignSystem.csproj" />
+  <Project Path="src/PbiBench.DesignExchange/PbiBench.DesignExchange.csproj" />
+  <Project Path="tests/PbiBench.ExternalTools.Tests/PbiBench.ExternalTools.Tests.csproj" />
+  <Project Path="tests/PbiBench.DesignExchange.Tests/PbiBench.DesignExchange.Tests.csproj" />
+  <Project Path="src/PbiBench.ExternalTools/PbiBench.ExternalTools.csproj" />
   <Project Path="tests/PbiBench.V2.Tests/PbiBench.V2.Tests.csproj" />
   <Project Path="src/PbiBench.Pbir/PbiBench.Pbir.csproj" />
   <Project Path="src/PbiBench.ReportStudio/PbiBench.ReportStudio.csproj" />

@@ -1,5 +1,13 @@
 # Compartmentalized architecture
 
+## Pass 3 implemented package
+
+`PbiBench.exe` is the normal entry point. Home, the compact module rail and the project context strip organize the product. `report-studio/` and `fabric-toolbox/` remain independent processes. `components.json` records their actual versions and paths. Shared light tokens and original vectors are in the UI-only DesignSystem assembly, built separately for each runtime.
+
+Generic discovery, Windows quoting and process handoffs belong to `PbiBench.ExternalTools` (net10/net48, no project references). DaxStudio contains only its specialist handoff and depends on ExternalTools. Report Studio and Fabric Toolbox reference ExternalTools without any DaxStudio dependency. DesignExchange reuses metadata DTOs and performs bounded offline validation; the Report Studio preview cannot generate or apply PBIR. The exact project-reference graph and declared module closure are checked against `module_catalog.json`.
+
+See [Pass 3 implementation](../V2_PASS3_IMPLEMENTATION.md) for supported contracts and verification boundaries. The broader target family below remains architectural context, not a claim that future areas are implemented.
+
 ## Why
 
 The repository now contains semantic editing, DAX IDE/query, data exploration, automation, Fabric, workspace sync, CLI, Agent, DataForge-related projects and prototypes. Keeping every future capability inside the same desktop process would make upstream updates and dependency changes increasingly risky.

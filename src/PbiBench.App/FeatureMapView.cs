@@ -79,6 +79,7 @@ public sealed class FeatureMapWindow : Window
     internal TabControl Pages { get; } = new();
     public FeatureMapWindow()
     {
+        PbiBench.DesignSystem.PbiBenchTheme.Apply(this);
         var provenance = ProvenanceCatalog.Bundled(); var catalog = FeatureCatalog.Bundled(provenance);
         Title = "PbiBench " + catalog.ProductVersion + " · Feature Map / Provenance";
         Width = 1360; Height = 850; MinWidth = 960; MinHeight = 620; WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -98,6 +99,9 @@ public sealed class FeatureMapWindow : Window
         Pages.Items.Add(new TabItem { Header = "Provenance / About", Content = new DataGrid { IsReadOnly = true, AutoGenerateColumns = true, CanUserAddRows = false,
             ItemsSource = provenance.Components.Select(c => new { c.Feature, c.OwnerProject, c.SourceType, c.Pin, c.License, c.UpdateLane,
                 Patches = string.Join("; ", c.LocalPatches), Tests = string.Join("; ", c.ProtectingTests) }).ToArray() } });
+        var manifestPath = PbiBench.ExternalTools.ComponentsManifest.Find(AppDomain.CurrentDomain.BaseDirectory);
+        Pages.Items.Add(new TabItem { Header = "Components", Content = manifestPath == null ? new TextBlock { Text = "Components manifest unavailable in this development output." } :
+            new DataGrid { IsReadOnly = true, AutoGenerateColumns = true, CanUserAddRows = false, ItemsSource = PbiBench.ExternalTools.ComponentsManifest.Load(manifestPath).Components } });
         Pages.SelectedIndex = 0; Content = Pages;
     }
     internal static string ReadDetailedCatalog(string baseDirectory)

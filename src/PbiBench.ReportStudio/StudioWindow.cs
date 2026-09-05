@@ -44,15 +44,15 @@ public sealed partial class StudioWindow : Window
     {
         engine = new(validator); actions = new(engine);
         Title = "PbiBench · Report Studio"; Width = 1480; Height = 920; MinWidth = 1050; MinHeight = 650;
-        FontFamily = new("Segoe UI"); FontSize = 14; Background = Brush(244, 246, 249); inspector.TextWrapping = TextWrapping.Wrap;
+        PbiBench.DesignSystem.PbiBenchTheme.Apply(this); inspector.TextWrapping = TextWrapping.Wrap;
         var root = new DockPanel(); Content = root;
-        var header = new StackPanel { Background = Brush(22, 40, 58), Margin = new Thickness(0) }; DockPanel.SetDock(header, Dock.Top); root.Children.Add(header);
-        header.Children.Add(new TextBlock { Text = "PbiBench   /   Report Studio", Foreground = Brushes.White, FontSize = 24, Margin = new Thickness(16, 12, 16, 4) });
+        var header = new StackPanel { Background = PbiBench.DesignSystem.PbiBenchTheme.Surface, Margin = new Thickness(0) }; DockPanel.SetDock(header, Dock.Top); root.Children.Add(header);
+        var branding = PbiBench.DesignSystem.PbiBenchTheme.Label("Report", "PbiBench / Report Studio"); branding.Margin = new Thickness(16, 12, 16, 4); ((TextBlock)branding.Children[1]).FontSize = 22; header.Children.Add(branding);
         var tools = Bar(input, Button("Open file…", ChooseFile), Button("Open folder…", ChooseFolder), Button("Open path", () => OpenAsync(input.Text)), Button("Refresh", () => report == null ? Task.CompletedTask : OpenAsync(report.Root)));
-        tools.Margin = new Thickness(12, 4, 12, 10); header.Children.Add(tools);
+        tools.Margin = new Thickness(12, 4, 12, 10); header.Children.Add(tools); header.Children.Add(projectStrip);
         var note = new TextBlock { Text = "Local PBIR engineering · Wireframe view · Metadata can contain persisted filter/slicer values. Close this project in Desktop before applying disk edits.", Margin = new Thickness(12, 8, 12, 4), TextWrapping = TextWrapping.Wrap };
         DockPanel.SetDock(note, Dock.Top); root.Children.Add(note); DockPanel.SetDock(status, Dock.Bottom); root.Children.Add(status);
-        var body = new System.Windows.Controls.Grid { Margin = new Thickness(10) }; root.Children.Add(body);
+        var body = new System.Windows.Controls.Grid { Margin = new Thickness(10) }; root.Children.Add(workspaces); workspaces.Items.Add(new TabItem { Header = "Report engineering", Content = body });
         body.RowDefinitions.Add(new() { Height = new GridLength(3, GridUnitType.Star) }); body.RowDefinitions.Add(new() { Height = new GridLength(2, GridUnitType.Star), MinHeight = 210 });
         body.ColumnDefinitions.Add(new() { Width = new GridLength(235) }); body.ColumnDefinitions.Add(new() { Width = new GridLength(1, GridUnitType.Star) }); body.ColumnDefinitions.Add(new() { Width = new GridLength(340) });
         Place(body, tree, 0, 0);
@@ -101,6 +101,8 @@ public sealed partial class StudioWindow : Window
         var catalog = await ReportLineage.ReadLocalModelAsync(loaded.SemanticModelPath, lifetime.Token);
         var issues = await Task.Run(() => validator.Validate(loaded), lifetime.Token);
         if (revision != loadRevision) return;
+        if (designTab != null) workspaces.SelectedIndex = 0;
+        projectStrip.Text = (loaded.ProjectFile == null ? Path.GetFileName(loaded.Root) : Path.GetFileName(loaded.ProjectFile)) + " · Disk · PBIR | Model: " + (loaded.SemanticModelPath == null ? "unbound" : Path.GetFileName(loaded.SemanticModelPath));
         report = loaded; model = catalog; input.Text = loaded.ProjectFile ?? loaded.Root; selectedPage = null; selectedVisual = null; selectedFile = null;
         view = new(loaded, catalog, issues); synchronizing = true;
         pageSelector.ItemsSource = loaded.Pages; visualSelection.ItemsSource = loaded.Pages.SelectMany(p => p.Visuals).ToArray();

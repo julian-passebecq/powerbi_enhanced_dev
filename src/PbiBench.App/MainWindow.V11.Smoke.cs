@@ -1,3 +1,4 @@
+using PbiBench.ExternalTools;
 using System.IO;
 using System.Text.Json;
 using System.Windows;
@@ -53,7 +54,7 @@ public partial class MainWindow
             try
             {
                 featureWindow.Show(); await PaintAsync();
-                Check(featureWindow.Map.VisibleRows.Count == FeatureCatalog.Bundled().Features.Count && featureWindow.Pages.Items.Count == 2, "Apps / Tools About opens the offline Feature Map and preserves Provenance", checks);
+                Check(featureWindow.Map.VisibleRows.Count == FeatureCatalog.Bundled().Features.Count && featureWindow.Pages.Items.Count == 3, "Apps / Tools About opens the offline Feature Map, Provenance and Components", checks);
                 featureWindow.Map.SelectFilter(FeatureMapFilter.Labs);
                 Check(featureWindow.Map.VisibleRows.Count == 4 && featureWindow.Map.VisibleRows.All(r => r.Status is "Labs" or "Future"), "Feature Map shows incubating and future areas with evolvable lifecycles", checks);
                 featureWindow.Map.SelectFilter(FeatureMapFilter.Te3Gaps);
@@ -67,7 +68,7 @@ public partial class MainWindow
             finally { featureWindow.Close(); }
             var toolbox = new CompanionTools().Discover(CompanionTools.Catalog.Single(t => t.Id == "fabric-toolbox"), null, AppDomain.CurrentDomain.BaseDirectory);
             Check(toolbox.Path != null, "Apps / Tools discovers the separate Fabric Toolbox executable", checks);
-            Check(PrimaryCommands.Children.OfType<Button>().Any(b => (string)b.Content == "Apps / Tools"), "Apps / Tools entry is visible in the Semantic IDE", checks);
+            Check(Navigation.Items.Cast<ListBoxItem>().Any(i => (string)i.Tag == "Tools"), "Tools entry is visible in the unified module rail", checks);
             if (gen2) await RunGen2SmokeAsync(outputRoot, checks);
             GoTo("Model");
             File.WriteAllText(Path.Combine(outputRoot, "smoke-result.json"), JsonSerializer.Serialize(new { success = true, checks, integration = "Synthetic BIM fixture only; no live PBIX/Power BI/Fabric target accessed." }, new JsonSerializerOptions { WriteIndented = true })); Environment.ExitCode = 0;

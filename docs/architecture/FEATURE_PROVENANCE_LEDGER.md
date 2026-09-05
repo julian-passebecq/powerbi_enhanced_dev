@@ -14,7 +14,7 @@ PbiBench owns its integration and new features. TE2 2.28.0 is the MIT semantic f
 | DAX language intelligence / grammar catalog | PbiBench.Dax.LanguageService | original-plus-te2-data | TE2 2.28.0 seed; PbiBench V9 | dax-language |
 | Fabric auth / REST / OneLake / SQL | PbiBench.Fabric | original-public-api-adapter | MSAL 4.84.2; SqlClient 6.1.6 | fabric |
 | DAX Studio query handoff | PbiBench.DaxStudio | external-process-bridge | detected-at-runtime | external-tools |
-| Fabric/DataForge/Desktop/VS Code/Codex switcher | PbiBench.App / PbiBench.DaxStudio | original-process-bridge | detected-at-runtime | external-tools |
+| Fabric/DataForge/Desktop/VS Code/Codex switcher | PbiBench.App / PbiBench.ExternalTools | original-process-bridge | detected-at-runtime | external-tools |
 | SQLBI VPAX parser fixture | PbiBench.Adapters.Tests | licensed-test-fixture | repository Contoso.vpax | fixtures |
 | Safe C# Preview / detached recipe execution | PbiBench.Core / PbiBench.Semantic | pbibench-original | baseline 53813388fbf2a3d7075572fd0a33be207faeccdf | automation |
 | Action recorder / generated C# / macro library | PbiBench.Core / PbiBench.Semantic / PbiBench.App | pbibench-original | 11.1.0 | automation |

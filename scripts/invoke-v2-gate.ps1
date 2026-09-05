@@ -31,9 +31,14 @@ try {
     Invoke-Dotnet -Arguments @('build', 'PbiBench.slnx', '-c', 'Release', '--nologo', '--verbosity', 'quiet')
     Invoke-Test 'tests/PbiBench.V2.Tests/PbiBench.V2.Tests.csproj' 'net10.0'
     foreach ($framework in @('net10.0', 'net48')) {
+        Invoke-Test 'tests/PbiBench.ExternalTools.Tests/PbiBench.ExternalTools.Tests.csproj' $framework
+        Invoke-Test 'tests/PbiBench.DesignExchange.Tests/PbiBench.DesignExchange.Tests.csproj' $framework
+    }
+    Invoke-Test 'tests/PbiBench.ReportStudio.Tests/PbiBench.ReportStudio.Tests.csproj' 'net10.0-windows'
+    foreach ($framework in @('net10.0', 'net48')) {
         Invoke-Test 'tests/PbiBench.V11.Tests/PbiBench.V11.Tests.csproj' $framework
     }
-    Invoke-Test 'tests/PbiBench.App.Tests/PbiBench.App.Tests.csproj' 'net48' 'FullyQualifiedName~DaxWorkspaceTests|FullyQualifiedName~CSharpAutomationTests|FullyQualifiedName~FeatureMapTests|FullyQualifiedName~V11WorkspaceTests|FullyQualifiedName~ConnectedWriteGuardTests'
+    Invoke-Test 'tests/PbiBench.App.Tests/PbiBench.App.Tests.csproj' 'net48' 'FullyQualifiedName~DaxWorkspaceTests|FullyQualifiedName~CSharpAutomationTests|FullyQualifiedName~FeatureMapTests|FullyQualifiedName~V11WorkspaceTests|FullyQualifiedName~ConnectedWriteGuardTests|FullyQualifiedName~UnifiedShellTests'
     Invoke-Test 'tests/PbiBench.Semantic.Tests/PbiBench.Semantic.Tests.csproj' 'net48' 'FullyQualifiedName~DiagramAuthoringTests|FullyQualifiedName~ScriptPreviewTests|FullyQualifiedName~SemanticAndAutomationTests|FullyQualifiedName~SelectionInspectorTests|FullyQualifiedName~SemanticImpactTests'
     Invoke-Test 'tests/PbiBench.FabricToolbox.Tests/PbiBench.FabricToolbox.Tests.csproj' 'net10.0-windows'
     & (Join-Path $repo 'scripts/test-process-isolation.ps1') -Configuration Release
@@ -48,10 +53,11 @@ try {
         $app = Join-Path $package 'PbiBench.exe'; $report = Join-Path $package 'report-studio/PbiBench.ReportStudio.exe'
         $toolbox = Join-Path $package 'fabric-toolbox/PbiBench.FabricToolbox.exe'
         if (-not (Test-Path -LiteralPath (Join-Path $package 'licenses/Microsoft-PBIR-schemas/LICENSE'))) { throw 'Schema attribution is missing from the package.' }
+        & (Join-Path $repo 'scripts/test-components.ps1') -PackageDirectory $package
     }
-    $forbidden = Get-ChildItem -LiteralPath (Split-Path $report) -File -Recurse | Where-Object { $_.Name -match '^(TabularEditor|TOMWrapper|PbiBench\.(App|ModelEditor|Semantic|Fabric))(\.|$)' }
+    $forbidden = Get-ChildItem -LiteralPath (Split-Path $report) -File -Recurse | Where-Object { $_.Name -match '^(TabularEditor|TOMWrapper|Microsoft\.Identity|PbiBench\.(App|ModelEditor|Semantic|Fabric|DaxStudio))(\.|$)' }
     if ($forbidden) { throw 'Report Studio package violates the process/dependency boundary.' }
-    $forbidden = Get-ChildItem -LiteralPath (Split-Path $toolbox) -File -Recurse | Where-Object { $_.Name -match '^(TabularEditor|TOMWrapper|PbiBench\.(App|ModelEditor|Semantic))(\.|$)' }
+    $forbidden = Get-ChildItem -LiteralPath (Split-Path $toolbox) -File -Recurse | Where-Object { $_.Name -match '^(TabularEditor|TOMWrapper|PbiBench\.(App|ModelEditor|Semantic|DaxStudio))(\.|$)' }
     if ($forbidden) { throw 'Fabric Toolbox package violates the process/dependency boundary.' }
     $semanticSmoke = Join-Path $logs 'semantic-smoke'
     Invoke-Smoke $app ('--smoke-test "' + $semanticSmoke + '" --v2') (Join-Path $semanticSmoke 'smoke-result.json')

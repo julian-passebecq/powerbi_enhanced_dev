@@ -1,4 +1,6 @@
-# Run PbiBench — integrated TE2++ first pass
+# Run PbiBench 2.3
+
+Start `PbiBench.exe` for the unified Home and module rail. Report and Fabric open independent modules within the same package. **Project > Design Exchange** exports model metadata and validates dashboard/theme JSON for read-only Report Studio Design Preview. See [Pass 3 usage, contracts and boundaries](docs/V2_PASS3_IMPLEMENTATION.md).
 
 PbiBench is the main application. Its Model workspace hosts the pinned TE2 2.28.0 editor **inside the same process**. The compatibility host uses WPF + WinForms on .NET Framework 4.8 so TE2's model editing and C# scripting remain available. Gen-2 adds the existing diagram's Semantic View modes, DAX Workbench, a curated C# gallery and a separate .NET 10 Report Studio for local PBIP/PBIR engineering. See [Gen-2 usage and boundaries](docs/V2_PASS1_IMPLEMENTATION.md). Fabric authentication and remote operations stay in Fabric Toolbox.
 

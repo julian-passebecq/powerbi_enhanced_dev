@@ -21,4 +21,10 @@ jobs:
       - run: dotnet test tests/PbiBench.V2.Tests/PbiBench.V2.Tests.csproj -f net10.0 --nologo
       - run: dotnet build src/PbiBench.ReportStudio/PbiBench.ReportStudio.csproj --nologo
       - run: ./scripts/test-process-isolation.ps1 -Configuration Debug
+      - name: ExternalTools contract and boundary tests
+        run: dotnet test tests/PbiBench.ExternalTools.Tests/PbiBench.ExternalTools.Tests.csproj --nologo
+      - name: DesignExchange contract and boundary tests
+        run: dotnet test tests/PbiBench.DesignExchange.Tests/PbiBench.DesignExchange.Tests.csproj --nologo
+      - name: ReportStudio contract and boundary tests
+        run: dotnet test tests/PbiBench.ReportStudio.Tests/PbiBench.ReportStudio.Tests.csproj --nologo
       # Offline coverage only; no hosted live TE2/Desktop/XMLA/Fabric claim.

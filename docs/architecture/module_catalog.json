@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "productVersion": "2.2.0",
-  "baselineCommit": "1e02628f7b35af0e5b92c0452f86d3b102562cc2",
+  "productVersion": "2.3.0",
+  "baselineCommit": "70493e1a63064a7e6d2ec98c285d187a556834a3",
   "modules": [
     {
       "id": "semantic-ide",
       "displayName": "Semantic IDE / TE2++",
       "kind": "InProcess",
       "lifecycle": "Active",
-      "version": "2.2.0",
+      "version": "2.3.0",
       "entryPoint": "PbiBench.exe",
       "targetFrameworks": [
         "net48"
@@ -18,7 +18,6 @@
         "src/PbiBench.ModelEditor/PbiBench.ModelEditor.csproj",
         "src/PbiBench.Semantic/PbiBench.Semantic.csproj",
         "src/PbiBench.Automation/PbiBench.Automation.csproj",
-        "src/PbiBench.Workspace/PbiBench.Workspace.csproj",
         "src/PbiBench.Git/PbiBench.Git.csproj"
       ],
       "updateLane": "semantic-shell",
@@ -44,7 +43,12 @@
         "lineage",
         "bravo-bridge",
         "powerbi-bridge",
-        "vscode-bridge"
+        "vscode-bridge",
+        "core-contracts",
+        "design-exchange",
+        "design-system",
+        "external-tools",
+        "workspace-contracts"
       ],
       "forbiddenDependencies": [
         "fabric-toolbox",
@@ -75,7 +79,9 @@
       "contracts": [
         "DAX document and diagnostic DTO v1"
       ],
-      "dependsOnModules": [],
+      "dependsOnModules": [
+        "core-contracts"
+      ],
       "forbiddenDependencies": [],
       "protectingTests": [
         "tests/PbiBench.Dax.LanguageService.Tests/DaxCodeActionTests.cs"
@@ -109,7 +115,9 @@
         "Script recovery v2 (detached draft restore)",
         "Safe recipe v1"
       ],
-      "dependsOnModules": [],
+      "dependsOnModules": [
+        "core-contracts"
+      ],
       "forbiddenDependencies": [],
       "protectingTests": [
         "tests/PbiBench.V11.Tests/LanguageTests.cs",
@@ -142,7 +150,10 @@
         ".pbifabric.json v1",
         "Fabric job inventory DTO v1"
       ],
-      "dependsOnModules": [],
+      "dependsOnModules": [
+        "core-contracts",
+        "workspace-contracts"
+      ],
       "forbiddenDependencies": [
         "TabularEditor",
         "TOMWrapper",
@@ -161,7 +172,7 @@
       "displayName": "Fabric Toolbox",
       "kind": "SeparateProcess",
       "lifecycle": "Independent",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "entryPoint": "fabric-toolbox/PbiBench.FabricToolbox.exe",
       "targetFrameworks": [
         "net10.0-windows"
@@ -176,7 +187,9 @@
         "Inventory export v1"
       ],
       "dependsOnModules": [
-        "fabric-services"
+        "fabric-services",
+        "design-system",
+        "external-tools"
       ],
       "forbiddenDependencies": [
         "semantic-ide",
@@ -184,7 +197,8 @@
         "TOMWrapper",
         "PbiBench.App",
         "PbiBench.ModelEditor",
-        "PbiBench.Semantic"
+        "PbiBench.Semantic",
+        "PbiBench.DaxStudio"
       ],
       "protectingTests": [
         "tests/PbiBench.FabricToolbox.Tests/ToolboxTests.cs",
@@ -211,7 +225,9 @@
       "contracts": [
         "AI context ZIP v1"
       ],
-      "dependsOnModules": [],
+      "dependsOnModules": [
+        "core-contracts"
+      ],
       "forbiddenDependencies": [],
       "protectingTests": [
         "tests/PbiBench.V11.Tests/ExportTests.cs"
@@ -237,7 +253,9 @@
       "contracts": [
         "Process arguments --server --database --file"
       ],
-      "dependsOnModules": [],
+      "dependsOnModules": [
+        "external-tools"
+      ],
       "forbiddenDependencies": [],
       "protectingTests": [
         "tests/PbiBench.V11.Tests/PlatformTests.cs"
@@ -365,7 +383,9 @@
       "contracts": [
         "Local paths and IDs v1; no authentication context"
       ],
-      "dependsOnModules": [],
+      "dependsOnModules": [
+        "core-contracts"
+      ],
       "forbiddenDependencies": [
         "semantic-ide",
         "PbiBench.App",
@@ -386,7 +406,7 @@
       "displayName": "Report Studio",
       "kind": "SeparateProcess",
       "lifecycle": "Independent",
-      "version": "2.2.0",
+      "version": "2.3.0",
       "entryPoint": "report-studio/PbiBench.ReportStudio.exe",
       "targetFrameworks": [
         "net10.0-windows"
@@ -401,7 +421,10 @@
       ],
       "dependsOnModules": [
         "pbir",
-        "lineage"
+        "lineage",
+        "design-exchange",
+        "design-system",
+        "external-tools"
       ],
       "forbiddenDependencies": [
         "semantic-ide",
@@ -409,7 +432,10 @@
         "PbiBench.ModelEditor",
         "PbiBench.Semantic",
         "TOMWrapper",
-        "TabularEditor"
+        "TabularEditor",
+        "PbiBench.DaxStudio",
+        "PbiBench.Fabric",
+        "Microsoft.Identity.Client"
       ],
       "protectingTests": [
         "tests/PbiBench.V2.Tests/ReportTests.cs",
@@ -461,17 +487,21 @@
       "version": "2.2.0",
       "entryPoint": "Bravo.exe",
       "targetFrameworks": [
+        "net10.0",
+        "net48",
         "external"
       ],
       "ownerProjects": [
-        "src/PbiBench.DaxStudio/PbiBench.DaxStudio.csproj"
+        "src/PbiBench.ExternalTools/PbiBench.ExternalTools.csproj"
       ],
       "updateLane": "bravo",
       "upstreamDependencies": [],
       "contracts": [
         "Local paths and IDs v1; no authentication context"
       ],
-      "dependsOnModules": [],
+      "dependsOnModules": [
+        "external-tools"
+      ],
       "forbiddenDependencies": [],
       "protectingTests": [
         "tests/PbiBench.V2.Tests/ReportTests.cs",
@@ -486,17 +516,21 @@
       "version": "2.2.0",
       "entryPoint": "PBIDesktop.exe",
       "targetFrameworks": [
+        "net10.0",
+        "net48",
         "external"
       ],
       "ownerProjects": [
-        "src/PbiBench.DaxStudio/PbiBench.DaxStudio.csproj"
+        "src/PbiBench.ExternalTools/PbiBench.ExternalTools.csproj"
       ],
       "updateLane": "powerbi-desktop",
       "upstreamDependencies": [],
       "contracts": [
         "Local paths and IDs v1; no authentication context"
       ],
-      "dependsOnModules": [],
+      "dependsOnModules": [
+        "external-tools"
+      ],
       "forbiddenDependencies": [],
       "protectingTests": [
         "tests/PbiBench.V2.Tests/ReportTests.cs",
@@ -511,21 +545,352 @@
       "version": "2.2.0",
       "entryPoint": "Code.exe",
       "targetFrameworks": [
+        "net10.0",
+        "net48",
         "external"
       ],
       "ownerProjects": [
-        "src/PbiBench.DaxStudio/PbiBench.DaxStudio.csproj"
+        "src/PbiBench.ExternalTools/PbiBench.ExternalTools.csproj"
       ],
       "updateLane": "vscode",
       "upstreamDependencies": [],
       "contracts": [
         "Local paths and IDs v1; no authentication context"
       ],
-      "dependsOnModules": [],
+      "dependsOnModules": [
+        "external-tools"
+      ],
       "forbiddenDependencies": [],
       "protectingTests": [
         "tests/PbiBench.V2.Tests/ReportTests.cs",
         "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
+      ]
+    },
+    {
+      "id": "external-tools",
+      "displayName": "External tools and local process handoffs",
+      "kind": "Library",
+      "lifecycle": "Active",
+      "version": "1.0.0",
+      "entryPoint": "PbiBench.ExternalTools.dll",
+      "targetFrameworks": [
+        "net10.0",
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.ExternalTools/PbiBench.ExternalTools.csproj"
+      ],
+      "updateLane": "external-tools",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Metadata contract v1"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [
+        "PbiBench.Core",
+        "PbiBench.DaxStudio",
+        "PbiBench.Semantic",
+        "PbiBench.Fabric",
+        "Microsoft.Identity.Client",
+        "TOMWrapper",
+        "TabularEditor"
+      ],
+      "protectingTests": [
+        "tests/PbiBench.ExternalTools.Tests/BoundaryTests.cs"
+      ]
+    },
+    {
+      "id": "design-exchange",
+      "displayName": "Design Exchange contracts",
+      "kind": "Library",
+      "lifecycle": "Active",
+      "version": "1.0.0",
+      "entryPoint": "PbiBench.DesignExchange.dll",
+      "targetFrameworks": [
+        "net10.0",
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.DesignExchange/PbiBench.DesignExchange.csproj"
+      ],
+      "updateLane": "design-exchange",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Metadata contract v1"
+      ],
+      "dependsOnModules": [
+        "ai-context-export",
+        "external-tools"
+      ],
+      "forbiddenDependencies": [
+        "PbiBench.Semantic",
+        "PbiBench.Fabric",
+        "Microsoft.Identity.Client",
+        "TOMWrapper",
+        "TabularEditor"
+      ],
+      "protectingTests": [
+        "tests/PbiBench.DesignExchange.Tests/ContractTests.cs"
+      ]
+    },
+    {
+      "id": "design-system",
+      "displayName": "PbiBench shared visual system",
+      "kind": "Library",
+      "lifecycle": "Active",
+      "version": "1.0.0",
+      "entryPoint": "PbiBench.DesignSystem.dll",
+      "targetFrameworks": [
+        "net10.0-windows",
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.DesignSystem/PbiBench.DesignSystem.csproj"
+      ],
+      "updateLane": "design-system",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Original WPF vectors and light tokens v1"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [
+        "PbiBench.Semantic",
+        "PbiBench.Fabric",
+        "TOMWrapper",
+        "TabularEditor"
+      ],
+      "protectingTests": [
+        "tests/PbiBench.App.Tests/UnifiedShellTests.cs"
+      ]
+    },
+    {
+      "id": "core-contracts",
+      "displayName": "Shared portable engineering contracts",
+      "kind": "Library",
+      "lifecycle": "Active",
+      "version": "2.2.0",
+      "entryPoint": "PbiBench.Core.dll",
+      "targetFrameworks": [
+        "net10.0",
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.Core/PbiBench.Core.csproj"
+      ],
+      "updateLane": "core-contracts",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Metadata contract v1"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [
+        "PbiBench.Semantic",
+        "PbiBench.Fabric",
+        "TOMWrapper",
+        "TabularEditor"
+      ],
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/ModuleCatalogTests.cs"
+      ]
+    },
+    {
+      "id": "workspace-contracts",
+      "displayName": "Portable PBIP workspace services",
+      "kind": "Library",
+      "lifecycle": "Active",
+      "version": "2.2.0",
+      "entryPoint": "PbiBench.Workspace.dll",
+      "targetFrameworks": [
+        "net10.0",
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.Workspace/PbiBench.Workspace.csproj"
+      ],
+      "updateLane": "workspace",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Metadata contract v1"
+      ],
+      "dependsOnModules": [
+        "core-contracts"
+      ],
+      "forbiddenDependencies": [
+        "PbiBench.Semantic",
+        "PbiBench.Fabric",
+        "TOMWrapper",
+        "TabularEditor"
+      ],
+      "protectingTests": [
+        "tests/PbiBench.V11.Tests/ModuleCatalogTests.cs"
+      ]
+    }
+  ],
+  "projectGraph": [
+    {
+      "path": "src/PbiBench.AI.ContextExport/PbiBench.AI.ContextExport.csproj",
+      "moduleId": "ai-context-export",
+      "references": [
+        "src/PbiBench.Core/PbiBench.Core.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.App/PbiBench.App.csproj",
+      "moduleId": "semantic-ide",
+      "references": [
+        "src/PbiBench.Automation/PbiBench.Automation.csproj",
+        "src/PbiBench.CSharp.LanguageService/PbiBench.CSharp.LanguageService.csproj",
+        "src/PbiBench.Core/PbiBench.Core.csproj",
+        "src/PbiBench.DaxStudio/PbiBench.DaxStudio.csproj",
+        "src/PbiBench.DesignExchange/PbiBench.DesignExchange.csproj",
+        "src/PbiBench.DesignSystem/PbiBench.DesignSystem.csproj",
+        "src/PbiBench.ExternalTools/PbiBench.ExternalTools.csproj",
+        "src/PbiBench.Fabric/PbiBench.Fabric.csproj",
+        "src/PbiBench.Git/PbiBench.Git.csproj",
+        "src/PbiBench.ModelEditor/PbiBench.ModelEditor.csproj",
+        "src/PbiBench.Pbir/PbiBench.Pbir.csproj",
+        "src/PbiBench.Workspace/PbiBench.Workspace.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.Automation/PbiBench.Automation.csproj",
+      "moduleId": "semantic-ide",
+      "references": [
+        "src/PbiBench.Core/PbiBench.Core.csproj",
+        "src/PbiBench.Semantic/PbiBench.Semantic.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.Cli/PbiBench.Cli.csproj",
+      "moduleId": "semantic-ide",
+      "references": [
+        "src/PbiBench.Automation/PbiBench.Automation.csproj",
+        "src/PbiBench.Core/PbiBench.Core.csproj",
+        "src/PbiBench.Workspace/PbiBench.Workspace.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.Core/PbiBench.Core.csproj",
+      "moduleId": "core-contracts",
+      "references": []
+    },
+    {
+      "path": "src/PbiBench.CSharp.LanguageService/PbiBench.CSharp.LanguageService.csproj",
+      "moduleId": "csharp-automation",
+      "references": [
+        "src/PbiBench.Core/PbiBench.Core.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.DataForge/PbiBench.DataForge.csproj",
+      "moduleId": "dataforge-bridge",
+      "references": []
+    },
+    {
+      "path": "src/PbiBench.Dax.LanguageService/PbiBench.Dax.LanguageService.csproj",
+      "moduleId": "dax",
+      "references": [
+        "src/PbiBench.Core/PbiBench.Core.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.DaxStudio/PbiBench.DaxStudio.csproj",
+      "moduleId": "daxstudio-bridge",
+      "references": [
+        "src/PbiBench.ExternalTools/PbiBench.ExternalTools.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.DesignExchange/PbiBench.DesignExchange.csproj",
+      "moduleId": "design-exchange",
+      "references": [
+        "src/PbiBench.AI.ContextExport/PbiBench.AI.ContextExport.csproj",
+        "src/PbiBench.ExternalTools/PbiBench.ExternalTools.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.DesignSystem/PbiBench.DesignSystem.csproj",
+      "moduleId": "design-system",
+      "references": []
+    },
+    {
+      "path": "src/PbiBench.ExternalTools/PbiBench.ExternalTools.csproj",
+      "moduleId": "external-tools",
+      "references": []
+    },
+    {
+      "path": "src/PbiBench.Fabric/PbiBench.Fabric.csproj",
+      "moduleId": "fabric-services",
+      "references": [
+        "src/PbiBench.Core/PbiBench.Core.csproj",
+        "src/PbiBench.Workspace/PbiBench.Workspace.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.FabricToolbox/PbiBench.FabricToolbox.csproj",
+      "moduleId": "fabric-toolbox",
+      "references": [
+        "src/PbiBench.DesignSystem/PbiBench.DesignSystem.csproj",
+        "src/PbiBench.ExternalTools/PbiBench.ExternalTools.csproj",
+        "src/PbiBench.Fabric/PbiBench.Fabric.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.Git/PbiBench.Git.csproj",
+      "moduleId": "semantic-ide",
+      "references": [
+        "src/PbiBench.Core/PbiBench.Core.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.ModelEditor/PbiBench.ModelEditor.csproj",
+      "moduleId": "semantic-ide",
+      "references": [
+        "src/PbiBench.CSharp.LanguageService/PbiBench.CSharp.LanguageService.csproj",
+        "src/PbiBench.Core/PbiBench.Core.csproj",
+        "src/PbiBench.Dax.LanguageService/PbiBench.Dax.LanguageService.csproj",
+        "src/PbiBench.Semantic/PbiBench.Semantic.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.Pbir/PbiBench.Pbir.csproj",
+      "moduleId": "pbir",
+      "references": [
+        "src/PbiBench.Core/PbiBench.Core.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.PowerBI/PbiBench.PowerBI.csproj",
+      "moduleId": "fabric-services",
+      "references": [
+        "src/PbiBench.Core/PbiBench.Core.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.ReportStudio/PbiBench.ReportStudio.csproj",
+      "moduleId": "report-studio",
+      "references": [
+        "src/PbiBench.DesignExchange/PbiBench.DesignExchange.csproj",
+        "src/PbiBench.DesignSystem/PbiBench.DesignSystem.csproj",
+        "src/PbiBench.ExternalTools/PbiBench.ExternalTools.csproj",
+        "src/PbiBench.Pbir/PbiBench.Pbir.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.Semantic/PbiBench.Semantic.csproj",
+      "moduleId": "semantic-ide",
+      "references": [
+        "src/PbiBench.AI.ContextExport/PbiBench.AI.ContextExport.csproj",
+        "src/PbiBench.Core/PbiBench.Core.csproj",
+        "src/PbiBench.Dax.LanguageService/PbiBench.Dax.LanguageService.csproj",
+        "src/PbiBench.Workspace/PbiBench.Workspace.csproj"
+      ]
+    },
+    {
+      "path": "src/PbiBench.Workspace/PbiBench.Workspace.csproj",
+      "moduleId": "workspace-contracts",
+      "references": [
+        "src/PbiBench.Core/PbiBench.Core.csproj"
       ]
     }
   ]

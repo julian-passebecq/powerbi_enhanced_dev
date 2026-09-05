@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF><Version>2.2.0</Version></PropertyGroup>
-  <ItemGroup><ProjectReference Include="../PbiBench.Pbir/PbiBench.Pbir.csproj" /><ProjectReference Include="../PbiBench.DaxStudio/PbiBench.DaxStudio.csproj" /></ItemGroup>
+  <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF><Version>2.3.0</Version></PropertyGroup>
+  <ItemGroup><ProjectReference Include="../PbiBench.Pbir/PbiBench.Pbir.csproj" /><ProjectReference Include="../PbiBench.ExternalTools/PbiBench.ExternalTools.csproj" /></ItemGroup>
   <ItemGroup><None Include="../../examples/reportstudio-demo/**/*" Link="examples/reportstudio-demo/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
-</Project>
+<ItemGroup><ProjectReference Include="../PbiBench.DesignSystem/PbiBench.DesignSystem.csproj" /><ProjectReference Include="../PbiBench.DesignExchange/PbiBench.DesignExchange.csproj" /></ItemGroup><Target Name="RemoveObsoleteSpecialistBridge" AfterTargets="Build"><Delete Files="$(TargetDir)PbiBench.DaxStudio.dll;$(TargetDir)PbiBench.DaxStudio.pdb" /></Target></Project>

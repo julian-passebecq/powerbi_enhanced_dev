@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFrameworks>net10.0;net48</TargetFrameworks><Version>1.0.0</Version></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../PbiBench.AI.ContextExport/PbiBench.AI.ContextExport.csproj" />
+    <ProjectReference Include="../PbiBench.ExternalTools/PbiBench.ExternalTools.csproj" />
+    <PackageReference Include="JsonSchema.Net" Version="7.3.1" />
+    <EmbeddedResource Include="../../schemas/report-theme/reportThemeSchema-2.156.json" LogicalName="PbiBench.ReportTheme.2.156" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'"><PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" /></ItemGroup>
+</Project>

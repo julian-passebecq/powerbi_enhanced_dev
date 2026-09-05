@@ -1,3 +1,4 @@
+using PbiBench.ExternalTools;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
@@ -27,7 +28,7 @@ public sealed class PlatformTests
     }
     [Fact] public void BundledProvenanceHasPinsPatchesOwnersAndIndependentLanes()
     {
-        var catalog = ProvenanceCatalog.Bundled(); Assert.Equal("2.2.0", catalog.ProductVersion); Assert.True(catalog.Components.Count >= 30);
+        var catalog = ProvenanceCatalog.Bundled(); Assert.Equal("2.3.0", catalog.ProductVersion); Assert.True(catalog.Components.Count >= 30);
         var te2 = catalog.Components.Single(c => c.Id == "semantic.model-editor.te2"); Assert.Contains("75f10e331b8de0dda5c213180b9b8867b4a38191", te2.Pin); Assert.Equal(2, te2.LocalPatches.Count);
         Assert.Contains(catalog.Components, c => c.UpdateLane == "fabric"); Assert.Contains(catalog.Components, c => c.UpdateLane == "csharp-language"); Assert.DoesNotContain(catalog.Components, c => c.Upstream.Contains("Roslyn"));
         Assert.Throws<InvalidDataException>(() => ProvenanceCatalog.Parse("{}"));

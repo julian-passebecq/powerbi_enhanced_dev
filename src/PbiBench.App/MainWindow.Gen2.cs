@@ -1,3 +1,4 @@
+using PbiBench.ExternalTools;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,7 +16,7 @@ public partial class MainWindow
 {
     private string? projectFile, reportFile;
     private readonly CompanionTools companionTools = new();
-    private readonly Dictionary<string, CompanionStatus> toolStatuses = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ExternalToolStatus> toolStatuses = new(StringComparer.Ordinal);
     private IReadOnlyList<ReportIndex> reportIndexes = Array.Empty<ReportIndex>();
     private readonly Dictionary<string, LocalSemanticCatalog> reportModels = new(StringComparer.OrdinalIgnoreCase);
     private int reportRevision;
@@ -44,20 +45,21 @@ public partial class MainWindow
         });
     }
     private ToolContext CurrentToolContext() => new(editor.Handler?.IsConnected == true ? editor.Server : null, editor.Handler?.IsConnected == true ? editor.Database : null, workspaceRoot, projectFile, reportFile);
-    private CompanionStatus RefreshTool(string id)
+    private ExternalToolStatus RefreshTool(string id)
     {
         var tool = CompanionTools.Catalog.Single(t => t.Id == id); var config = Path.Combine(settingsDirectory, id + "-path.txt");
         return toolStatuses[id] = companionTools.Discover(tool, File.Exists(config) ? File.ReadAllText(config).Trim() : null, AppDomain.CurrentDomain.BaseDirectory);
     }
     private (bool Enabled, string Reason) ToolState(string id)
     { var state = ExternalToolContext.Evaluate(toolStatuses[id], CurrentToolContext()); return (state.Enabled, state.Reason); }
-    private void LaunchCompanion(string id) => Run(() => companionTools.Launch(RefreshTool(id), CurrentToolContext()));
+    private void LaunchCompanion(string id) => Run(() => companionTools.Launch(RefreshTool(id), CurrentToolContext() with { ProjectContextFile = id is "report-studio" or "fabric-toolbox" ? SaveProjectHandoff(id) : null }));
     private void ChooseReportContext() => ChooseReportContext(false);
     private void ChooseReportContext(bool launch) => Run(async () =>
     {
         var dialog = new OpenFileDialog { Title = "Choose PBIP / PBIR report context", Filter = "Power BI project or report|*.pbip;*.pbir" }; if (dialog.ShowDialog(this) != true) return;
         var index = await ReportIndex.OpenAsync(dialog.FileName, lifetime.Token); reportFile = Path.Combine(index.Root, "definition.pbir"); projectFile = index.ProjectFile;
         await UpdateWorkspaceAsync(index.ProjectFile ?? Path.GetDirectoryName(index.Root)); reportFile = Path.Combine(index.Root, "definition.pbir");
+        RememberProject(dialog.FileName); RefreshProjectStrip();
         if (launch) LaunchCompanion("report-studio");
     });
     private async Task UpdateReportIndexesAsync(PbipInventory? inventory)
@@ -99,6 +101,7 @@ public partial class MainWindow
     }
     private void AddQuickOpenEntries(IDictionary<string, Action> entries)
     {
+        entries["Project · Design Exchange"] = () => GoTo("Design Exchange");
         entries["Apps · choose PBIP / report context"] = ChooseReportContext;
         entries["Report impact · export semantic catalog"] = () => Run(ExportSemanticCatalogAsync);
         entries["Report impact · import display-name annotations"] = () => Run(ImportDisplayNamesAsync);

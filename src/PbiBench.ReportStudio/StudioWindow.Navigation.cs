@@ -1,3 +1,4 @@
+using PbiBench.ExternalTools;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -5,7 +6,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Microsoft.Win32;
-using PbiBench.DaxStudio;
 using PbiBench.Pbir;
 
 namespace PbiBench.ReportStudio;

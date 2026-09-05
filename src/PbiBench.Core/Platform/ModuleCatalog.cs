@@ -9,10 +9,12 @@ public sealed record CatalogModule(string Id, string DisplayName, string Kind, s
     string EntryPoint, IReadOnlyList<string> TargetFrameworks, IReadOnlyList<string> OwnerProjects, string UpdateLane,
     IReadOnlyList<string> UpstreamDependencies, IReadOnlyList<string> Contracts, IReadOnlyList<string> DependsOnModules,
     IReadOnlyList<string> ForbiddenDependencies, IReadOnlyList<string> ProtectingTests);
+public sealed record CatalogProject(string Path, string ModuleId, IReadOnlyList<string> References);
 
 /// <summary>Offline ownership and update contracts. No module loading or execution is performed.</summary>
 public sealed record ModuleCatalog(int SchemaVersion, string ProductVersion, string BaselineCommit, IReadOnlyList<CatalogModule> Modules)
 {
+    public IReadOnlyList<CatalogProject> ProjectGraph { get; init; } = Array.Empty<CatalogProject>();
     public static IReadOnlyList<string> Lifecycles { get; } = Array.AsReadOnly(new[] { "Active", "Selective", "Independent", "Incubating", "OnDemand", "Later" });
     public static IReadOnlyList<string> Kinds { get; } = Array.AsReadOnly(new[] { "InProcess", "SeparateProcess", "ExternalProcess", "Library", "Lab" });
     public static string LifecycleLabel(string value) => value == "OnDemand" ? "On demand" : value;
@@ -44,6 +46,12 @@ public sealed record ModuleCatalog(int SchemaVersion, string ProductVersion, str
                 throw new InvalidDataException("Invalid or incomplete module metadata.");
         }
         var modules = value.Modules.ToDictionary(m => m.Id, StringComparer.Ordinal);
+        if (value.ProjectGraph == null || value.ProjectGraph.Count > 64 || value.ProjectGraph.Any(p => p == null) || value.ProjectGraph.Select(p => p.Path).Distinct(StringComparer.Ordinal).Count() != value.ProjectGraph.Count)
+            throw new InvalidDataException("Invalid project-reference graph.");
+        foreach (var project in value.ProjectGraph)
+            if (!Path(project.Path, "src/", ".csproj") || !modules.ContainsKey(project.ModuleId) || project.References == null ||
+                project.References.Any(p => !Path(p, "src/", ".csproj")) || project.References.Distinct(StringComparer.Ordinal).Count() != project.References.Count ||
+                project.References.Any(p => !value.ProjectGraph.Any(target => target.Path == p))) throw new InvalidDataException("Invalid project-reference graph entry.");
         var completed = new HashSet<string>(StringComparer.Ordinal); var visiting = new HashSet<string>(StringComparer.Ordinal);
         void Visit(string id)
         {
@@ -72,7 +80,7 @@ public sealed record ModuleCatalog(int SchemaVersion, string ProductVersion, str
                 throw new InvalidDataException("Forbidden dependency in module: " + m.Id);
         }
         IReadOnlyList<string> Copy(IReadOnlyList<string> items) => Array.AsReadOnly(items.ToArray());
-        return value with { Modules = Array.AsReadOnly(value.Modules.Select(m => m with {
+        return value with { ProjectGraph = Array.AsReadOnly(value.ProjectGraph.Select(p => p with { References = Array.AsReadOnly(p.References.ToArray()) }).ToArray()), Modules = Array.AsReadOnly(value.Modules.Select(m => m with {
             TargetFrameworks = Copy(m.TargetFrameworks), OwnerProjects = Copy(m.OwnerProjects), UpstreamDependencies = Copy(m.UpstreamDependencies),
             Contracts = Copy(m.Contracts), DependsOnModules = Copy(m.DependsOnModules), ForbiddenDependencies = Copy(m.ForbiddenDependencies), ProtectingTests = Copy(m.ProtectingTests)
         }).ToArray()) };

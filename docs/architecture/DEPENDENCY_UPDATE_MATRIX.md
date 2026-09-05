@@ -1,5 +1,7 @@
 # Dependency update matrix
 
+Pass 3 adds independent `external-tools`, `design-exchange` and `design-system` lanes. Generic launch code moved out of DaxStudio without expanding its specialist behavior. Theme validation pins Microsoft's reportThemeSchema-2.156.json at `6ccd62e9d79c4b1b0662ba8955598492c35cc8c4`; source hashes and MIT attribution are in `schemas/report-theme.lock.json`. The visual system uses original MIT PbiBench vectors with no upstream asset dependency. Protect these lanes with the ExternalTools/DesignExchange dual-runtime suites, exact module graph tests and focused shell/Report Studio WPF tests.
+
 | Dependency / upstream | Current use | Owning lane | Allowed coupling | Update trigger | Mandatory regression |
 |---|---|---|---|---|---|
 | Tabular Editor 2 / TOMWrapper | semantic editor, undo, trusted scripting | TE2 | Semantic IDE/ModelEditor only | intentional TE2 upgrade | native edit/undo/script/model serialization suite |

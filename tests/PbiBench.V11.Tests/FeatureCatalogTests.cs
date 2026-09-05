@@ -15,9 +15,9 @@ public sealed class FeatureCatalogTests
     [Fact] public void BundledCatalogHasTheAuditedVersionAndConservativePublicBaseline()
     {
         var provenance = ProvenanceCatalog.Bundled(); var catalog = FeatureCatalog.Bundled(provenance);
-        Assert.Equal("2.2.0", catalog.ProductVersion); Assert.Equal("1e02628f7b35af0e5b92c0452f86d3b102562cc2", catalog.BaselineCommit);
+        Assert.Equal("2.3.0", catalog.ProductVersion); Assert.Equal("70493e1a63064a7e6d2ec98c285d187a556834a3", catalog.BaselineCommit);
         Assert.Equal("Tabular Editor 3", catalog.Comparison.Product); Assert.Equal("3.26.3", catalog.Comparison.VerifiedVersion); Assert.Equal("2026-09-05", catalog.Comparison.VerifiedDate);
-        Assert.Equal(24, catalog.Features.Count); Assert.Equal(catalog.Features.Count, catalog.Features.Select(f => f.Id).Distinct().Count());
+        Assert.Equal(26, catalog.Features.Count); Assert.Equal(catalog.Features.Count, catalog.Features.Select(f => f.Id).Distinct().Count());
         Assert.All(catalog.Features, f => { Assert.Contains(f.Status, FeatureCatalog.Statuses); Assert.Contains(f.Lifecycle, FeatureCatalog.Lifecycles); Assert.Contains(f.Te3.Comparison, FeatureCatalog.Comparisons); });
         Assert.All(catalog.Features.SelectMany(f => f.ProvenanceIds), id => Assert.Contains(provenance.Components, c => c.Id == id));
     }
@@ -36,12 +36,12 @@ public sealed class FeatureCatalogTests
     [Fact] public void FiltersHaveExplicitSemanticsWithoutChangingTheCatalog()
     {
         var provenance = ProvenanceCatalog.Bundled(); var catalog = FeatureCatalog.Bundled();
-        Assert.Equal(13, catalog.Rows(provenance, FeatureMapFilter.Core).Count);
+        Assert.Equal(15, catalog.Rows(provenance, FeatureMapFilter.Core).Count);
         Assert.Equal(new[] { "fabric-toolbox", "daxstudio", "dataforge", "external-tools" }, catalog.Rows(provenance, FeatureMapFilter.Companions).Select(r => r.Feature.Id));
         Assert.Equal(4, catalog.Rows(provenance, FeatureMapFilter.Labs).Count);
         Assert.All(catalog.Rows(provenance, FeatureMapFilter.Te3Gaps), r => Assert.Contains(r.Feature.Te3.Comparison, new[] { "Partial", "Gap" }));
         Assert.Contains(catalog.Rows(provenance, FeatureMapFilter.Te3Gaps), r => r.Feature.Id == "dax-debugger");
-        Assert.Equal(24, catalog.Rows(provenance).Count);
+        Assert.Equal(26, catalog.Rows(provenance).Count);
         Assert.Throws<ArgumentOutOfRangeException>(() => catalog.Rows(provenance, (FeatureMapFilter)999));
     }
     [Fact] public void OriginAndDetailFollowProvenanceRatherThanADuplicatedLedger()
