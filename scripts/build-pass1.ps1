@@ -70,6 +70,8 @@ try {
     if (-not $SkipSmoke) {
         $smokeOutput = Join-Path $logs ("smoke-$Configuration-" + [Guid]::NewGuid().ToString('N'))
         & (Join-Path $PSScriptRoot 'invoke-smoke-pass1.ps1') -Executable $app -OutputDirectory $smokeOutput
+        $cliSmokeOutput = Join-Path $logs ("cli-smoke-$Configuration-" + [Guid]::NewGuid().ToString('N'))
+        & (Join-Path $PSScriptRoot 'invoke-cli-smoke.ps1') -Executable (Join-Path $repo "src/PbiBench.Cli/bin/$Configuration/net48/pbibench.exe") -OutputDirectory $cliSmokeOutput
     }
     Write-Host "PbiBench: $app"
 } finally { Pop-Location }

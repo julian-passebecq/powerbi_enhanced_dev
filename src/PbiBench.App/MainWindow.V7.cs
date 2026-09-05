@@ -38,7 +38,7 @@ public partial class MainWindow
         commands.Register(WorkbenchCommandId.Save, () => { if (DaxPage.Visibility == Visibility.Visible) SaveScratch(this, new RoutedEventArgs()); else SaveModel(this, new RoutedEventArgs()); });
         commands.Register(WorkbenchCommandId.Undo, () => Undo(this, new RoutedEventArgs()));
         commands.Register(WorkbenchCommandId.Redo, () => Redo(this, new RoutedEventArgs()));
-        commands.Register(WorkbenchCommandId.RunBpa, () => { GoTo("QA"); ScanBpa(this, new RoutedEventArgs()); });
+        commands.Register(WorkbenchCommandId.RunBpa, () => { GoTo("QA"); qualityWorkspace.SelectedIndex = 0; ScanBpa(this, new RoutedEventArgs()); });
         commands.Register(WorkbenchCommandId.Automate, () => GoTo("Automate"));
         commands.Register(WorkbenchCommandId.DaxStudio, () => { if (DaxPage.Visibility == Visibility.Visible) LaunchDaxStudio(this, new RoutedEventArgs()); else LaunchActiveExpression(this, new RoutedEventArgs()); });
         commands.Register(WorkbenchCommandId.Diagram, () => GoTo("Model diagram"));
@@ -108,7 +108,7 @@ public partial class MainWindow
         if (path.EndsWith(".pbip", StringComparison.OrdinalIgnoreCase) || Directory.Exists(path)) { GoTo("PBIP / Git"); await UpdateWorkspaceAsync(path); }
         else { GoTo("Model"); editor.Open(path); }
     });
-    private void CommonMeasures(object sender, RoutedEventArgs e) { GoTo("Automate"); ActionPicker.SelectedItem = AutomationService.Actions.First(a => a.Id == AutomationActionId.CreateSumMeasures); }
+    private void CommonMeasures(object sender, RoutedEventArgs e) { GoTo("Automate"); automationWorkspace.SelectedIndex = 0; ActionPicker.SelectedItem = AutomationService.Actions.First(a => a.Id == AutomationActionId.CreateSumMeasures); }
     private void AnalyzeFromHome(object sender, RoutedEventArgs e) { GoTo("DAX"); RefreshDaxStudioStatus(); }
     private void ReviewGit(object sender, RoutedEventArgs e) => GoTo("PBIP / Git");
 
@@ -204,14 +204,17 @@ public partial class MainWindow
         var severity = (BpaSeverity.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "All severities";
         var category = (BpaCategory.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "All categories";
         BpaGrid.ItemsSource = currentFindings.Where(f => (severity.StartsWith("All", StringComparison.Ordinal) || f.Severity.ToString() == severity) &&
-            (category.StartsWith("All", StringComparison.Ordinal) || f.Category == category) && (ShowIgnored.IsChecked == true || !ignoredFindings.Contains(FindingKey(f)))).ToArray();
+            (category.StartsWith("All", StringComparison.Ordinal) || f.Category == category) && (ShowIgnored.IsChecked == true || !ignoredFindings.Contains(FindingKey(f)) && !IsBpaSuppressed(f))).ToArray();
     }
     private static string FindingKey(BpaFinding f) => f.RuleId + "|" + f.ObjectPath;
-    private void GoToFinding(object sender, RoutedEventArgs e) => Run(() => { if (BpaGrid.SelectedItem is BpaFinding f) { editor.Select(f.Object); GoTo("Model"); } });
+    private void GoToFinding(object sender, RoutedEventArgs e) => Run(() => { if (BpaGrid.SelectedItem is BpaFinding f) { if (f.Object is { } obj) { editor.Select(obj); GoTo("Model"); } else GoTo("PBIP / Git"); } });
     private void IgnoreFinding(object sender, RoutedEventArgs e)
     {
         if (BpaGrid.SelectedItem is not BpaFinding f) return;
-        var key = FindingKey(f); if (!ignoredFindings.Remove(key)) ignoredFindings.Add(key);
-        Log("Changed this finding's session visibility. Model rules and metadata are unchanged."); FilterBpa(sender, e);
+        if (editor.Handler == null || automation == null) return;
+        var key = new BpaService(editor.Handler, automation).SuppressionKey(f);
+        if (!bpaProfile.Suppressions.Remove(key)) bpaProfile.Suppressions.Add(key);
+        ignoredFindings.Remove(FindingKey(f));
+        Run(SaveBpaProfileAsync); Log("Saved this finding's visibility for the current model source. Model metadata is unchanged."); FilterBpa(sender, e);
     }
 }

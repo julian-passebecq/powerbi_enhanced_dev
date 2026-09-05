@@ -1,1 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><ProjectReference Include="../PbiBench.Core/PbiBench.Core.csproj" /><ProjectReference Include="../PbiBench.Workspace/PbiBench.Workspace.csproj" /></ItemGroup></Project>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFrameworks>net10.0;net48</TargetFrameworks></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../PbiBench.Core/PbiBench.Core.csproj" />
+    <ProjectReference Include="../PbiBench.Workspace/PbiBench.Workspace.csproj" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.84.2" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.6" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Data" />
+  </ItemGroup>
+</Project>

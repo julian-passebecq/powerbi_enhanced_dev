@@ -65,7 +65,7 @@ public sealed class DaxAuthoringView : UserControl, IDisposable
         scriptEntries.SelectionChanged += (_, _) => { if (scriptEntries.SelectedItem is DaxScriptEntry entry) scriptEditor.SelectSpan(entry.ExpressionSpan.Start, entry.ExpressionSpan.Length); };
         foreach (var editor in new[] { functionEditor, scriptEditor, explainEditor })
         {
-            editor.DefinitionRequested += (_, e) => Guard(() => { var item = Service().GetObjects().FirstOrDefault(o => o.Name == e.Location.Name && o.Kind.ToString() == e.Location.Kind.ToString()); if (item != null) { tabs.SelectedIndex = 3; objects.SelectedItem = objects.Items.Cast<DaxAuthoringObject>().FirstOrDefault(o => o.Id == item.Id); Explain(); } });
+            editor.DefinitionRequested += (_, e) => Guard(() => { var item = Service().ResolveDefinition(e.Location); if (item != null) { tabs.SelectedIndex = 3; objects.SelectedItem = objects.Items.Cast<DaxAuthoringObject>().FirstOrDefault(o => o.Id == item.Id); Explain(); } });
             editor.ReferencesRequested += (_, e) => status.Text = string.Join(" · ", e.Locations.Select(location => location.SymbolId).Distinct());
         }
         RefreshModel();

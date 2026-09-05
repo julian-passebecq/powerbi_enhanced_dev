@@ -33,6 +33,12 @@ public sealed class DaxAuthoringService
             binding.Get(), (binding.Object as IDescriptionObject)?.Description ?? "", FormatExpression(binding.Object)))
         .OrderBy(item => item.Kind).ThenBy(item => item.Table).ThenBy(item => item.Name).ToArray();
     public IReadOnlyList<DaxAuthoringObject> GetFunctions() => GetObjects().Where(item => item.Kind == DaxScriptObjectKind.Function).ToArray();
+    public DaxAuthoringObject? ResolveDefinition(DaxSymbolLocation location)
+    {
+        var target = DaxMetadataSnapshotProvider.Resolve(handler, location);
+        var binding = Bindings().FirstOrDefault(item => item.Property == "Expression" && ReferenceEquals(item.Object, target));
+        return binding == null ? null : GetObjects().FirstOrDefault(item => item.Id == binding.Entry.ObjectKey);
+    }
 
     public string ExportScript(IEnumerable<string>? selectedObjectIds = null)
     {

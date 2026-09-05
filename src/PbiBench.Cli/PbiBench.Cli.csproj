@@ -1,1 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework></PropertyGroup><ItemGroup><ProjectReference Include="../PbiBench.Workspace/PbiBench.Workspace.csproj" /><ProjectReference Include="../PbiBench.Core/PbiBench.Core.csproj" /></ItemGroup></Project>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net48</TargetFramework><UseWPF>true</UseWPF>
+    <AssemblyName>pbibench</AssemblyName><AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects><GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../PbiBench.Automation/PbiBench.Automation.csproj" />
+    <ProjectReference Include="../PbiBench.Workspace/PbiBench.Workspace.csproj" />
+    <ProjectReference Include="../PbiBench.Core/PbiBench.Core.csproj" />
+    <Reference Include="TOMWrapper"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/TOMWrapper.dll</HintPath></Reference>
+    <Reference Include="Microsoft.AnalysisServices.Tabular"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/Microsoft.AnalysisServices.Tabular.dll</HintPath></Reference>
+    <Reference Include="Microsoft.AnalysisServices.Core"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/Microsoft.AnalysisServices.Core.dll</HintPath></Reference>
+  </ItemGroup>
+  <Target Name="CopyNativeDependencies" AfterTargets="Build">
+    <ItemGroup><NativeDependency Include="../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/*.dll" /></ItemGroup>
+    <Copy SourceFiles="@(NativeDependency)" DestinationFolder="$(OutDir)" Condition="!Exists('$(OutDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

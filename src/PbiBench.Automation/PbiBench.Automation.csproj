@@ -5,7 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="System.Net.Http" />
     <Reference Include="TOMWrapper"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/TOMWrapper.dll</HintPath></Reference>
+    <Reference Include="Microsoft.AnalysisServices.Tabular"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/Microsoft.AnalysisServices.Tabular.dll</HintPath></Reference>
+    <Reference Include="Microsoft.AnalysisServices.Core"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/Microsoft.AnalysisServices.Core.dll</HintPath></Reference>
     <ProjectReference Include="../PbiBench.Core/PbiBench.Core.csproj" />
     <ProjectReference Include="../PbiBench.Semantic/PbiBench.Semantic.csproj" />
   </ItemGroup>

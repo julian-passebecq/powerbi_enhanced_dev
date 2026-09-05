@@ -58,6 +58,9 @@ public partial class MainWindow : Window
         InitializeDaxWorkspace();
         InitializeDataWorkspace();
         InitializeModelAuthoring();
+        InitializeQualityWorkspace();
+        InitializeConnectedWorkspaces();
+        InitializeAgentWorkspace();
         ready = true;
         GoTo(layoutState.SelectedPage);
         RefreshDaxStudioStatus();
@@ -84,6 +87,12 @@ public partial class MainWindow : Window
     private bool ReviewRemoteWrite(string operation, string target, string proposed)
     {
         if (!Dispatcher.CheckAccess()) return Dispatcher.Invoke(() => ReviewRemoteWrite(operation, target, proposed));
+        if (reloadRequiredHandler != null && ReferenceEquals(reloadRequiredHandler, editor.Handler))
+        {
+            MessageBox.Show(this, "This connection's live metadata changed during background work. Reconnect to reload it before writing model metadata.", "Reload model metadata", MessageBoxButton.OK, MessageBoxImage.Information);
+            return false;
+        }
+        var reviewedOwner = editor.Handler;
         var before = operation.StartsWith("Deploy", StringComparison.Ordinal)
             ? "Destination metadata is not loaded in this preview. The After column contains the actual deployment command."
             : baseline;
@@ -92,9 +101,16 @@ public partial class MainWindow : Window
             new[] { new PlannedChange(target, operation, before, proposed, new[] { "TE2 conflict check and server validation" }) },
             "Original model metadata held for review in this session", "Local edits can be undone. Remote rollback requires a separately reviewed deployment.");
         var approved = PreviewDialog.Show(this, operation + " · " + target,
-            "Review the complete metadata / command before writing to this connection. Server-side validation may reject the request.\n" + plan.RollbackStrategy,
+            "Review the complete metadata / command before writing to this connection. Server-side validation may reject the request.\n" + plan.RollbackStrategy +
+            (editor.Handler?.Model.Tables.Any(table => table.Partitions.Any(partition => partition.Mode == ModeType.DirectLake || partition.Mode == ModeType.Default && editor.Handler.Model.DefaultMode == ModeType.DirectLake)) == true
+                ? "\nThe native TE2 save path can also request framing/refresh after adding Direct Lake tables. Review target credentials, capacity and source access before approving." : ""),
             new[] { new PreviewRow(target, operation, before, proposed, "Remote semantic model write") }, true, "Approve and write to server");
         if (!approved) return false;
+        if (!CanFinishWriteReview(reviewedOwner, editor.Handler, reloadRequiredHandler))
+        {
+            Log("The model connection changed during remote-write review. Reconnect and review the current metadata before writing.");
+            return false;
+        }
         var approval = new ApprovedChangePlan(plan, DateTimeOffset.UtcNow, Environment.UserName);
         Log("Approved remote write plan " + approval.Plan.Id + ". Server execution follows; approval alone is not a success result.");
         return true;
@@ -129,6 +145,7 @@ public partial class MainWindow : Window
         if (handler != currentHandler)
         {
             workspaceRoot = null;
+            semanticWorkspaceRoot = null;
             currentHandler = handler;
             automation = handler == null ? null : new AutomationService(handler);
             baseline = handler == null ? "" : Microsoft.AnalysisServices.Tabular.JsonSerializer.SerializeDatabase(handler.Database);
@@ -137,6 +154,7 @@ public partial class MainWindow : Window
                 handler.UndoManager.UndoStateChanged += (_, _) => Dispatcher.BeginInvoke(new Action(UpdateModelStatus));
             }
             currentFindings = null; ignoredFindings.Clear(); scannedAction = null;
+            bpaWorkspaceContext = null;
             BpaGrid.ItemsSource = null;
             FindingDetails.Text = "";
             ActionPreviewGrid.ItemsSource = null;
@@ -147,6 +165,9 @@ public partial class MainWindow : Window
         daxWorkspace?.RefreshMetadata();
         dataWorkspace?.RefreshSchema();
         metadataEditors?.RefreshModel(); daxAuthoring?.RefreshModel();
+        RefreshQualityModel();
+        advancedRefresh?.RefreshModel(); UpdateConnectedContext();
+        agentWorkspace?.RefreshModel(); semanticPrototypes?.RefreshModel();
         ConfigureDiagramAuthoring();
         if (handler == null) { await UpdateWorkspaceAsync(null); return; }
         await UpdateWorkspaceAsync(workspaceRoot ?? editor.FilePath);
@@ -169,6 +190,7 @@ public partial class MainWindow : Window
         else { diagram.SelectRelationship(null); diagram.SelectTable(null); }
         InspectorSelection.Text = selection.Count == 0 ? "Select objects in the model tree" : string.Join("\n", selection.Take(12).Select(SemanticModelService.ObjectPath)) + (selection.Count > 12 ? $"\n+ {selection.Count - 12} more" : "");
         UpdateInspector();
+        agentWorkspace?.RefreshModel();
         SelectionSummary.Text = $"{selection.Count} selected object(s). " + string.Join(", ", selection.Take(6).Select(o => o.Name));
     }
     private void NavigationChanged(object sender, SelectionChangedEventArgs e)
@@ -177,15 +199,38 @@ public partial class MainWindow : Window
     }
     internal void ShowPage(string page)
     {
+        if (page == "Model tools")
+        {
+            if (editor.Handler != null) editor.AcceptExpression();
+            metadataEditors?.RefreshModel(); daxAuthoring?.RefreshModel();
+            semanticPrototypes?.RefreshModel();
+            UpdateModelStatus();
+        }
+        if (page is "QA" or "Automate")
+        {
+            if (editor.Handler != null) editor.AcceptExpression();
+            RefreshQualityModel();
+        }
+        if (page == "Agent")
+        {
+            if (editor.Handler != null) editor.AcceptExpression();
+            RefreshQualityModel(); agentWorkspace?.RefreshModel();
+        }
+        if (page is "Fabric" or "Deploy" or "PBIP / Git")
+        {
+            if (editor.Handler != null) editor.AcceptExpression();
+            UpdateConnectedContext();
+            if (page == "Deploy") advancedRefresh?.RefreshModel();
+        }
         if (InspectorPane.Visibility == Visibility.Visible && InspectorColumn.ActualWidth >= 210) layoutState.InspectorWidth = InspectorColumn.ActualWidth;
         if (OutputTabs.Visibility == Visibility.Visible && OutputRow.ActualHeight >= 80) layoutState.OutputHeight = OutputRow.ActualHeight;
         activePage = page; ApplyPaneVisibility();
-        foreach (var surface in new FrameworkElement[] { ModelSurface, HomePage, DaxPage, DataPage, AuthoringPage, AutomationPage, DiagramPage, WorkspacePage, QaPage, LaterPage }) surface.Visibility = Visibility.Collapsed;
+        foreach (var surface in new FrameworkElement[] { ModelSurface, HomePage, DaxPage, DataPage, AuthoringPage, automationWorkspace, DiagramPage, workspaceExperience, qualityWorkspace, fabricWorkspace!, refreshExperience, agentWorkspace!, LaterPage }) surface.Visibility = Visibility.Collapsed;
         FrameworkElement selected = page switch
         {
-            "Home" => HomePage, "Model" => ModelSurface, "DAX" => DaxPage, "Data" => DataPage, "Automate" => AutomationPage,
-            "Model tools" => AuthoringPage,
-            "Model diagram" => DiagramPage, "PBIP / Git" => WorkspacePage, "QA" => QaPage, _ => LaterPage
+            "Home" => HomePage, "Model" => ModelSurface, "DAX" => DaxPage, "Data" => DataPage, "Automate" => automationWorkspace,
+            "Model tools" => AuthoringPage, "Agent" => agentWorkspace!,
+            "Model diagram" => DiagramPage, "PBIP / Git" => workspaceExperience, "QA" => qualityWorkspace, "Fabric" => fabricWorkspace!, "Deploy" => refreshExperience, _ => LaterPage
         };
         selected.Visibility = Visibility.Visible;
         if (page == "Model diagram") DrawDiagram();
@@ -246,8 +291,10 @@ public partial class MainWindow : Window
     private void ScanBpa(object sender, RoutedEventArgs e) => Run(() =>
     {
         RequireModel();
-        var findings = new BpaService(editor.Handler!, automation!).Scan();
+        var findings = new BpaService(editor.Handler!, automation!).Scan(bpaProfile, bpaWorkspaceContext, includeSuppressed: true);
         currentFindings = findings;
+        bpaScanFingerprint = new SemanticModelService(editor.Handler!).Fingerprint();
+        UpdateQualitySignals();
         FilterBpa(sender, e);
         UpdateInspector();
         ValidationDetails.Text = $"BPA scan: {findings.Count} findings. SAFE fixes are metadata changes; REVIEW findings require checking model/report intent. Performance changes require separate benchmarks.";
@@ -259,7 +306,7 @@ public partial class MainWindow : Window
     {
         if (BpaGrid.SelectedItem is BpaFinding f) FindingDetails.Text = $"{f.RuleId} · {f.Rule}\n{f.Category} · {f.Risk}\n{f.Reason}\n\nProposed: {f.ProposedChange}\nBefore: {f.Before}\nAfter: {f.After}\n\nSource: {f.Source}\n{(f.FixPreview == null ? "Requires author decision; no automatic fix." : "Safe metadata fix available for preview.")}\nDouble-click the finding to select its object.";
     }
-    private void NavigateBpa(object sender, MouseButtonEventArgs e) => Run(() => { if (BpaGrid.SelectedItem is BpaFinding f) { editor.Select(f.Object); GoTo("Model"); } });
+    private void NavigateBpa(object sender, MouseButtonEventArgs e) => GoToFinding(sender, e);
     private void PreviewBpaFix(object sender, RoutedEventArgs e) => Run(() =>
     {
         RequireModel();
@@ -318,8 +365,9 @@ public partial class MainWindow : Window
         if (string.IsNullOrWhiteSpace(path))
         {
             semanticWorkspaceRoot = null;
+            bpaWorkspaceContext = null;
             workspaceRoot = null; GitHeader.Text = "Git · no project"; SourceStatus.Text = "No PBIP workspace";
-            WorkspaceDetails.Text = "Open a model from a PBIP project or choose a .pbip file."; GitDetails.Text = ""; GitFiles.ItemsSource = null; return;
+            WorkspaceDetails.Text = "Open a model from a PBIP project or choose a .pbip file."; GitDetails.Text = ""; GitFiles.ItemsSource = null; UpdateConnectedContext(); return;
         }
         var inventory = await scanner.DetectAsync(path!, token);
         if (revision != statusRevision || token.IsCancellationRequested) return;
@@ -327,8 +375,10 @@ public partial class MainWindow : Window
         var status = await git.GetStatusAsync(root!, inventory?.SemanticModelFolders, token);
         if (revision != statusRevision || token.IsCancellationRequested) return;
         workspaceRoot = root;
+        bpaWorkspaceContext = status.IsStatusKnown ? new BpaWorkspaceContext(inventory != null, status.IsRepository, status.Changes.Any(change => change.IsConflict), status.ChangedSemanticFiles.Count > 0) : null;
         semanticWorkspaceRoot = inventory?.SemanticModelFolders.FirstOrDefault(folder => editor.FilePath?.StartsWith(folder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) == true)
             ?? (inventory?.SemanticModelFolders.Count == 1 ? inventory.SemanticModelFolders[0] : null);
+        UpdateConnectedContext();
         GitHeader.Text = status.Summary;
         SourceStatus.Text = inventory == null ? "No PBIP project detected\n" + status.Summary : $"PBIP · {inventory.Root}\nTMDL · {(inventory.HasTmdl ? "present" : "absent")}\nPBIR · {(inventory.HasPbir ? "present" : "absent")}\n{status.ChangedSemanticFiles.Count} changed semantic files";
         WorkspaceDetails.Text = inventory == null ? "No PBIP project detected at " + root : $"PBIP root: {inventory.Root}\nSemantic folders: {string.Join(", ", inventory.SemanticModelFolders)}\nTMDL: {inventory.HasTmdl} · PBIR: {inventory.HasPbir} · enhanced PBIR: {inventory.HasEnhancedPbir}\n{status.Summary}\n{string.Join("\\n", inventory.Warnings.Concat(status.Warnings))}";
@@ -358,6 +408,9 @@ public partial class MainWindow : Window
         var entries = Enum.GetValues(typeof(PbiBench.Core.Commands.WorkbenchCommandId)).Cast<PbiBench.Core.Commands.WorkbenchCommandId>().Where(commands.Contains).ToDictionary(id => id.ToString(), id => new Action(() => Run(() => commands.Execute(id))));
         foreach (var page in Navigation.Items.Cast<ListBoxItem>().Select(i => i.Content.ToString()!)) entries["Workspace · " + page] = () => GoTo(page);
         AddAuthoringCommands(entries);
+        AddQualityCommands(entries);
+        AddConnectedCommands(entries);
+        AddAgentCommands(entries);
         var panel = new DockPanel { Margin = new Thickness(15) };
         var search = new TextBox { Padding = new Thickness(8), Margin = new Thickness(0, 0, 0, 10) };
         DockPanel.SetDock(search, Dock.Top); panel.Children.Add(search);
@@ -376,6 +429,9 @@ public partial class MainWindow : Window
         if (!smokeMode && !editor.CanClose()) { e.Cancel = true; return; }
         SaveLayout();
         lifetime.Cancel();
+        backgroundTasks.Dispose(); backgroundTasksView?.Dispose(); semanticTests?.Dispose(); vertiPaq?.Dispose(); scriptAutomation?.Dispose();
+        workspaceSync?.Dispose(); fabricWorkspace?.Dispose(); advancedRefresh?.Dispose();
+        agentWorkspace?.Dispose(); semanticPrototypes?.Dispose();
         try { File.WriteAllText(Path.Combine(settingsDirectory, "scratch.dax"), scratch.Text); } catch (IOException) { } catch (UnauthorizedAccessException) { }
         metadataEditors?.Dispose(); daxAuthoring?.Dispose(); dataWorkspace?.Dispose(); daxWorkspace?.Dispose(); editor.Dispose(); lifetime.Dispose(); ready = false;
     }

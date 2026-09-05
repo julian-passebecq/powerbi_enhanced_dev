@@ -26,7 +26,7 @@ The existing 371 V6 test executions and 15 original launch checks must remain co
 
 ## Results
 
-Release build: **0 warnings, 0 errors**.
+PbiBench Release build: **0 warnings, 0 errors**. The pinned upstream TE2 build retains its existing reference-resolution warnings; its build, configured tests and launch checks passed.
 
 | Suite | Passed | Failed |
 |---|---:|---:|

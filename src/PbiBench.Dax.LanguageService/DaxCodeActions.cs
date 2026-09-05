@@ -10,8 +10,9 @@ public sealed partial class DaxLanguageService
         if (reference?.Declaration is not { Valid: true } declaration || reference.Symbol.Kind != DaxSymbolKind.Variable || !ConstantLiteral(reference.Symbol.Expression ?? "")) return;
         var uses = analysis.BoundReferences.Where(item => item.Symbol.Id == reference.Symbol.Id && !item.IsDefinition).ToArray();
         if (uses.Length == 0 || uses.Length > 200 || uses.Any(use => use.Span.Start < declaration.ScopeStart || use.Span.End > declaration.ScopeEnd)) return;
+        var literal = string.Join(" ", DaxTokenizer.Tokenize(reference.Symbol.Expression!).Where(token => !DaxTokenizer.IsTrivia(token)).Select(token => token.Text));
         actions.Add(Action(analysis, "Inline constant variable uses", "Replace resolved uses of this context-independent literal. The declaration and its comments remain, preserving the surrounding VAR/RETURN structure. Model references, volatile calls and other initializers are not eligible.",
-            uses.Select(use => new DaxTextEdit(use.Span, "(" + reference.Symbol.Expression + "\n)")).ToArray()));
+            uses.Select(use => new DaxTextEdit(use.Span, "(" + literal + ")")).ToArray()));
     }
 
     private DaxCodeAction? TryExtractExpression(DaxAnalysis analysis, TextSpan requested)
@@ -25,6 +26,10 @@ public sealed partial class DaxLanguageService
         if (end + 1 < all.Length && all[end + 1].Kind == DaxTokenKind.BracketIdentifier && chosen[chosen.Length - 1].Kind is DaxTokenKind.Identifier or DaxTokenKind.QuotedIdentifier) return null;
         if (chosen.Any(token => Is(token, "DEFINE") || Is(token, "EVALUATE") || Is(token, "FUNCTION") || token.Text == ":" || token.Text == "=>")) return null;
         var errors = new List<DaxDiagnostic>(); CheckDelimiters(chosen, errors); if (errors.Count != 0) return null;
+        if (chosen.Any(token => Is(token, "KEEPFILTERS") || Is(token, "REMOVEFILTERS") || Is(token, "USERELATIONSHIP") || Is(token, "CROSSFILTER"))) return null;
+        if (analysis.Document.Kind == DaxDocumentKind.Function && all.FirstOrDefault(token => token.Text == "=>") is { } body && requested.Start < body.Span.End) return null;
+        foreach (var function in analysis.Declarations.Where(item => item.Symbol.Kind == DaxSymbolKind.Function && item.ExpressionSpan != null))
+            if (function.ExpressionSpan!.Value.Contains(requested.Start) && all.FirstOrDefault(token => token.Text == "=>" && function.ExpressionSpan.Value.Contains(token.Span.Start)) is { } arrow && requested.Start < arrow.Span.End) return null;
         // Only whole arguments, whole initializers/bodies, atoms and already-parenthesized subtrees
         // are eligible. A lexical substring such as 1+2 inside 1+2*3 is not an expression subtree.
         var frames = new Stack<(int Open, int Argument, int Start)>();
@@ -54,6 +59,7 @@ public sealed partial class DaxLanguageService
             var name = Array.FindIndex(all, token => token.Span == declaration.NameSpan);
             wholeValue |= name >= 0 && start == name + 2 && end + 1 < all.Length && all[end + 1].Span.Start == declaration.ScopeStart;
         }
+        if (!wholeValue && analysis.BoundReferences.Any(reference => reference.IsDefinition && chosen.Any(token => token.Span == reference.Span))) return null;
         var atom = chosen.Length == 1 && (chosen[0].Kind is DaxTokenKind.Number or DaxTokenKind.String or DaxTokenKind.Date ||
             analysis.BoundReferences.Any(reference => reference.Span == chosen[0].Span && !reference.IsDefinition && reference.Symbol.Kind is DaxSymbolKind.Variable or DaxSymbolKind.Parameter or DaxSymbolKind.Measure or DaxSymbolKind.Column));
         atom |= chosen.Length == 2 && chosen[0].Kind is DaxTokenKind.Identifier or DaxTokenKind.QuotedIdentifier && chosen[1].Kind == DaxTokenKind.BracketIdentifier;

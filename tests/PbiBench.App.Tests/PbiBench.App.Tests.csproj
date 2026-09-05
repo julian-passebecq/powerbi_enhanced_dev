@@ -10,5 +10,6 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
     <ProjectReference Include="../../src/PbiBench.App/PbiBench.App.csproj" />
+    <Reference Include="TOMWrapper"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/TOMWrapper.dll</HintPath></Reference>
   </ItemGroup>
 </Project>

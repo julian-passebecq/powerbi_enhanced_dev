@@ -1,0 +1,13 @@
+# Original PbiBench example. Explicitly map this source to a model table before review.
+version: 1.1
+source: example.sales.orders
+comment: Prototype intent; compare source and model results before deployment.
+fields:
+  - name: Amount
+    expr: Amount
+measures:
+  - name: Imported gross amount
+    expr: SUM(Amount)
+    comment: Review Amount's source binding and numeric type.
+  - name: Imported order count
+    expr: COUNT(*)

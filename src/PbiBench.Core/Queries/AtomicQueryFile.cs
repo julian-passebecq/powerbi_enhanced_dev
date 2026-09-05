@@ -1,9 +1,9 @@
 namespace PbiBench.Core.Queries;
 
 /// <summary>Commits a fully written sibling file while preserving the previous destination on lock failure.</summary>
-internal static class AtomicQueryFile
+public static class AtomicQueryFile
 {
-    internal static void Commit(string temporary, string destination, CancellationToken token)
+    public static void Commit(string temporary, string destination, CancellationToken token)
     {
         for (var attempt = 0; ; attempt++)
         {

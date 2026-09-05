@@ -54,4 +54,13 @@ if ($LASTEXITCODE -ne 0) {
     if ($LASTEXITCODE -ne 0) { throw 'Integration patch failed.' }
     Write-Host 'Applied minimal PbiBench remote-write review patch.'
 } else { Write-Host 'PbiBench integration patch already applied.' }
+$functionPatch = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../vendor/patches/te2-2.28.0-function-undo-order.patch'))
+& git -C $target apply --reverse --check $functionPatch 2>$null
+if ($LASTEXITCODE -ne 0) {
+    & git -C $target apply --check $functionPatch
+    if ($LASTEXITCODE -ne 0) { throw 'Function Undo order patch conflicts with existing changes; nothing was overwritten.' }
+    & git -C $target apply $functionPatch
+    if ($LASTEXITCODE -ne 0) { throw 'Function Undo order patch failed.' }
+    Write-Host 'Applied bounded PbiBench Function Undo order correction.'
+} else { Write-Host 'PbiBench Function Undo order patch already applied.' }
 Write-Host "TE2 source: $target"

@@ -40,18 +40,59 @@ public sealed class AuthoringPreview
             throw new InvalidOperationException("Finish the current editor operation and enable Undo before applying.");
         if (new SemanticModelService(handler).Fingerprint() != fingerprint)
             throw new InvalidOperationException("The model changed after this preview. Preview again.");
+        var undoSize = handler.UndoManager.UndoSize;
+        var undoSteps = handler.UndoManager.UndoSteps;
+        var undoHistory = handler.UndoManager.GetHistory();
+        var finalizing = false;
         handler.BeginUpdate("PbiBench: " + Title);
         try
         {
             foreach (var edit in edits) edit.Apply();
             var invalid = edits.FirstOrDefault(edit => !edit.Validate());
             if (invalid != null) throw new InvalidOperationException("The model did not match the preview for " + invalid.Change.ObjectPath + " / " + invalid.Change.Property + ". Changes were rolled back.");
+            if (handler.UndoManager.BatchDepth != 1) throw new InvalidOperationException("An edit left an unexpected nested undo operation open.");
+            finalizing = true;
             handler.EndUpdate();
             consumed = true;
         }
-        catch
+        catch (Exception failure)
         {
-            if (handler.UndoManager.BatchDepth > 0) handler.EndUpdateAll(rollback: true);
+            var recoveryErrors = new List<Exception>();
+            if (handler.UndoManager.BatchDepth > 0)
+            {
+                // EndBatch may itself notify a failing observer after it has reduced depth.
+                // Continue only while each attempt makes progress through our own batches.
+                while (handler.UndoManager.BatchDepth > 0)
+                {
+                    var depth = handler.UndoManager.BatchDepth;
+                    try { handler.UndoManager.EndBatch(rollback: true); }
+                    catch (Exception recovery) { recoveryErrors.Add(recovery); }
+                    if (handler.UndoManager.BatchDepth >= depth) break;
+                }
+            }
+            else if (finalizing && handler.UndoManager.UndoSize > undoSize && handler.UndoManager.UndoSteps == undoSteps + 1 &&
+                handler.UndoManager.GetHistory().StartsWith(undoHistory, StringComparison.Ordinal))
+            {
+                // TE2 commits the undo step before dependency/tree notifications. Recover
+                // only one new step whose earlier history still matches our captured boundary.
+                try { handler.UndoManager.Undo(); }
+                catch (Exception recovery) { recoveryErrors.Add(recovery); }
+            }
+            try
+            {
+                handler.EndUpdateAll();
+                // EndUpdateAll clears tree locks but can leave PostponeOperations set when
+                // no dependency rebuild was needed. A balanced public update resets it.
+                if (handler.UpdateInProgress) { handler.BeginUpdate(null!); handler.EndUpdate(undoable: false); }
+            }
+            catch (Exception recovery) { recoveryErrors.Add(recovery); }
+            if (handler.UndoManager.BatchDepth != 0 || handler.UpdateInProgress || handler.UndoManager.UndoSize != undoSize ||
+                handler.UndoManager.UndoSteps != undoSteps || handler.UndoManager.GetHistory() != undoHistory ||
+                new SemanticModelService(handler).Fingerprint() != fingerprint)
+            {
+                consumed = true;
+                throw new AggregateException("The authoring operation failed and automatic rollback could not restore its exact undo boundary. Inspect the pending model changes before continuing; unrelated undo history was not unwound.", new[] { failure }.Concat(recoveryErrors));
+            }
             throw;
         }
     }

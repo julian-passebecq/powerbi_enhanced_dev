@@ -11,6 +11,8 @@
     <Reference Include="Microsoft.AnalysisServices.Tabular"><HintPath>../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/Microsoft.AnalysisServices.Tabular.dll</HintPath></Reference>
     <Reference Include="Microsoft.AnalysisServices.Core"><HintPath>../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/Microsoft.AnalysisServices.Core.dll</HintPath></Reference>
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="WindowsFormsIntegration" />
     <ProjectReference Include="../PbiBench.Core/PbiBench.Core.csproj" />
@@ -19,9 +21,11 @@
     <ProjectReference Include="../PbiBench.Git/PbiBench.Git.csproj" />
     <ProjectReference Include="../PbiBench.DaxStudio/PbiBench.DaxStudio.csproj" />
     <ProjectReference Include="../PbiBench.Automation/PbiBench.Automation.csproj" />
+    <ProjectReference Include="../PbiBench.Fabric/PbiBench.Fabric.csproj" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup><None Include="../../examples/pass1-demo.bim" Link="examples/pass1-demo.bim" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
+  <ItemGroup><None Include="../../examples/prototypes/**/*" Link="examples/prototypes/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
   <ItemGroup><Resource Include="Assets/PbiBench.ico" /></ItemGroup>
   <Target Name="CopyTe2Runtime" AfterTargets="Build">
     <ItemGroup><Te2Runtime Include="../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*" Exclude="../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*.pdb;../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*.config" /></ItemGroup>

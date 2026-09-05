@@ -99,6 +99,14 @@ public sealed class DaxAuthoringTests
         var nested = service.Explain(service.GetObjects().Single(o => o.Name == "Double").Id); Assert.IsTrue(nested.DependencyTree.Single(node => node.Name == "Revenue").Children.Any(node => node.Name == "Amount"));
     }
     [TestMethod]
+    public void DefinitionNavigationUsesStableIdentityForSameNamedCalculatedColumns()
+    {
+        using var handler = Fixture(); handler.Model.AddTable("Other").AddCalculatedColumn("Tax", "99"); var service = new DaxAuthoringService(handler);
+        var metadata = DaxMetadataSnapshotProvider.Capture(handler); var symbol = metadata.Symbols.Single(item => item.Kind == DaxSymbolKind.Column && item.Table == "Other" && item.Name == "Tax");
+        var target = service.ResolveDefinition(new DaxSymbolLocation(symbol.Id, symbol.Name, symbol.Kind, null, null, symbol.Expression, null)); Assert.IsNotNull(target); Assert.AreEqual("Other", target.Table); Assert.AreEqual("99", target.Expression);
+    }
+
+    [TestMethod]
     public void FailedNativeCreationRollsBackEarlierEdits()
     {
         using var handler = Fixture(); var service = new DaxAuthoringService(handler); var before = new SemanticModelService(handler).Fingerprint();

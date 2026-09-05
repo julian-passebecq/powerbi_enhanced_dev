@@ -107,8 +107,7 @@ public sealed class LayoutStateStore
                 new DataContractJsonSerializer(typeof(AppLayoutState)).WriteObject(stream, state.Normalize());
                 stream.Flush(true);
             }
-            if (File.Exists(filePath)) File.Replace(temporary, filePath, null);
-            else File.Move(temporary, filePath);
+            PbiBench.Core.Queries.AtomicQueryFile.Commit(temporary, filePath, CancellationToken.None);
             error = null;
             return true;
         }

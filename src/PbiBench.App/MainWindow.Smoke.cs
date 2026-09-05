@@ -71,6 +71,9 @@ public partial class MainWindow
             await RunDaxWorkspaceSmokeAsync(outputRoot, checks);
             await RunDataWorkspaceSmokeAsync(outputRoot, checks);
             await RunAuthoringSmokeAsync(outputRoot, checks);
+            await RunQualitySmokeAsync(outputRoot, checks);
+            await RunConnectedSmokeAsync(outputRoot, checks);
+            await RunAgentSmokeAsync(outputRoot, checks);
             File.AppendAllText(Path.Combine(outputRoot, "smoke-progress.txt"), "\nLocal save complete; serializing report");
             File.WriteAllText(Path.Combine(outputRoot, "smoke-result.json"), JsonSerializer.Serialize(new { success = true, checks, screenshots = Directory.GetFiles(outputRoot, "*.png") }, new JsonSerializerOptions { WriteIndented = true }));
             Environment.ExitCode = 0;

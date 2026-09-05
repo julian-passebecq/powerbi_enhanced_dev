@@ -4,7 +4,7 @@ using TabularEditor.TOMWrapper;
 namespace PbiBench.Automation;
 
 /// <summary>Original, deterministic BPA companion. Native TE2 BPA remains available in the editor.</summary>
-public sealed class BpaService
+public sealed partial class BpaService
 {
     private readonly TabularModelHandler handler;
     private readonly AutomationService automation;
@@ -14,8 +14,9 @@ public sealed class BpaService
         this.automation = automation ?? throw new ArgumentNullException(nameof(automation));
     }
 
-    public IReadOnlyList<BpaFinding> Scan()
+    public IReadOnlyList<BpaFinding> Scan(BpaRuleProfile? profile = null, BpaWorkspaceContext? workspace = null, bool includeSuppressed = false)
     {
+        profile ??= new BpaRuleProfile(); profile.Validate();
         var findings = new List<BpaFinding>();
         var fingerprint = new SemanticModelService(handler).Fingerprint();
         foreach (var measure in handler.Model.AllMeasures)
@@ -54,10 +55,21 @@ public sealed class BpaService
                 "This is an explicit key or the one side of a relationship; its implicit sum is usually not meaningful. Review existing report defaults before applying.",
                 "Set SummarizeBy to None.", column.SummarizeBy.ToString(), "None", fix));
         }
-        return findings.OrderByDescending(f => f.Severity).ThenBy(f => f.ObjectPath, StringComparer.Ordinal).ThenBy(f => f.RuleId, StringComparer.Ordinal).ToArray();
+        AddPackFindings(findings, workspace);
+        return findings.Where(f => profile.IsEnabled(f.RuleId) && (includeSuppressed || !profile.Suppressions.Contains(SuppressionKey(f))))
+            .Select(f => profile.Severities.TryGetValue(f.RuleId, out var severity) ? f with { Severity = severity } : f)
+            .OrderByDescending(f => f.Severity).ThenBy(f => f.ObjectPath, StringComparer.Ordinal).ThenBy(f => f.RuleId, StringComparer.Ordinal).ToArray();
+    }
+
+    public string SuppressionKey(BpaFinding finding)
+    {
+        using var hash = System.Security.Cryptography.SHA256.Create();
+        var identity = handler.Database.ID + "\n" + handler.Source;
+        var scope = Convert.ToBase64String(hash.ComputeHash(System.Text.Encoding.UTF8.GetBytes(identity)));
+        return "v1|" + scope + "|" + finding.RuleId + "|" + finding.ObjectPath;
     }
 
     private static BpaFinding Finding(string id, string rule, FindingSeverity severity, TabularNamedObject obj, string reason, string proposed, string before, string after, ChangePreview? fix)
         => new(id, rule, severity, obj, SemanticModelService.ObjectPath(obj), reason, proposed, before, after,
-            "PbiBench Pass 1 policy / " + id + " (original rule; safe metadata subset)", fix);
+            BpaRulePacks.PackFor(id).Name + " / " + BpaRulePacks.Version + " / " + id + " · Original policy · " + BpaRulePacks.Get(id).Reference, fix);
 }

@@ -7,6 +7,7 @@ using Xunit;
 
 namespace PbiBench.Adapters.Tests;
 
+[Collection("Native TE2")]
 public sealed class ModelEditorBoundaryTests
 {
     [Fact]

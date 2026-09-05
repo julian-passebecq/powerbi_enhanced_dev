@@ -1,4 +1,4 @@
-using System.Net.Http.Headers;
+using System.Net.Http;
 using System.Text.Json;
 using PbiBench.Core.Abstractions;
 namespace PbiBench.Fabric;
@@ -15,13 +15,8 @@ public sealed class FabricAdminClient(HttpClient http, IAccessTokenProvider toke
 
     private async Task<JsonDocument> GetAsync(string path, CancellationToken ct)
     {
-        http.BaseAddress ??= FabricApiClient.BaseUri;
-        using var req = new HttpRequestMessage(HttpMethod.Get, path);
-        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await tokens.GetAccessTokenAsync(Scopes, ct));
-        using var res = await http.SendAsync(req, ct);
-        var body = await res.Content.ReadAsStringAsync(ct);
-        if (!res.IsSuccessStatusCode) throw new FabricApiException($"Fabric Admin API failed: {(int)res.StatusCode}", (int)res.StatusCode, body);
-        return JsonDocument.Parse(body);
+        using var res = await FabricHttp.SendAsync(http, tokens, HttpMethod.Get, new Uri(FabricApiClient.BaseUri, path), FabricAudience.Fabric, null, ct).ConfigureAwait(false);
+        return await FabricHttp.ReadJsonAsync(res.Content, ct).ConfigureAwait(false);
     }
     private static string Q(string? token) => string.IsNullOrWhiteSpace(token) ? "" : $"?continuationToken={Uri.EscapeDataString(token)}";
 }

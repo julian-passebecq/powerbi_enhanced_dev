@@ -13,14 +13,17 @@
     <ProjectReference Include="../../src/PbiBench.DaxStudio/PbiBench.DaxStudio.csproj" />
     <ProjectReference Include="../../src/PbiBench.Workspace/PbiBench.Workspace.csproj" />
     <ProjectReference Include="../../src/PbiBench.Git/PbiBench.Git.csproj" />
+    <ProjectReference Include="../../src/PbiBench.Fabric/PbiBench.Fabric.csproj" />
     <Compile Include="../../src/PbiBench.App/LayoutStateStore.cs" Link="App/LayoutStateStore.cs" />
     <None Include="../../src/PbiBench.App/Assets/PbiBench.ico" Link="Assets/PbiBench.ico" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="TestData/VertiPaq/Contoso.vpax" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
     <ProjectReference Include="../../src/PbiBench.ModelEditor/PbiBench.ModelEditor.csproj" />
     <Reference Include="TOMWrapper"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/TOMWrapper.dll</HintPath></Reference>
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="WindowsFormsIntegration" />
     <Reference Include="PresentationFramework" />
@@ -30,6 +33,6 @@
   </ItemGroup>
   <Target Name="CopyTe2RuntimeForBoundaryTests" AfterTargets="Build" Condition="'$(TargetFramework)' == 'net48'">
     <ItemGroup><Te2TestRuntime Include="../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*" Exclude="../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*.pdb;../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/**/*.config" /></ItemGroup>
-    <Copy SourceFiles="@(Te2TestRuntime)" DestinationFiles="@(Te2TestRuntime->'$(TargetDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(Te2TestRuntime)" DestinationFiles="@(Te2TestRuntime->'$(TargetDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" Condition="!Exists('$(TargetDir)%(Te2TestRuntime.RecursiveDir)%(Te2TestRuntime.Filename)%(Te2TestRuntime.Extension)')" />
   </Target>
 </Project>

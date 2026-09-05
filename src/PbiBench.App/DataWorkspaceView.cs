@@ -73,7 +73,7 @@ public sealed class DataWorkspaceView : UserControl, IDisposable
         OpenProfile(plan);
     }
     private void OpenRelationshipProfile(DataRelationshipSchema relationship) => OpenProfile(DataProfileBuilder.Relationship(schema(), relationship, new DataProfileOptions { IncludeAdvanced = advanced.IsChecked == true }));
-    private void OpenProfile(DataProfilePlan plan)
+    public void OpenProfile(DataProfilePlan plan)
     {
         var query = NewQuery(); query.RowLimit = 1000; query.SetPlan(plan.Query, plan.Warnings, plan.ResultNames);
         AddTab(plan.Title, query, query, query);

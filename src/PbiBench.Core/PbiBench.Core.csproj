@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFrameworks>net10.0;net48</TargetFrameworks></PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.IO.Compression" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
     <PackageReference Include="System.Text.Json" Version="9.0.9" />
   </ItemGroup>

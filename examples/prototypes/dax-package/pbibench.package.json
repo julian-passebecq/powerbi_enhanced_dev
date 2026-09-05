@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "pbibench.sample",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Original local PbiBench prototype sample. Review before installing.",
+  "dependencies": [],
+  "functions": [
+    {
+      "name": "pbibench.sample.Double",
+      "path": "Double.dax",
+      "sha256": "b81a5dfa8e209fc884bf4cce04c321d14bdff3ab5a7e70d7529ae81f90fde605",
+      "description": "Returns twice the supplied integer.",
+      "isHidden": false
+    }
+  ]
+}

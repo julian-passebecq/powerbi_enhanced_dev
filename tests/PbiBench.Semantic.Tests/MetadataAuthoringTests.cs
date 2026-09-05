@@ -28,10 +28,54 @@ public sealed class MetadataAuthoringTests
         var failure = AuthoringPreview.Create(handler, "Fail", new[] { new AuthoringEdit(new("Sales", "Description", "Before", "After", "Test rollback"), () => { table.Description = "After"; throw new InvalidOperationException("Expected"); }, () => true) });
         Assert.ThrowsExactly<InvalidOperationException>(() => failure.Apply(handler));
         Assert.AreEqual(fingerprint, new SemanticModelService(handler).Fingerprint()); Assert.AreEqual(0, handler.UndoManager.BatchDepth);
+        Assert.IsFalse(handler.UpdateInProgress, "Rollback leaves the editor ready for another command.");
         var mismatch = AuthoringPreview.Create(handler, "Mismatch", new[] { new AuthoringEdit(new("Sales", "Description", "Before", "After", "Test postcondition"), () => table.Description = "After", () => false) });
         Assert.ThrowsExactly<InvalidOperationException>(() => mismatch.Apply(handler)); Assert.AreEqual("Before", table.Description); Assert.AreEqual(0, handler.UndoManager.BatchDepth);
         var invalid = AuthoringPreview.Create(handler, "Invalid", new[] { new AuthoringEdit(new("Sales", "Description", "Before", "After", "Error guard"), () => table.Description = "After", () => true) }, new[] { new AuthoringIssue("INVALID", "Invalid metadata", AuthoringIssueSeverity.Error) });
         Assert.IsFalse(invalid.CanApply); Assert.ThrowsExactly<InvalidOperationException>(() => invalid.Apply(handler)); Assert.AreEqual("Before", table.Description);
+    }
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void SharedPreviewRestoresCommittedStepWhenUndoNotificationThrows(bool throwDuringRecovery)
+    {
+        using var handler = new TabularModelHandler(1600); var table = handler.Model.AddTable("Sales"); table.Description = "Existing user edit";
+        var before = new SemanticModelService(handler).Fingerprint(); var history = handler.UndoManager.GetHistory(); var size = handler.UndoManager.UndoSize;
+        var preview = AuthoringPreview.Create(handler, "Notification fault", new[] { new AuthoringEdit(new("Sales", "Description", table.Description, "After", "Notification regression"), () => table.Description = "After", () => table.Description == "After") });
+        var thrown = false;
+        EventHandler observer = (_, _) => { if (!thrown || throwDuringRecovery) { thrown = true; throw new InvalidOperationException("Expected notification failure"); } };
+        handler.UndoManager.UndoStateChanged += observer;
+        try { Assert.ThrowsExactly<InvalidOperationException>(() => preview.Apply(handler)); }
+        finally { handler.UndoManager.UndoStateChanged -= observer; }
+        Assert.AreEqual(before, new SemanticModelService(handler).Fingerprint()); Assert.AreEqual(history, handler.UndoManager.GetHistory()); Assert.AreEqual(size, handler.UndoManager.UndoSize);
+        Assert.AreEqual(0, handler.UndoManager.BatchDepth); Assert.IsFalse(handler.UpdateInProgress);
+        new PerspectiveEditorService(handler).PreviewCreate("Next operation").Apply(handler); Assert.IsTrue(handler.Model.Perspectives.Contains("Next operation"));
+        handler.UndoManager.Undo(); Assert.AreEqual("Existing user edit", table.Description);
+    }
+    [TestMethod]
+    public void SharedPreviewRestoresTreeNotificationFailureWithoutUndoingEarlierHistory()
+    {
+        using var handler = new TabularModelHandler(1600); var tree = new ThrowingTree(handler); var table = handler.Model.AddTable("Sales"); table.Description = "Existing user edit";
+        var before = new SemanticModelService(handler).Fingerprint(); var history = handler.UndoManager.GetHistory();
+        var preview = AuthoringPreview.Create(handler, "Tree fault", new[] { new AuthoringEdit(new("Sales", "Description", table.Description, "After", "Tree regression"), () => table.Description = "After", () => table.Description == "After") });
+        tree.FailNext = true; Assert.ThrowsExactly<InvalidOperationException>(() => preview.Apply(handler));
+        Assert.AreEqual(before, new SemanticModelService(handler).Fingerprint()); Assert.AreEqual(history, handler.UndoManager.GetHistory()); Assert.IsFalse(handler.UpdateInProgress);
+        var empty = AuthoringPreview.Create(handler, "No actual edits", new[] { new AuthoringEdit(new("Sales", "Description", table.Description, table.Description, "No-op boundary"), () => { }, () => true) });
+        tree.FailNext = true; Assert.ThrowsExactly<InvalidOperationException>(() => empty.Apply(handler));
+        Assert.AreEqual(before, new SemanticModelService(handler).Fingerprint()); Assert.AreEqual(history, handler.UndoManager.GetHistory()); Assert.IsFalse(handler.UpdateInProgress);
+    }
+    [TestMethod]
+    public void SharedPreviewDoesNotUnwindAnUnrelatedObserverEditAfterItsBatchCommits()
+    {
+        using var handler = new TabularModelHandler(1600); var table = handler.Model.AddTable("Sales"); table.Description = "Existing user edit";
+        var preview = AuthoringPreview.Create(handler, "Boundary fault", new[] { new AuthoringEdit(new("Sales", "Description", table.Description, "After", "Boundary regression"), () => table.Description = "After", () => table.Description == "After") });
+        var once = false; EventHandler observer = (_, _) => { if (once) return; once = true; table.IsHidden = true; throw new InvalidOperationException("Observer added a separate edit"); };
+        handler.UndoManager.UndoStateChanged += observer;
+        try { Assert.ThrowsExactly<AggregateException>(() => preview.Apply(handler)); }
+        finally { handler.UndoManager.UndoStateChanged -= observer; }
+        Assert.AreEqual("After", table.Description); Assert.IsTrue(table.IsHidden, "An unrelated later undo step must never be rolled back automatically.");
+        Assert.IsFalse(preview.CanApply); Assert.IsFalse(handler.UpdateInProgress);
+        handler.UndoManager.Undo(); Assert.IsFalse(table.IsHidden); handler.UndoManager.Undo(); Assert.AreEqual("Existing user edit", table.Description);
     }
     [TestMethod]
     public void PerspectiveTableTriStateExpandsPartialMembershipAndOneUndoRestoresIt()
@@ -161,6 +205,15 @@ public sealed class MetadataAuthoringTests
         table.AddDataColumn("Year", "Year", dataType: DataType.Int64); table.AddDataColumn("Month", "Month", dataType: DataType.Int64); table.AddDataColumn("Month Name", "Month Name", dataType: DataType.String); table.AddDataColumn("Working Day", "Working Day", dataType: DataType.Boolean); return handler;
     }
     private static CalendarDraft Calendar() => new("Dates", null, "Fiscal", "Fiscal calendar", new[] { new CalendarMapping("Year", "Year", Array.Empty<string>()), new CalendarMapping("Month", "Month", new[] { "Month Name" }) }, new[] { "Working Day" });
+    private sealed class ThrowingTree(TabularModelHandler handler) : NullTree(handler)
+    {
+        internal bool FailNext { get; set; }
+        public override void EndUpdate()
+        {
+            base.EndUpdate();
+            if (UpdateLocks == 0 && FailNext) { FailNext = false; throw new InvalidOperationException("Expected tree notification failure"); }
+        }
+    }
     private static string CalendarCanonicalJson(TabularModelHandler handler)
     {
         // TE2 reattaches removed column groups at the end; category order has no ordinal

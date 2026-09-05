@@ -1,6 +1,10 @@
 **/bin/
 **/obj/
 **/packages/
+!src/PbiBench.Core/Packages/
+!src/PbiBench.Core/Packages/**
+!src/PbiBench.Semantic/Packages/
+!src/PbiBench.Semantic/Packages/**
 .tools/
 .vs/
 artifacts/

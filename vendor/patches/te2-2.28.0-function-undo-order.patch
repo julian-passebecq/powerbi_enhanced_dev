@@ -1,0 +1,67 @@
+diff --git a/TOMWrapper/UndoFramework/UndoAddRemoveAction.cs b/TOMWrapper/UndoFramework/UndoAddRemoveAction.cs
+index 87df4bb..0f5daf2 100644
+--- a/TOMWrapper/UndoFramework/UndoAddRemoveAction.cs
++++ b/TOMWrapper/UndoFramework/UndoAddRemoveAction.cs
+@@ -1,5 +1,6 @@
+ using System;
+ using System.Collections.Generic;
++using System.Linq;
+ using TabularEditor.TOMWrapper;
+ 
+ namespace TabularEditor.TOMWrapper.Undo
+@@ -17,6 +18,7 @@ namespace TabularEditor.TOMWrapper.Undo
+         UndoAddRemoveActionType _actionType;
+         string _json;
+         Type _tomObjectType;
++        readonly int _functionIndex;
+ 
+         public UndoAddRemoveAction(ITabularObjectCollection collection, TabularObject obj, UndoAddRemoveActionType actionType)
+         {
+@@ -25,6 +27,8 @@ namespace TabularEditor.TOMWrapper.Undo
+             _collection = collection;
+             _obj = obj;
+             _actionType = actionType;
++            // PbiBench: Function collections preserve their serialized order across Undo/Redo.
++            _functionIndex = obj is Function ? collection.IndexOf(obj) : -1;
+         }
+ 
+         public string ActionName
+@@ -40,6 +44,7 @@ namespace TabularEditor.TOMWrapper.Undo
+             if (_actionType == UndoAddRemoveActionType.Add)
+             {
+                 _obj.Undelete(_collection, _tomObjectType, _json);
++                RestoreFunctionIndex();
+                 //_collection.Add(_obj);
+             }
+             else
+@@ -55,6 +60,7 @@ namespace TabularEditor.TOMWrapper.Undo
+             else
+             {
+                 _obj.Undelete(_collection, _tomObjectType, _json);
++                RestoreFunctionIndex();
+                 //_collection.Add(_obj);
+             }
+         }
+@@ -64,6 +70,22 @@ namespace TabularEditor.TOMWrapper.Undo
+             return string.Format("{0} object {{{1}}} in collection {{{2}}}", _actionType == UndoAddRemoveActionType.Add ? "Added" : "Removed",
+                 (_obj as TabularNamedObject)?.Name ?? _obj.ObjectTypeName, _collection.CollectionName);
+         }
++
++        private void RestoreFunctionIndex()
++        {
++            // Public TOM has no positional Insert, and removed metadata cannot be reattached.
++            // Renew only the affected suffix through the existing Undelete path, preserving
++            // wrapper identities and all serialized properties. Other object kinds are unchanged.
++            if (_functionIndex < 0 || !(_obj is Function)) return;
++            var functions = (FunctionCollection)_collection;
++            var position = functions.IndexOf((Function)_obj);
++            if (position <= _functionIndex) return;
++            var suffix = new[] { (Function)_obj }.Concat(functions.Skip(_functionIndex).Where(item => !ReferenceEquals(item, _obj)))
++                .Select(item => new { Object = item, Json = Microsoft.AnalysisServices.Tabular.JsonSerializer.SerializeObject(
++                    item.MetadataObject, TabularObject.RenewMetadataOptions, item.Handler.CompatibilityLevel, item.Handler.Database.CompatibilityMode) }).ToArray();
++            foreach (var item in suffix) _collection.Remove(item.Object);
++            foreach (var item in suffix) item.Object.Undelete(_collection, _tomObjectType, item.Json);
++        }
+     }
+ 
+     internal class UndoAddRemoveReferenceAction : IUndoAction
