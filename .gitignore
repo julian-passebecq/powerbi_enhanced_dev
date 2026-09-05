@@ -9,6 +9,7 @@
 .vs/
 artifacts/
 TestResults/
+**/.pbibench/
 *.user
 *.suo
 vendor/TabularEditor2-2.28.0/

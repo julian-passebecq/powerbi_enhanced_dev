@@ -1,0 +1,38 @@
+Start from current `main` of `julian-passebecq/powerbi_enhanced_dev`.
+
+Audited baseline:
+`bbb29c3ab7adb2e7b9c04bf71b618354847e3e92`
+
+Read this V2.1 pack completely.
+
+This is no longer a small V11.x improvement pass.
+
+Implement V2 Pass 1 with these priorities:
+
+1. DO NOT create a second semantic-model viewer. PbiBench already has a real model explorer + relationship diagram. Upgrade the existing DiagramView / semantic workspace into a stronger `Semantic View`.
+2. Keep the existing DAX Query engine and make the DAX workspace feel like one professional workbench: model explorer left, DAX editor center, context/help right, results/problems/history bottom.
+3. Add an External Tool Hub with:
+   - Analyze in DAX Studio
+   - Open model in Bravo
+   - Open PBIP/report in Power BI Desktop
+   - Open project in VS Code
+   - Open report in PbiBench Report Studio
+4. Bravo integration is a launcher/companion integration, not embedded Bravo. Detect installed Bravo and launch with its supported `--server` and `--database` arguments. Do not invent a deep-link to Analyze Model / Manage Dates because Bravo's current public startup parser does not expose such a route argument.
+5. Add a curated `Power BI C# Automation Gallery` in Semantic IDE. Prefer PbiBench Safe Recipe/native actions when the operation can be represented safely; use Trusted C# only where needed. Preserve upstream source/license/provenance.
+6. Create a separate modern `PbiBench.ReportStudio` process for PBIP/PBIR. Do not reference TE2, TOMWrapper, PbiBench.App or PbiBench.ModelEditor from Report Studio.
+7. Add a pure PBIP/PBIR index + change-plan layer: open project/report, report tree, page/visual wireframe, inspector, validation, exact diff, backup, atomic apply, restore.
+8. Add local semantic <-> report lineage:
+   - measure/column -> visuals/pages
+   - visual -> semantic references
+   - broken references
+9. Add a Report Action Gallery for PBIR tasks. Do not force report-file automation through the TE2 C# runtime.
+10. Update module/provenance catalogs for Report Studio, PBIP/PBIR, lineage and external-tool bridges.
+
+Keep Fabric Toolbox separate. Fabric Toolbox owns Fabric authentication and future remote report get/update definition flows.
+
+Do not copy DAX.do branding/assets/CSS/source. Do not copy code from non-commercial/reference-only PBIR projects. Use Microsoft public PBIP/PBIR schemas as the authoritative format contract.
+
+Use targeted tests during development and one final impacted Release gate before push. Leave post-push review/CI inspection to the separate reviewer.
+
+Preferred commit:
+`v2-pass1 - Semantic workbench, Report Studio and automation galleries`

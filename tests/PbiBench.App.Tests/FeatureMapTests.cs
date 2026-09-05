@@ -16,9 +16,9 @@ public sealed class FeatureMapTests
         owner.Show(); var window = MainWindow.CreateAboutWindow(owner);
         try
         {
-            Assert.Same(owner, window.Owner); Assert.Equal(0, window.Pages.SelectedIndex); Assert.Contains("11.3.0", window.Title);
+            Assert.Same(owner, window.Owner); Assert.Equal(0, window.Pages.SelectedIndex); Assert.Contains("2.1.0", window.Title);
             Assert.Equal(new[] { "Feature Map", "Provenance / About" }, window.Pages.Items.Cast<TabItem>().Select(t => (string)t.Header));
-            Assert.Equal(21, window.Map.VisibleRows.Count);
+            Assert.Equal(23, window.Map.VisibleRows.Count);
             var provenance = (DataGrid)((TabItem)window.Pages.Items[1]).Content; Assert.True(provenance.IsReadOnly);
             Assert.Equal(ProvenanceCatalog.Bundled().Components.Count, provenance.Items.Count);
             window.Pages.SelectedIndex = 1; Assert.Same(provenance, ((TabItem)window.Pages.SelectedItem).Content);
@@ -31,11 +31,11 @@ public sealed class FeatureMapTests
         Assert.Equal(new[] { "Feature", "Status", "Origin", "Our implementation", "TE3 comparable capability", "Lifecycle" }, view.FeatureGrid.Columns.Select(c => (string)c.Header));
         var filters = Descendants(view).OfType<RadioButton>().ToDictionary(b => (string)b.Content);
         Assert.Equal(new[] { "All", "Core", "Companions", "Labs", "TE3 gaps" }, filters.Keys);
-        filters["Core"].IsChecked = true; Assert.Equal(10, view.VisibleRows.Count); Assert.All(view.VisibleRows, r => Assert.Equal("Core", r.Status));
-        filters["Companions"].IsChecked = true; Assert.Equal(3, view.VisibleRows.Count); Assert.Contains(view.VisibleRows, r => r.Status == "External");
-        filters["Labs"].IsChecked = true; Assert.Equal(5, view.VisibleRows.Count); Assert.All(view.VisibleRows, r => Assert.Contains(r.Status, new[] { "Labs", "Future" }));
+        filters["Core"].IsChecked = true; Assert.Equal(12, view.VisibleRows.Count); Assert.All(view.VisibleRows, r => Assert.Equal("Core", r.Status));
+        filters["Companions"].IsChecked = true; Assert.Equal(4, view.VisibleRows.Count); Assert.Contains(view.VisibleRows, r => r.Status == "External");
+        filters["Labs"].IsChecked = true; Assert.Equal(4, view.VisibleRows.Count); Assert.All(view.VisibleRows, r => Assert.Contains(r.Status, new[] { "Labs", "Future" }));
         filters["TE3 gaps"].IsChecked = true; Assert.Contains(view.VisibleRows, r => r.Feature.Id == "dax-debugger");
-        filters["All"].IsChecked = true; Assert.Equal(21, view.VisibleRows.Count);
+        filters["All"].IsChecked = true; Assert.Equal(23, view.VisibleRows.Count);
     });
     [Fact] public Task SelectionDetailFollowsFiltersAndClearlyMarksFutureAndGapRows() => Sta(() =>
     {
@@ -43,8 +43,8 @@ public sealed class FeatureMapTests
         view.FeatureGrid.SelectedItem = view.VisibleRows.Single(r => r.Feature.Id == "dax-debugger");
         Assert.Contains("No implementation provenance claimed", view.SelectedDetail); Assert.Contains("No expression stepping", view.SelectedDetail);
         view.SelectFilter(FeatureMapFilter.Core); Assert.Contains("semantic.model-editor.te2", view.SelectedDetail); Assert.DoesNotContain("No expression stepping", view.SelectedDetail);
-        view.SelectFilter(FeatureMapFilter.Labs); view.FeatureGrid.SelectedItem = view.VisibleRows.Single(r => r.Feature.Id == "pbir");
-        Assert.Contains("No PBIR editor", view.SelectedDetail); Assert.Equal("Future", ((FeatureMapRow)view.FeatureGrid.SelectedItem).Status);
+        view.SelectFilter(FeatureMapFilter.Core); view.FeatureGrid.SelectedItem = view.VisibleRows.Single(r => r.Feature.Id == "pbir");
+        Assert.Contains("Report Studio", view.SelectedDetail); Assert.Equal("Core", ((FeatureMapRow)view.FeatureGrid.SelectedItem).Status);
     });
     [Fact] public Task DetailedDocumentOpensOnlyByExplicitActionAndReadsTheBundledFile() => Sta(() =>
     {

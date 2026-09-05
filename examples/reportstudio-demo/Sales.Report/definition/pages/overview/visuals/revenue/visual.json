@@ -1,0 +1,22 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.9.0/schema.json",
+  "name": "revenue",
+  "position": { "x": 40, "y": 40, "z": 0, "width": 460, "height": 240 },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [{
+            "field": { "Measure": { "Expression": { "SourceRef": { "Entity": "Sales" } }, "Property": "Revenue" } },
+            "queryRef": "Sales.Revenue"
+          }]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [{ "properties": { "text": { "expr": { "Literal": { "Value": "'Revenue'" } } }, "show": { "expr": { "Literal": { "Value": "true" } } } } }]
+    }
+  },
+  "annotations": [{ "name": "Owner", "value": "Synthetic example" }]
+}

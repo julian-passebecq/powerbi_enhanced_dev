@@ -1,0 +1,30 @@
+{
+  "name": "PbiBench V2.1 planning pack",
+  "baselineCommit": "bbb29c3ab7adb2e7b9c04bf71b618354847e3e92",
+  "supersedes": [
+    "pbibench_codex_v11_4_update_safe_growth_fabric_csharp_quickopen_2026-09-05.zip",
+    "pbibench_codex_v2_gen2_report_studio_pbir_pbip_csharp_daxworkbench_2026-09-05.zip"
+  ],
+  "imagesIncluded": false,
+  "focus": [
+    "upgrade existing Semantic View",
+    "DAX workbench + external tools",
+    "curated Power BI C# Automation Gallery",
+    "separate PBIP/PBIR Report Studio",
+    "semantic-report lineage"
+  ],
+  "files": [
+    "ACCEPTANCE_GATE_V2_PASS1.md",
+    "CSHARP_POWERBI_GALLERY.md",
+    "DAX_QUERY_AND_EXTERNAL_TOOLS.md",
+    "PACK_MANIFEST.json",
+    "PASTE_THIS_TO_CODEX.txt",
+    "README_FIRST.md",
+    "REPORT_AUTOMATION_GALLERY.md",
+    "REPORT_STUDIO_PBIP_PBIR.md",
+    "SEMANTIC_VIEW_DECISION.md",
+    "SOURCE_AND_LICENSE_INDEX.md",
+    "V2_ARCHITECTURE.md",
+    "V2_PASS1_SCOPE.md"
+  ]
+}

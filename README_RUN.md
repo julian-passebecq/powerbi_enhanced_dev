@@ -1,6 +1,6 @@
 # Run PbiBench — integrated TE2++ first pass
 
-PbiBench is the main application. Its Model workspace hosts the pinned TE2 2.28.0 editor **inside the same process**. The first-pass compatibility host uses WPF + WinForms on .NET Framework 4.8 so TE2's model editing and C# scripting remain available. The Core, Workspace, Git and DAX Studio services also target .NET 10. The architecture and later-pass boundaries remain those in the V6 contract.
+PbiBench is the main application. Its Model workspace hosts the pinned TE2 2.28.0 editor **inside the same process**. The compatibility host uses WPF + WinForms on .NET Framework 4.8 so TE2's model editing and C# scripting remain available. Gen-2 adds the existing diagram's Semantic View modes, DAX Workbench, a curated C# gallery and a separate .NET 10 Report Studio for local PBIP/PBIR engineering. See [Gen-2 usage and boundaries](docs/V2_PASS1_IMPLEMENTATION.md). Fabric authentication and remote operations stay in Fabric Toolbox.
 
 ## Build and test
 

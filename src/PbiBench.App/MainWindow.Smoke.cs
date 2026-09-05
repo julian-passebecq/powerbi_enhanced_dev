@@ -22,6 +22,7 @@ public partial class MainWindow
         var outputRoot = index + 1 < args.Length ? Path.GetFullPath(args[index + 1]) : Path.Combine(settingsDirectory, "smoke");
         Directory.CreateDirectory(outputRoot);
         if (args.Contains("--v11")) { await RunV11SmokeAsync(outputRoot); return; }
+        if (args.Contains("--v2")) { await RunV11SmokeAsync(outputRoot, true); return; }
         var checks = new List<string>();
         try
         {

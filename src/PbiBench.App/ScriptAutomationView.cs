@@ -50,6 +50,12 @@ public sealed class ScriptAutomationView : UserControl, IDisposable
     private bool disposed, loadingSource, initialized;
     public AuthoringPreview? LastPreview { get; private set; }
     public IReadOnlyList<CSharpWorkspaceView> VisibleEditors => new[] { safeSource, trustedSource }.Where(v => v.IsVisible).ToArray();
+    public void InsertGalleryRecipe(ActionRecipe recipe)
+    {
+        ActionRecipeRules.Validate(recipe); recipeDraft = null; ShowTool("Safe C# Preview"); safeSource.IsReadOnly = false;
+        safeSource.NewDocument(RecipeCSharpGenerator.Generate(recipe).Source); trust.IsChecked = false; compiledTrustedSource = null;
+        status.Text = "Gallery C# inserted for review. Nothing has run; Preview uses the bounded Safe interpreter.";
+    }
 
     public ScriptAutomationView(Func<TabularModelHandler?> currentHandler, Func<IReadOnlyList<TabularNamedObject>> selection, Action changed, BackgroundTaskQueue? backgroundTasks = null, string? settingsDirectory = null)
     {

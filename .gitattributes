@@ -1,0 +1,2 @@
+# Pinned third-party schemas and their license must retain the verified source bytes.
+schemas/microsoft/** -text

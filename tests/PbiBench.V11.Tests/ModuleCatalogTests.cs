@@ -17,7 +17,7 @@ public sealed class ModuleCatalogTests
     }
     [Fact] public void AllFeaturesResolveVersionedModulesAndEmbeddedMetadataMatchesDisk()
     {
-        var catalog = ModuleCatalog.Bundled(); Assert.Equal(12, catalog.Modules.Count); Assert.Equal("11.3.0", catalog.ProductVersion);
+        var catalog = ModuleCatalog.Bundled(); Assert.Equal(18, catalog.Modules.Count); Assert.Equal("2.1.0", catalog.ProductVersion);
         Assert.Equal(Serialize(catalog), Serialize(ModuleCatalog.Parse(File.ReadAllText(Path.Combine(Root(), "docs/architecture/module_catalog.json")))));
         foreach (var module in catalog.Modules)
         {

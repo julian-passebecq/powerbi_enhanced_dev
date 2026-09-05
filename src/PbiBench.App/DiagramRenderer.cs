@@ -113,7 +113,7 @@ internal static class DiagramRenderer
             {
                 Content = content, Width = NodeWidth, Height = nodeHeight, Padding = new Thickness(13),
                 HorizontalContentAlignment = HorizontalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Top,
-                Background = Brushes.White, BorderBrush = RoleBrush(table.Role), BorderThickness = new Thickness(2),
+                Background = Brushes.White, BorderBrush = RoleBrush(table.Role), BorderThickness = new Thickness(4, 1, 1, 1),
                 ToolTip = $"{table.Name}\n{table.Columns.Count} columns · {table.MeasureCount} measures\n{table.Role} role inferred from relationship cardinality.\nSelect in Model", Tag = table.Object
             };
             System.Windows.Automation.AutomationProperties.SetName(button, "Select table " + table.Name);

@@ -1,0 +1,11 @@
+table Sales
+
+	column Amount
+		dataType: decimal
+		sourceColumn: Amount
+
+	measure Revenue = SUM(Sales[Amount])
+		formatString: #,0.00
+
+	measure 'Revenue adjusted' = [Revenue] * 1.05
+		formatString: #,0.00

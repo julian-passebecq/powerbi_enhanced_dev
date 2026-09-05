@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "productVersion": "11.3.0",
-  "baselineCommit": "4caccae9f4751555cbe584ffbf02e81e2fb88f77",
+  "productVersion": "2.1.0",
+  "baselineCommit": "bbb29c3ab7adb2e7b9c04bf71b618354847e3e92",
   "modules": [
     {
       "id": "semantic-ide",
       "displayName": "Semantic IDE / TE2++",
       "kind": "InProcess",
       "lifecycle": "Active",
-      "version": "11.3.0",
+      "version": "2.1.0",
       "entryPoint": "PbiBench.exe",
       "targetFrameworks": [
         "net48"
@@ -21,7 +21,7 @@
         "src/PbiBench.Workspace/PbiBench.Workspace.csproj",
         "src/PbiBench.Git/PbiBench.Git.csproj"
       ],
-      "updateLane": "te2",
+      "updateLane": "semantic-shell",
       "upstreamDependencies": [
         "TabularEditor 2.28.0",
         "TOMWrapper"
@@ -39,7 +39,12 @@
         "dataforge-bridge",
         "agent",
         "semantic-compiler",
-        "dax-packages"
+        "dax-packages",
+        "pbir",
+        "lineage",
+        "bravo-bridge",
+        "powerbi-bridge",
+        "vscode-bridge"
       ],
       "forbiddenDependencies": [
         "fabric-toolbox",
@@ -81,7 +86,7 @@
       "displayName": "C# automation",
       "kind": "Library",
       "lifecycle": "Active",
-      "version": "11.3.0",
+      "version": "2.1.0",
       "entryPoint": "Automate / C# workspaces",
       "targetFrameworks": [
         "net10.0",
@@ -360,6 +365,182 @@
       "dependsOnModules": [],
       "forbiddenDependencies": [],
       "protectingTests": []
+    },
+    {
+      "id": "pbir",
+      "displayName": "PBIP / PBIR contracts and change plans",
+      "kind": "Library",
+      "lifecycle": "Active",
+      "version": "2.1.0",
+      "entryPoint": "PbiBench.Pbir.dll",
+      "targetFrameworks": [
+        "net10.0",
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.Pbir/PbiBench.Pbir.csproj"
+      ],
+      "updateLane": "pbip-pbir",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Local paths and IDs v1; no authentication context"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [
+        "semantic-ide",
+        "PbiBench.App",
+        "PbiBench.ModelEditor",
+        "PbiBench.Semantic",
+        "TOMWrapper",
+        "TabularEditor"
+      ],
+      "protectingTests": [
+        "tests/PbiBench.V2.Tests/ReportTests.cs",
+        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
+      ]
+    },
+    {
+      "id": "report-studio",
+      "displayName": "Report Studio",
+      "kind": "SeparateProcess",
+      "lifecycle": "Independent",
+      "version": "2.1.0",
+      "entryPoint": "report-studio/PbiBench.ReportStudio.exe",
+      "targetFrameworks": [
+        "net10.0-windows"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.ReportStudio/PbiBench.ReportStudio.csproj"
+      ],
+      "updateLane": "report-studio",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Local paths and IDs v1; no authentication context"
+      ],
+      "dependsOnModules": [
+        "pbir",
+        "lineage"
+      ],
+      "forbiddenDependencies": [
+        "semantic-ide",
+        "PbiBench.App",
+        "PbiBench.ModelEditor",
+        "PbiBench.Semantic",
+        "TOMWrapper",
+        "TabularEditor"
+      ],
+      "protectingTests": [
+        "tests/PbiBench.V2.Tests/ReportTests.cs",
+        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
+      ]
+    },
+    {
+      "id": "lineage",
+      "displayName": "Local semantic / report lineage",
+      "kind": "Library",
+      "lifecycle": "Active",
+      "version": "2.1.0",
+      "entryPoint": "PbiBench.Pbir.dll",
+      "targetFrameworks": [
+        "net10.0",
+        "net48"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.Pbir/PbiBench.Pbir.csproj"
+      ],
+      "updateLane": "lineage",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Local paths and IDs v1; no authentication context"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [
+        "semantic-ide",
+        "PbiBench.App",
+        "PbiBench.ModelEditor",
+        "PbiBench.Semantic",
+        "TOMWrapper",
+        "TabularEditor"
+      ],
+      "protectingTests": [
+        "tests/PbiBench.V2.Tests/ReportTests.cs",
+        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
+      ]
+    },
+    {
+      "id": "bravo-bridge",
+      "displayName": "Bravo",
+      "kind": "ExternalProcess",
+      "lifecycle": "OnDemand",
+      "version": "2.1.0",
+      "entryPoint": "Bravo.exe",
+      "targetFrameworks": [
+        "external"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.DaxStudio/PbiBench.DaxStudio.csproj"
+      ],
+      "updateLane": "bravo",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Local paths and IDs v1; no authentication context"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [],
+      "protectingTests": [
+        "tests/PbiBench.V2.Tests/ReportTests.cs",
+        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
+      ]
+    },
+    {
+      "id": "powerbi-bridge",
+      "displayName": "Power BI Desktop",
+      "kind": "ExternalProcess",
+      "lifecycle": "OnDemand",
+      "version": "2.1.0",
+      "entryPoint": "PBIDesktop.exe",
+      "targetFrameworks": [
+        "external"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.DaxStudio/PbiBench.DaxStudio.csproj"
+      ],
+      "updateLane": "powerbi-desktop",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Local paths and IDs v1; no authentication context"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [],
+      "protectingTests": [
+        "tests/PbiBench.V2.Tests/ReportTests.cs",
+        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
+      ]
+    },
+    {
+      "id": "vscode-bridge",
+      "displayName": "VS Code",
+      "kind": "ExternalProcess",
+      "lifecycle": "OnDemand",
+      "version": "2.1.0",
+      "entryPoint": "Code.exe",
+      "targetFrameworks": [
+        "external"
+      ],
+      "ownerProjects": [
+        "src/PbiBench.DaxStudio/PbiBench.DaxStudio.csproj"
+      ],
+      "updateLane": "vscode",
+      "upstreamDependencies": [],
+      "contracts": [
+        "Local paths and IDs v1; no authentication context"
+      ],
+      "dependsOnModules": [],
+      "forbiddenDependencies": [],
+      "protectingTests": [
+        "tests/PbiBench.V2.Tests/ReportTests.cs",
+        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
+      ]
     }
   ]
 }

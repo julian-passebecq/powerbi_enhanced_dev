@@ -14,7 +14,7 @@ using PbiBench.Semantic;
 namespace PbiBench.App;
 public partial class MainWindow
 {
-    private async Task RunV11SmokeAsync(string outputRoot)
+    private async Task RunV11SmokeAsync(string outputRoot, bool gen2 = false)
     {
         var checks = new List<string>();
         try
@@ -53,9 +53,9 @@ public partial class MainWindow
             try
             {
                 featureWindow.Show(); await PaintAsync();
-                Check(featureWindow.Map.VisibleRows.Count == 21 && featureWindow.Pages.Items.Count == 2, "Apps / Tools About opens the offline Feature Map and preserves Provenance", checks);
+                Check(featureWindow.Map.VisibleRows.Count == 23 && featureWindow.Pages.Items.Count == 2, "Apps / Tools About opens the offline Feature Map and preserves Provenance", checks);
                 featureWindow.Map.SelectFilter(FeatureMapFilter.Labs);
-                Check(featureWindow.Map.VisibleRows.Count == 5 && featureWindow.Map.VisibleRows.All(r => r.Status is "Labs" or "Future"), "Feature Map shows incubating and future areas with evolvable lifecycles", checks);
+                Check(featureWindow.Map.VisibleRows.Count == 4 && featureWindow.Map.VisibleRows.All(r => r.Status is "Labs" or "Future"), "Feature Map shows incubating and future areas with evolvable lifecycles", checks);
                 featureWindow.Map.SelectFilter(FeatureMapFilter.Te3Gaps);
                 Check(featureWindow.Map.VisibleRows.Any(r => r.Feature.Id == "dax-debugger" && r.Status == "Gap"), "Feature Map records the DAX debugger gap without adding a debugger", checks);
                 featureWindow.Map.SelectFilter(FeatureMapFilter.All); await featureWindow.Dispatcher.InvokeAsync(() => featureWindow.UpdateLayout());
@@ -68,6 +68,7 @@ public partial class MainWindow
             var toolbox = new CompanionTools().Discover(CompanionTools.Catalog.Single(t => t.Id == "fabric-toolbox"), null, AppDomain.CurrentDomain.BaseDirectory);
             Check(toolbox.Path != null, "Apps / Tools discovers the separate Fabric Toolbox executable", checks);
             Check(PrimaryCommands.Children.OfType<Button>().Any(b => (string)b.Content == "Apps / Tools"), "Apps / Tools entry is visible in the Semantic IDE", checks);
+            if (gen2) await RunGen2SmokeAsync(outputRoot, checks);
             GoTo("Model");
             File.WriteAllText(Path.Combine(outputRoot, "smoke-result.json"), JsonSerializer.Serialize(new { success = true, checks, integration = "Synthetic BIM fixture only; no live PBIX/Power BI/Fabric target accessed." }, new JsonSerializerOptions { WriteIndented = true })); Environment.ExitCode = 0;
         }

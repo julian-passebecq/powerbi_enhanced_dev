@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "productVersion": "11.3.0",
-  "baselineCommit": "4caccae9f4751555cbe584ffbf02e81e2fb88f77",
+  "productVersion": "2.1.0",
+  "baselineCommit": "bbb29c3ab7adb2e7b9c04bf71b618354847e3e92",
   "components": [
     {
       "id": "semantic.model-editor.te2",
@@ -642,6 +642,96 @@
       "protectingTests": [
         "tests/PbiBench.V11.Tests/MacroContextTests.cs",
         "tests/PbiBench.App.Tests/CSharpAutomationTests.cs"
+      ]
+    },
+    {
+      "id": "report.pbip-pbir",
+      "feature": "Local PBIP/PBIR index, validation and transactions",
+      "ownerProject": "PbiBench.Pbir",
+      "sourceType": "original",
+      "upstream": "Microsoft public PBIR schemas",
+      "pin": "83ce11373faada0d01e76264a5cceb0ba70003e6",
+      "localAdapter": "src/PbiBench.Pbir/ReportChanges.cs",
+      "license": "Original PbiBench; Microsoft schemas MIT; JsonSchema.Net MIT",
+      "updateLane": "pbip-pbir",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.V2.Tests/ReportTests.cs"
+      ]
+    },
+    {
+      "id": "report.studio",
+      "feature": "Report Studio process / wireframe / inspector",
+      "ownerProject": "PbiBench.ReportStudio",
+      "sourceType": "original",
+      "upstream": "PbiBench",
+      "pin": "2.1.0",
+      "localAdapter": "src/PbiBench.ReportStudio/StudioWindow.cs",
+      "license": "Original PbiBench",
+      "updateLane": "report-studio",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.V2.Tests/ReportTests.cs"
+      ]
+    },
+    {
+      "id": "report.lineage",
+      "feature": "Semantic object / report usage links",
+      "ownerProject": "PbiBench.Pbir",
+      "sourceType": "original",
+      "upstream": "Microsoft PBIR semantic query contract",
+      "pin": "83ce11373faada0d01e76264a5cceb0ba70003e6",
+      "localAdapter": "src/PbiBench.Pbir/ReportLineage.cs",
+      "license": "Original PbiBench",
+      "updateLane": "lineage",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.V2.Tests/ReportTests.cs"
+      ]
+    },
+    {
+      "id": "automation.gallery",
+      "feature": "Curated Power BI automation patterns",
+      "ownerProject": "PbiBench.CSharp.LanguageService",
+      "sourceType": "original",
+      "upstream": "TabularEditor/Scripts; official C# Script Library (curation reference only)",
+      "pin": "3430e5a474f9975a630819ccb0abeb265697364c",
+      "localAdapter": "src/PbiBench.CSharp.LanguageService/PowerBiGallery.cs",
+      "license": "Original PbiBench; reference repository MIT; no upstream script code copied",
+      "updateLane": "csharp-language",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
+      ]
+    },
+    {
+      "id": "external.bravo",
+      "feature": "Bravo live model launcher",
+      "ownerProject": "PbiBench.DaxStudio",
+      "sourceType": "external",
+      "upstream": "sql-bi/Bravo",
+      "pin": "fbc2b12950ddb4344ae71f16de8861407c32050e",
+      "localAdapter": "src/PbiBench.DaxStudio/ExternalToolContext.cs",
+      "license": "Original launcher; external Bravo MIT; no Bravo code or runtime embedded",
+      "updateLane": "bravo",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
+      ]
+    },
+    {
+      "id": "external.project-tools",
+      "feature": "Desktop and VS Code project launchers",
+      "ownerProject": "PbiBench.DaxStudio",
+      "sourceType": "original",
+      "upstream": "Microsoft public PBIP/PBIR and process startup contracts",
+      "pin": "2026-09-05",
+      "localAdapter": "src/PbiBench.DaxStudio/ExternalToolContext.cs",
+      "license": "Original PbiBench; companions separately installed",
+      "updateLane": "powerbi-desktop / vscode",
+      "localPatches": [],
+      "protectingTests": [
+        "tests/PbiBench.V2.Tests/GalleryAndToolsTests.cs"
       ]
     }
   ]

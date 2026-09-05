@@ -7,6 +7,7 @@
     <ApplicationIcon>Assets/PbiBench.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../PbiBench.Pbir/PbiBench.Pbir.csproj" />
     <ProjectReference Include="../PbiBench.CSharp.LanguageService/PbiBench.CSharp.LanguageService.csproj" />
     <Reference Include="FastColoredTextBox"><HintPath>../../vendor/TabularEditor2-2.28.0/packages/FCTB.2.16.24/lib/FastColoredTextBox.dll</HintPath></Reference>
     <Reference Include="TOMWrapper"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/TOMWrapper.dll</HintPath></Reference>
@@ -27,6 +28,7 @@
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup><None Include="../../examples/pass1-demo.bim" Link="examples/pass1-demo.bim" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
+  <ItemGroup><None Include="../../examples/reportstudio-demo/**/*" Link="examples/reportstudio-demo/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
   <ItemGroup><None Include="../../examples/prototypes/**/*" Link="examples/prototypes/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
   <ItemGroup><Resource Include="Assets/PbiBench.ico" /></ItemGroup>
   <ItemGroup><None Include="../../docs/architecture/**/*" Link="docs/architecture/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>

@@ -15,9 +15,9 @@ public sealed class FeatureCatalogTests
     [Fact] public void BundledCatalogHasTheAuditedVersionAndConservativePublicBaseline()
     {
         var provenance = ProvenanceCatalog.Bundled(); var catalog = FeatureCatalog.Bundled(provenance);
-        Assert.Equal("11.3.0", catalog.ProductVersion); Assert.Equal("4caccae9f4751555cbe584ffbf02e81e2fb88f77", catalog.BaselineCommit);
+        Assert.Equal("2.1.0", catalog.ProductVersion); Assert.Equal("bbb29c3ab7adb2e7b9c04bf71b618354847e3e92", catalog.BaselineCommit);
         Assert.Equal("Tabular Editor 3", catalog.Comparison.Product); Assert.Equal("3.26.3", catalog.Comparison.VerifiedVersion); Assert.Equal("2026-09-05", catalog.Comparison.VerifiedDate);
-        Assert.Equal(21, catalog.Features.Count); Assert.Equal(catalog.Features.Count, catalog.Features.Select(f => f.Id).Distinct().Count());
+        Assert.Equal(23, catalog.Features.Count); Assert.Equal(catalog.Features.Count, catalog.Features.Select(f => f.Id).Distinct().Count());
         Assert.All(catalog.Features, f => { Assert.Contains(f.Status, FeatureCatalog.Statuses); Assert.Contains(f.Lifecycle, FeatureCatalog.Lifecycles); Assert.Contains(f.Te3.Comparison, FeatureCatalog.Comparisons); });
         Assert.All(catalog.Features.SelectMany(f => f.ProvenanceIds), id => Assert.Contains(provenance.Components, c => c.Id == id));
     }
@@ -29,19 +29,19 @@ public sealed class FeatureCatalogTests
         Assert.Equal("Independent", features["fabric-toolbox"].Lifecycle); Assert.Equal("Selective", features["ai-context-export"].Lifecycle);
         foreach (var id in new[] { "daxstudio", "cli-ci" }) Assert.Equal("OnDemand", features[id].Lifecycle);
         foreach (var id in new[] { "embedded-agent", "semantic-compiler", "dax-packages" }) Assert.Equal("Incubating", features[id].Lifecycle);
-        Assert.Equal("OnDemand", features["dataforge"].Lifecycle); Assert.Equal("Later", features["pbir"].Lifecycle);
+        Assert.Equal("OnDemand", features["dataforge"].Lifecycle); Assert.Equal("Active", features["pbir"].Lifecycle);
         Assert.Equal("Gap", features["dax-debugger"].Status); Assert.Equal("Later", features["dax-debugger"].Lifecycle); Assert.Equal("Gap", features["dax-debugger"].Te3.Comparison);
         Assert.All(catalog.Rows(ProvenanceCatalog.Bundled()).Where(r => r.Status is "Future" or "Gap"), row => { Assert.Equal("Not implemented", row.Origin); Assert.Empty(row.Components); });
     }
     [Fact] public void FiltersHaveExplicitSemanticsWithoutChangingTheCatalog()
     {
         var provenance = ProvenanceCatalog.Bundled(); var catalog = FeatureCatalog.Bundled();
-        Assert.Equal(10, catalog.Rows(provenance, FeatureMapFilter.Core).Count);
-        Assert.Equal(new[] { "fabric-toolbox", "daxstudio", "dataforge" }, catalog.Rows(provenance, FeatureMapFilter.Companions).Select(r => r.Feature.Id));
-        Assert.Equal(5, catalog.Rows(provenance, FeatureMapFilter.Labs).Count);
+        Assert.Equal(12, catalog.Rows(provenance, FeatureMapFilter.Core).Count);
+        Assert.Equal(new[] { "fabric-toolbox", "daxstudio", "dataforge", "external-tools" }, catalog.Rows(provenance, FeatureMapFilter.Companions).Select(r => r.Feature.Id));
+        Assert.Equal(4, catalog.Rows(provenance, FeatureMapFilter.Labs).Count);
         Assert.All(catalog.Rows(provenance, FeatureMapFilter.Te3Gaps), r => Assert.Contains(r.Feature.Te3.Comparison, new[] { "Partial", "Gap" }));
         Assert.Contains(catalog.Rows(provenance, FeatureMapFilter.Te3Gaps), r => r.Feature.Id == "dax-debugger");
-        Assert.Equal(21, catalog.Rows(provenance).Count);
+        Assert.Equal(23, catalog.Rows(provenance).Count);
         Assert.Throws<ArgumentOutOfRangeException>(() => catalog.Rows(provenance, (FeatureMapFilter)999));
     }
     [Fact] public void OriginAndDetailFollowProvenanceRatherThanADuplicatedLedger()

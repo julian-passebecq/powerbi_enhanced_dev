@@ -43,6 +43,17 @@ public partial class MainWindow
         automationWorkspace.Items.Add(new TabItem { Header = "Automation Gallery", Content = AutomationPage });
         scriptAutomation = new ScriptAutomationView(() => editor.Handler, () => editor.Selection, () => Run(UpdateSessionAsync), backgroundTasks, settingsDirectory);
         automationWorkspace.Items.Add(new TabItem { Header = "Scripts / recorder / macros", Content = scriptAutomation }); parent.Children.Add(automationWorkspace);
+        automationWorkspace.Items.Add(new TabItem { Header = "Power BI C# Gallery", Content = new PowerBiGalleryView(() => editor.Handler, () => editor.Selection,
+            () => Run(UpdateSessionAsync), recipe => { automationWorkspace.SelectedIndex = 1; scriptAutomation.InsertGalleryRecipe(recipe); },
+            (card, values) => Run(() =>
+            {
+                RequireModel();
+                if (card.Id == "profile") { GoTo("Data"); return; }
+                if (card.Id == "references") { GoTo("QA"); ScanBpa(this, new RoutedEventArgs()); return; }
+                var options = new AutomationOptions { AllMeasuresWhenSelectionEmpty = false };
+                if (card.Id == "measure-table") options.MeasureTableName = values["Table name"];
+                ReviewPreview(automation!.Preview(card.Id == "measure-table" ? AutomationActionId.CreateMeasureTable : AutomationActionId.FormatMeasures, editor.Selection, options));
+            })) });
         backgroundTasksView = new BackgroundTasksView(backgroundTasks);
         OutputTabs.Items.Add(new TabItem { Header = "Background tasks", Content = backgroundTasksView });
         BpaCategory.Items.Clear(); BpaCategory.Items.Add(new ComboBoxItem { Content = "All categories" });

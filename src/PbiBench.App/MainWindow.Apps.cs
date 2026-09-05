@@ -21,15 +21,17 @@ public partial class MainWindow
         { var button = new Button { Content = title, Margin = new Thickness(4), Padding = new Thickness(9), HorizontalContentAlignment = HorizontalAlignment.Left }; button.Click += (_, _) => Run(run); panel.Children.Add(button); panel.Children.Add(new TextBlock { Text = description, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(5) }); }
         Action("▣  Semantic IDE / TE2++", "Current app · model engineering, DAX/query, data exploration, automation, QA and PBIP/Git. TE2 2.28 / net48.", () => { window.Close(); GoTo("Model"); });
         Action("↗  AI Context Export", "Semantic utility · review metadata, selected scope and optional samples for any external AI.", () => { RequireModel(); window.Close(); CreateAIExportWindow().ShowDialog(); });
+        Action("Choose PBIP / report context…", "Select the project/report used by Desktop and Report Studio launchers and local report lineage.", () => { window.Close(); ChooseReportContext(); });
         var launcher = new CompanionTools();
         foreach (var tool in CompanionTools.Catalog)
         {
             var config = Path.Combine(settingsDirectory, tool.Id + "-path.txt");
             CompanionStatus Detect() => launcher.Discover(tool, File.Exists(config) ? File.ReadAllText(config).Trim() : null, AppDomain.CurrentDomain.BaseDirectory);
-            var row = new StackPanel(); var label = new TextBlock { Text = tool.Ownership + " · " + Detect().Display, Margin = new Thickness(5) };
+            var row = new StackPanel(); var label = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(5) };
             var bar = new WrapPanel(); var open = new Button { Content = "↗  " + tool.Name, Margin = new Thickness(4), Padding = new Thickness(8) };
-            open.Click += (_, _) => Run(() => launcher.Launch(Detect(), workspaceRoot)); bar.Children.Add(open);
-            var configure = new Button { Content = "Configure path…", Margin = new Thickness(4) }; configure.Click += (_, _) => Run(() => { var dialog = new OpenFileDialog { Filter = "Windows executable|*.exe", Title = "Choose " + tool.Name }; if (dialog.ShowDialog(window) == true) { File.WriteAllText(config, dialog.FileName); label.Text = tool.Ownership + " · " + Detect().Display; } }); bar.Children.Add(configure);
+            void Refresh() { var detected = Detect(); var state = ExternalToolContext.Evaluate(detected, CurrentToolContext()); open.IsEnabled = state.Enabled; open.ToolTip = state.Reason; label.Text = tool.Ownership + " · " + detected.Display + "\n" + (detected.Path ?? "No configured/detected path") + "\n" + state.Reason; }
+            Refresh(); open.Click += (_, _) => Run(() => launcher.Launch(Detect(), CurrentToolContext())); bar.Children.Add(open);
+            var configure = new Button { Content = "Configure path…", Margin = new Thickness(4) }; configure.Click += (_, _) => Run(() => { var dialog = new OpenFileDialog { Filter = "Windows executable|*.exe", Title = "Choose " + tool.Name }; if (dialog.ShowDialog(window) == true) { File.WriteAllText(config, dialog.FileName); RefreshTool(tool.Id); Refresh(); } }); bar.Children.Add(configure);
             row.Children.Add(bar); row.Children.Add(label); panel.Children.Add(row);
         }
         Action("↗  DAX Studio", "External specialist · uses the current server/database and active DAX through the existing handoff.", () => { window.Close(); LaunchDaxStudio(this, new RoutedEventArgs()); });

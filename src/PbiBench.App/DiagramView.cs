@@ -92,6 +92,7 @@ public sealed partial class DiagramView : UserControl
             FontSize = 11, Foreground = new SolidColorBrush(Color.FromRgb(99, 121, 136)), Margin = new Thickness(0, 3, 0, 0), TextWrapping = TextWrapping.Wrap
         });
         Grid.SetRow(footer, 2); layout.Children.Add(footer);
+        InitializeSemanticModes(layout, tools);
         Content = layout;
         Loaded += (_, _) => { if (autoFit) Fit(); };
     }

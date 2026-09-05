@@ -13,7 +13,7 @@ using PbiBench.Semantic;
 namespace PbiBench.App;
 
 /// <summary>Original document workspace over the existing editor and public TOM query transport.</summary>
-public sealed class DaxWorkspaceView : UserControl, IDisposable
+public sealed partial class DaxWorkspaceView : UserControl, IDisposable
 {
     private readonly TabControl documents = new();
     private readonly TabControl resultTabs = new();
@@ -72,12 +72,12 @@ public sealed class DaxWorkspaceView : UserControl, IDisposable
         commands.Children.Add(rowLimit);
         commands.Children.Add(Button("Apply expression…", ApplyExpression));
         grid.Children.Add(commands);
-        Grid.SetRow(documents, 1); grid.Children.Add(documents);
+        var workbench = BuildWorkbench(documents); Grid.SetRow(workbench, 1); grid.Children.Add(workbench);
         var splitter = new GridSplitter { Height = 5, HorizontalAlignment = HorizontalAlignment.Stretch, VerticalAlignment = VerticalAlignment.Stretch };
         Grid.SetRow(splitter, 2); grid.Children.Add(splitter);
         var output = new TabControl(); Grid.SetRow(output, 3); grid.Children.Add(output);
         output.Items.Add(new TabItem { Header = "Results", Content = resultTabs });
-        output.Items.Add(new TabItem { Header = "Diagnostics", Content = diagnostics });
+        output.Items.Add(new TabItem { Header = "Problems", Content = diagnostics });
         output.Items.Add(new TabItem { Header = "Executed DAX", Content = executedText });
         output.Items.Add(new TabItem { Header = "History", Content = history });
         Grid.SetRow(status, 4); grid.Children.Add(status);
@@ -124,6 +124,13 @@ public sealed class DaxWorkspaceView : UserControl, IDisposable
     {
         var editor = new DaxScratchEditor { Text = text }; AddDocument(editor, title + " " + (tabs.Count + 1), null);
     }
+    public void OpenDocument(string path)
+    {
+        path = Path.GetFullPath(path); var existing = tabs.FirstOrDefault(t => string.Equals(t.Path, path, StringComparison.OrdinalIgnoreCase));
+        if (existing != null) { documents.SelectedItem = existing.Tab; return; }
+        if (new FileInfo(path).Length > 4 * 1024 * 1024) throw new IOException("DAX documents are limited to 4 MiB.");
+        AddDocument(new DaxScratchEditor { Text = File.ReadAllText(path) }, Path.GetFileName(path), path);
+    }
     public void OpenExpression(string title, string text, Action<string> apply, string? table = null, bool tableExpression = false)
     {
         var editor = new DaxScratchEditor { Text = text };
@@ -134,6 +141,7 @@ public sealed class DaxWorkspaceView : UserControl, IDisposable
     public void RefreshMetadata()
     {
         var snapshot = metadata(); foreach (var doc in tabs) doc.Editor.SetMetadata(snapshot);
+        refreshExplorer?.Invoke();
     }
     private void RefreshDiagnostics() => diagnostics.ItemsSource = Active.Editor.Diagnostics;
     private void NavigateDiagnostic()
@@ -297,6 +305,7 @@ public sealed class DaxWorkspaceView : UserControl, IDisposable
     }
     public void Dispose()
     {
+        helpTimer.Stop();
         if (disposed) return;
         disposed = true; lifetime.Cancel(); running?.Cancel();
         try

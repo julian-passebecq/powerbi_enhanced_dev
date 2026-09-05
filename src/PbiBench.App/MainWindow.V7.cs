@@ -70,7 +70,7 @@ public partial class MainWindow
     }
     private void ApplyPaneVisibility()
     {
-        var inspectorVisible = layoutState.InspectorVisible && activePage != "Home" && activePage != "PBIP / Git";
+        var inspectorVisible = layoutState.InspectorVisible && activePage != "Home" && activePage != "PBIP / Git" && activePage != "DAX";
         InspectorPane.Visibility = InspectorSplitter.Visibility = inspectorVisible ? Visibility.Visible : Visibility.Collapsed;
         InspectorColumn.Width = new GridLength(inspectorVisible ? Math.Min(layoutState.InspectorWidth, Math.Max(210, ActualWidth - 775)) : 0);
         InspectorSplitterColumn.Width = new GridLength(inspectorVisible ? 5 : 0);

@@ -8,6 +8,7 @@ $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $source = Join-Path $repo "src/PbiBench.App/bin/$Configuration/net48"
 $cliSource = Join-Path $repo "src/PbiBench.Cli/bin/$Configuration/net48"
 $toolboxSource = Join-Path $repo "src/PbiBench.FabricToolbox/bin/$Configuration/net10.0-windows"
+$reportSource = Join-Path $repo "src/PbiBench.ReportStudio/bin/$Configuration/net10.0-windows"
 $destinationPath = [IO.Path]::GetFullPath($Destination)
 $artifacts = [IO.Path]::GetFullPath((Join-Path $repo 'artifacts'))
 if (-not $destinationPath.StartsWith($artifacts + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
@@ -25,11 +26,14 @@ foreach ($required in @('PbiBench.FabricToolbox.exe', 'PbiBench.FabricToolbox.ru
     if (-not (Test-Path -LiteralPath (Join-Path $toolboxSource $required))) { throw "Missing Fabric Toolbox runtime: $required. Build the solution first." }
 }
 New-Item -ItemType Directory -Path $staging | Out-Null
+foreach ($required in @('PbiBench.ReportStudio.exe', 'PbiBench.ReportStudio.runtimeconfig.json', 'PbiBench.ReportStudio.deps.json')) {
+    if (-not (Test-Path -LiteralPath (Join-Path $reportSource $required))) { throw "Missing Report Studio runtime: $required. Build the solution first." }
+}
 # Ship runtime binaries/config only; exclude build logs, private settings, scratch queries and test fixtures.
-foreach ($runtime in @(@{ Source = $source; Output = $staging }, @{ Source = $cliSource; Output = (Join-Path $staging 'cli') }, @{ Source = $toolboxSource; Output = (Join-Path $staging 'fabric-toolbox') })) {
+foreach ($runtime in @(@{ Source = $source; Output = $staging }, @{ Source = $cliSource; Output = (Join-Path $staging 'cli') }, @{ Source = $toolboxSource; Output = (Join-Path $staging 'fabric-toolbox') }, @{ Source = $reportSource; Output = (Join-Path $staging 'report-studio') })) {
 # Windows file names ignore case: the CLI lives in cli/ to preserve both entry points.
 Get-ChildItem -LiteralPath $runtime.Source -File -Recurse | Where-Object {
-    ($_.Extension -in @('.dll', '.exe', '.config') -or ($runtime.Source -eq $toolboxSource -and $_.Name -match '\.(runtimeconfig|deps)\.json$')) -and $_.FullName -notmatch '[\\/](TestResults|examples)[\\/]'
+    ($_.Extension -in @('.dll', '.exe', '.config') -or ($runtime.Source -in @($toolboxSource, $reportSource) -and $_.Name -match '\.(runtimeconfig|deps)\.json$')) -and $_.FullName -notmatch '[\\/](TestResults|examples)[\\/]'
 } | ForEach-Object {
     $relative = $_.FullName.Substring($runtime.Source.Length + 1)
     $target = Join-Path $runtime.Output $relative
@@ -45,11 +49,14 @@ Get-ChildItem -LiteralPath $runtime.Source -File -Recurse | Where-Object {
 New-Item -ItemType Directory -Path (Join-Path $staging 'examples') | Out-Null
 Copy-Item -LiteralPath (Join-Path $repo 'examples/pass1-demo.bim') -Destination (Join-Path $staging 'examples/pass1-demo.bim')
 Copy-Item -LiteralPath (Join-Path $repo 'examples/prototypes') -Destination (Join-Path $staging 'examples/prototypes') -Recurse
+Copy-Item -LiteralPath (Join-Path $repo 'examples/reportstudio-demo') -Destination (Join-Path $staging 'examples/reportstudio-demo') -Recurse
+New-Item -ItemType Directory -Path (Join-Path $staging 'report-studio/examples') -Force | Out-Null
+Copy-Item -LiteralPath (Join-Path $repo 'examples/reportstudio-demo') -Destination (Join-Path $staging 'report-studio/examples/reportstudio-demo') -Recurse
 New-Item -ItemType Directory -Path (Join-Path $staging 'docs') | Out-Null
 Copy-Item -LiteralPath (Join-Path $repo 'docs/architecture') -Destination (Join-Path $staging 'docs/architecture') -Recurse
 Copy-Item -LiteralPath (Join-Path $repo 'docs/V11_IMPLEMENTATION.md') -Destination (Join-Path $staging 'docs/V11_IMPLEMENTATION.md')
 Copy-Item -LiteralPath (Join-Path $repo 'docs/V11_2_IMPLEMENTATION.md') -Destination (Join-Path $staging 'docs/V11_2_IMPLEMENTATION.md')
-foreach ($guide in @('V11_3_IMPLEMENTATION.md', 'FABRIC_TOOLBOX_V02.md')) {
+foreach ($guide in @('V11_3_IMPLEMENTATION.md', 'FABRIC_TOOLBOX_V02.md', 'V2_PASS1_IMPLEMENTATION.md', 'V2_SOURCE_INDEX.md')) {
     Copy-Item -LiteralPath (Join-Path $repo "docs/$guide") -Destination (Join-Path $staging "docs/$guide")
 }
 foreach ($guide in @('V9_CLI_REFERENCE.md', 'V9_AGENT_REFERENCE.md', 'V9_PROTOTYPES_REFERENCE.md', 'V9_MODEL_AUTHORING_REFERENCE.md', 'V9_DAX_AUTHORING_REFERENCE.md', 'V9_FABRIC_REFERENCE.md', 'V9_FABRIC_AUTHORING_REFERENCE.md', 'V9_REFRESH_REFERENCE.md', 'V9_WORKSPACE_REFERENCE.md', 'V9_SCRIPT_AUTOMATION_REFERENCE.md', 'V9_SEMANTIC_TESTS_REFERENCE.md', 'V9_VERTIPAQ_REFERENCE.md', 'V9_BPA_RULE_PACKS.md')) {
@@ -58,6 +65,9 @@ foreach ($guide in @('V9_CLI_REFERENCE.md', 'V9_AGENT_REFERENCE.md', 'V9_PROTOTY
 $notices = Join-Path $staging 'licenses'
 $upstreamNotices = Join-Path $notices 'TabularEditor2'
 New-Item -ItemType Directory -Path $upstreamNotices -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $notices 'Microsoft-PBIR-schemas') -Force | Out-Null
+Copy-Item -LiteralPath (Join-Path $repo 'schemas/microsoft/LICENSE') -Destination (Join-Path $notices 'Microsoft-PBIR-schemas/LICENSE')
+Copy-Item -LiteralPath (Join-Path $repo 'schemas/microsoft.lock.json') -Destination (Join-Path $notices 'Microsoft-PBIR-schemas/source-manifest.json')
 $vendor = Join-Path $repo 'vendor/TabularEditor2-2.28.0'
 foreach ($notice in @('LICENSE', 'license-FastColoredTextbox.txt', 'license-FastWildcardMatching.txt', 'license-TreeViewAdv.txt', 'TabularEditor-license.rtf')) {
     Copy-Item -LiteralPath (Join-Path $vendor $notice) -Destination (Join-Path $upstreamNotices $notice)
@@ -70,7 +80,7 @@ Copy-Item -LiteralPath (Join-Path $repo 'vendor/patches/te2-2.28.0-remote-write-
 Copy-Item -LiteralPath (Join-Path $repo 'vendor/patches/te2-2.28.0-function-undo-order.patch') -Destination $upstreamNotices
 $packageFiles = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 Get-ChildItem -LiteralPath (Join-Path $vendor 'packages') -Filter '*.nupkg' -Recurse | ForEach-Object { [void]$packageFiles.Add($_.FullName) }
-foreach ($assetsRelativePath in @('src/PbiBench.App/obj/project.assets.json', 'src/PbiBench.Cli/obj/project.assets.json', 'src/PbiBench.FabricToolbox/obj/project.assets.json')) {
+foreach ($assetsRelativePath in @('src/PbiBench.App/obj/project.assets.json', 'src/PbiBench.Cli/obj/project.assets.json', 'src/PbiBench.FabricToolbox/obj/project.assets.json', 'src/PbiBench.ReportStudio/obj/project.assets.json')) {
 $assetsFile = Join-Path $repo $assetsRelativePath
 if (-not (Test-Path -LiteralPath $assetsFile)) { throw 'Package assets missing; build the complete solution before packaging.' }
 $assets = Get-Content -LiteralPath $assetsFile -Raw | ConvertFrom-Json
@@ -109,10 +119,15 @@ foreach ($packageFile in $packageFiles) {
 }
 $packageManifest | Sort-Object Package | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $notices 'packaged-notices.json') -Encoding utf8
 @'
-PbiBench V11.3.0 portable build
+PbiBench Gen-2 2.1.0 portable build
 
 Launch PbiBench.exe on Windows with .NET Framework 4.8 installed.
 Apps / Tools launches fabric-toolbox/PbiBench.FabricToolbox.exe in its separate process.
+Apps / Tools launches report-studio/PbiBench.ReportStudio.exe for local PBIP/PBIR engineering.
+Report Studio uses exact file previews, pinned offline schemas and backup/restore. Close Desktop before editing its files.
+Report Studio requires the .NET 10 Windows Desktop runtime; its dependencies stay in its own folder.
+Semantic View evolves the existing diagram, with Dependencies, Report Usage and Issues modes.
+The Power BI C# Gallery is under Automate. DAX Workbench includes local context/help and external tool launchers.
 Apps / Tools > Feature Map / Provenance / About shows the offline product catalog.
 Open detailed catalog reads docs/architecture/FEATURE_CATALOG.md from this package.
 Module ownership, lifecycle, versions and update lanes are in docs/architecture/module_catalog.json.

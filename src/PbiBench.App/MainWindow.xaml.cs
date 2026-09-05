@@ -61,6 +61,7 @@ public partial class MainWindow : Window
         InitializeQualityWorkspace();
         InitializeConnectedWorkspaces();
         InitializeAgentWorkspace();
+        InitializeGen2();
         ready = true;
         GoTo(layoutState.SelectedPage);
         RefreshDaxStudioStatus();
@@ -190,6 +191,7 @@ public partial class MainWindow : Window
         else { diagram.SelectRelationship(null); diagram.SelectTable(null); }
         InspectorSelection.Text = selection.Count == 0 ? "Select objects in the model tree" : string.Join("\n", selection.Take(12).Select(SemanticModelService.ObjectPath)) + (selection.Count > 12 ? $"\n+ {selection.Count - 12} more" : "");
         UpdateInspector();
+        RefreshSemanticMode();
         agentWorkspace?.RefreshModel();
         SelectionSummary.Text = $"{selection.Count} selected object(s). " + string.Join(", ", selection.Take(6).Select(o => o.Name));
     }
@@ -199,6 +201,8 @@ public partial class MainWindow : Window
     }
     internal void ShowPage(string page)
     {
+        if (page == "Semantic View") page = "Model diagram";
+        if (page == "Report") { if (reportFile != null || projectFile != null) LaunchCompanion("report-studio"); else ChooseReportContext(true); return; }
         if (page == "Model tools")
         {
             if (editor.Handler != null) editor.AcceptExpression();
@@ -249,6 +253,7 @@ public partial class MainWindow : Window
     }
     private void GoTo(string page)
     {
+        if (page == "Model diagram") page = "Semantic View";
         var item = Navigation.Items.Cast<ListBoxItem>().First(i => (string)i.Content == page);
         if (ReferenceEquals(Navigation.SelectedItem, item)) ShowPage(page);
         else Navigation.SelectedItem = item;
@@ -366,7 +371,7 @@ public partial class MainWindow : Window
         {
             semanticWorkspaceRoot = null;
             bpaWorkspaceContext = null;
-            workspaceRoot = null; GitHeader.Text = "Git · no project"; SourceStatus.Text = "No PBIP workspace";
+            workspaceRoot = null; await UpdateReportIndexesAsync(null); GitHeader.Text = "Git · no project"; SourceStatus.Text = "No PBIP workspace";
             WorkspaceDetails.Text = "Open a model from a PBIP project or choose a .pbip file."; GitDetails.Text = ""; GitFiles.ItemsSource = null; UpdateConnectedContext(); return;
         }
         var inventory = await scanner.DetectAsync(path!, token);
@@ -379,6 +384,7 @@ public partial class MainWindow : Window
         semanticWorkspaceRoot = inventory?.SemanticModelFolders.FirstOrDefault(folder => editor.FilePath?.StartsWith(folder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) == true)
             ?? (inventory?.SemanticModelFolders.Count == 1 ? inventory.SemanticModelFolders[0] : null);
         UpdateConnectedContext();
+        await UpdateReportIndexesAsync(inventory);
         GitHeader.Text = status.Summary;
         SourceStatus.Text = inventory == null ? "No PBIP project detected\n" + status.Summary : $"PBIP · {inventory.Root}\nTMDL · {(inventory.HasTmdl ? "present" : "absent")}\nPBIR · {(inventory.HasPbir ? "present" : "absent")}\n{status.ChangedSemanticFiles.Count} changed semantic files";
         WorkspaceDetails.Text = inventory == null ? "No PBIP project detected at " + root : $"PBIP root: {inventory.Root}\nSemantic folders: {string.Join(", ", inventory.SemanticModelFolders)}\nTMDL: {inventory.HasTmdl} · PBIR: {inventory.HasPbir} · enhanced PBIR: {inventory.HasEnhancedPbir}\n{status.Summary}\n{string.Join("\\n", inventory.Warnings.Concat(status.Warnings))}";
@@ -400,6 +406,7 @@ public partial class MainWindow : Window
     {
         if (Keyboard.Modifiers != ModifierKeys.Control) return;
         if (e.Key == Key.K) { e.Handled = true; ShowCommands(); }
+        else if (e.Key == Key.P) { e.Handled = true; ShowCommands(); }
         else if (e.Key == Key.O) { e.Handled = true; commands.Execute(PbiBench.Core.Commands.WorkbenchCommandId.Open); }
         else if (e.Key == Key.S) { e.Handled = true; commands.Execute(PbiBench.Core.Commands.WorkbenchCommandId.Save); }
     }
@@ -411,11 +418,12 @@ public partial class MainWindow : Window
         AddQualityCommands(entries);
         AddConnectedCommands(entries);
         AddAgentCommands(entries);
+        AddQuickOpenEntries(entries);
         var panel = new DockPanel { Margin = new Thickness(15) };
         var search = new TextBox { Padding = new Thickness(8), Margin = new Thickness(0, 0, 0, 10) };
         DockPanel.SetDock(search, Dock.Top); panel.Children.Add(search);
         var list = new ListBox { ItemsSource = entries.Keys.ToArray(), SelectedIndex = 0 }; panel.Children.Add(list);
-        var window = new Window { Title = "PbiBench commands", Icon = Icon, Width = 420, Height = 540, Owner = this, WindowStartupLocation = WindowStartupLocation.CenterOwner, Content = panel };
+        var window = new Window { Title = "Quick Open · objects, queries and commands", Icon = Icon, Width = 680, Height = 600, Owner = this, WindowStartupLocation = WindowStartupLocation.CenterOwner, Content = panel };
         void Activate() { if (list.SelectedItem is string key) { window.Close(); entries[key](); } }
         search.TextChanged += (_, _) => { list.ItemsSource = entries.Keys.Where(k => k.IndexOf(search.Text, StringComparison.OrdinalIgnoreCase) >= 0).ToArray(); list.SelectedIndex = 0; };
         list.MouseDoubleClick += (_, _) => Activate();

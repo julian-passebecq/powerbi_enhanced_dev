@@ -1,4 +1,7 @@
 <Solution>
+  <Project Path="tests/PbiBench.V2.Tests/PbiBench.V2.Tests.csproj" />
+  <Project Path="src/PbiBench.Pbir/PbiBench.Pbir.csproj" />
+  <Project Path="src/PbiBench.ReportStudio/PbiBench.ReportStudio.csproj" />
   <Project Path="src/PbiBench.Core/PbiBench.Core.csproj" />
   <Project Path="src/PbiBench.Workspace/PbiBench.Workspace.csproj" />
   <Project Path="src/PbiBench.Fabric/PbiBench.Fabric.csproj" />

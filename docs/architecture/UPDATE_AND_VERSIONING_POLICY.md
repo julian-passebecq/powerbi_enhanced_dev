@@ -48,6 +48,12 @@ Refresh public syntax/function metadata independently. Keep engine validation au
 
 DAX Studio/Power BI Desktop/VS Code are launch/handoff integrations. Detect supported versions where useful; do not vendor or fork them without a separate explicit decision.
 
+Gen-2 gives DAX Studio, Bravo, Power BI Desktop and VS Code distinct bridge lanes. Supported process arguments and applicability tests protect each lane; tool authentication stays in the companion.
+
+### Gen-2 report and semantic lanes
+
+`semantic-shell` owns the existing DiagramView/Semantic View and DAX workspace presentation; TE2 engine/source updates remain in `te2`. `pbip-pbir` owns the pinned Microsoft schemas, index and file transactions. `report-studio` owns the separate modern WPF process. `lineage` owns structural reference traversal and local declaration evidence. These three report lanes must not acquire TE2, TOMWrapper, App or ModelEditor dependencies. `csharp-language` owns the curated gallery contracts and existing Safe/Trusted host boundaries. `workspace-git`, Fabric services and Fabric Toolbox remain separately owned. See V2_SOURCE_INDEX.md for exact new source pins.
+
 ### Lane 5 - PbiBench-owned features
 
 Automation, Data Exploration, QA, workspace logic, AI export, CLI, etc. evolve under PbiBench versioning.

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "productVersion": "11.3.0",
-  "baselineCommit": "4caccae9f4751555cbe584ffbf02e81e2fb88f77",
+  "productVersion": "2.1.0",
+  "baselineCommit": "bbb29c3ab7adb2e7b9c04bf71b618354847e3e92",
   "comparison": {
     "product": "Tabular Editor 3",
     "verifiedVersion": "3.26.3",
@@ -38,7 +38,7 @@
       "name": "DAX IDE / Query / authoring",
       "status": "Core",
       "uiLocation": "DAX",
-      "summary": "Write and run routine DAX queries.",
+      "summary": "Everyday DAX workbench with model navigation, local context/help, query results and external analysis.",
       "implementation": "Query tabs, language assistance and Microsoft engine execution.",
       "provenanceIds": [
         "dax.language",
@@ -88,7 +88,7 @@
       "name": "C# semantic automation",
       "status": "Core",
       "uiLocation": "Automate / Safe C# Preview / Trusted Legacy",
-      "summary": "Automate model changes through distinct execution lanes.",
+      "summary": "13 curated native/recipe entries, exact source insertion and existing Safe/Trusted hosts.",
       "implementation": "Safe Preview, TE2 Problems navigation, context macros and semantic snippets.",
       "provenanceIds": [
         "automation.trusted",
@@ -97,7 +97,8 @@
         "csharp.language",
         "editor.fctb",
         "automation.macro-context",
-        "csharp.semantic-snippets"
+        "csharp.semantic-snippets",
+        "automation.gallery"
       ],
       "limitations": [
         "Safe Preview accepts a restricted grammar. Trusted scripts remain unrestricted; no debugger or project system."
@@ -188,13 +189,14 @@
     },
     {
       "id": "model-diagram",
-      "name": "Model Diagram",
+      "name": "Semantic View",
       "status": "Core",
-      "uiLocation": "Model diagram",
-      "summary": "Inspect and edit model relationships.",
-      "implementation": "PbiBench relationship visualization and reviewed authoring.",
+      "uiLocation": "Semantic View",
+      "summary": "Existing relationship diagram with dependencies, report usage and issues modes.",
+      "implementation": "Evolves DiagramView and TE2 metadata; preserves relationship editing and Undo.",
       "provenanceIds": [
-        "semantic.diagram"
+        "semantic.diagram",
+        "report.lineage"
       ],
       "limitations": [
         "Layout and analysis are deliberately basic; table roles are inferred."
@@ -206,7 +208,8 @@
       },
       "lifecycle": "Active",
       "moduleIds": [
-        "semantic-ide"
+        "semantic-ide",
+        "lineage"
       ]
     },
     {
@@ -471,23 +474,28 @@
     },
     {
       "id": "pbir",
-      "name": "PBIR/report engineering",
-      "status": "Future",
-      "uiLocation": "Not available; reports use Power BI Desktop",
-      "summary": "Record a parked report-engineering area.",
-      "implementation": "Report authoring is deferred; existing workspace detection remains.",
-      "provenanceIds": [],
+      "name": "Report Studio / PBIR engineering",
+      "status": "Core",
+      "uiLocation": "Apps / Tools > Report Studio",
+      "summary": "Inspect local reports, preview exact file changes, validate, apply and restore.",
+      "implementation": "Separate .NET 10 WPF process over a pure offline PBIP/PBIR index and change-plan library.",
+      "provenanceIds": [
+        "report.pbip-pbir",
+        "report.studio"
+      ],
       "limitations": [
-        "No PBIR editor or report renderer is implemented. This pass preserves the existing semantic/workspace scope."
+        "Enhanced PBIR only for writes; unknown schemas are read-only. Wireframe is not a Power BI renderer.",
+        "Atomic per-file writes with durable backups and guarded rollback; close Desktop during disk edits."
       ],
       "te3": {
         "comparison": "No direct equivalent",
         "capability": "Report authoring",
         "sourceUrl": "https://docs.tabulareditor.com/en/getting-started/migrate-from-te2.html"
       },
-      "lifecycle": "Later",
+      "lifecycle": "Active",
       "moduleIds": [
-        "future-report-tooling"
+        "report-studio",
+        "pbir"
       ]
     },
     {
@@ -509,6 +517,55 @@
       "lifecycle": "OnDemand",
       "moduleIds": [
         "future-report-tooling"
+      ]
+    },
+    {
+      "id": "report-lineage",
+      "name": "Semantic / report lineage",
+      "status": "Core",
+      "uiLocation": "Semantic View > Report Usage; Report Studio > Lineage",
+      "summary": "Trace columns and measures to pages/visuals and report references back to fields.",
+      "implementation": "Structured PBIR query traversal with explicit broken and unverified references.",
+      "provenanceIds": [
+        "report.lineage"
+      ],
+      "limitations": [
+        "Local TMDL declaration index; unsupported layouts and unavailable remote models remain unverified."
+      ],
+      "te3": {
+        "comparison": "N/A",
+        "capability": "Not compared",
+        "sourceUrl": null
+      },
+      "lifecycle": "Active",
+      "moduleIds": [
+        "lineage"
+      ]
+    },
+    {
+      "id": "external-tools",
+      "name": "Bravo / Desktop / VS Code launchers",
+      "status": "External",
+      "uiLocation": "Apps / Tools; DAX toolbar",
+      "summary": "Context-aware external process launchers with explicit applicability.",
+      "implementation": "Supported startup arguments; paths and IDs only; replaceable process adapter.",
+      "provenanceIds": [
+        "external.bravo",
+        "external.project-tools"
+      ],
+      "limitations": [
+        "Tools must be installed/configured. Bravo needs a live server/database; no query or feature deep links."
+      ],
+      "te3": {
+        "comparison": "N/A",
+        "capability": "Not compared",
+        "sourceUrl": null
+      },
+      "lifecycle": "OnDemand",
+      "moduleIds": [
+        "bravo-bridge",
+        "powerbi-bridge",
+        "vscode-bridge"
       ]
     }
   ]
