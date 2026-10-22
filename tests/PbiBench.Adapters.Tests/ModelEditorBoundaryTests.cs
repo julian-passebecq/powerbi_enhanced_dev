@@ -18,11 +18,12 @@ public sealed class ModelEditorBoundaryTests
         File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "examples", "pass1-demo.bim"), path);
         using var editor = new Te2ModelEditor(() => true, Path.Combine(temp.Root, "profile"));
         const BindingFlags profileFields = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+        var upstream = editor.View.Child.GetType().BaseType!.Assembly;
         foreach (var field in new[] { "WrapperDllPath", "NewtonsoftJsonDllPath", "CustomActionsJsonPath", "MacrosJsonPath", "MacrosErrorLogPath" })
             Assert.StartsWith(Path.Combine(temp.Root, "profile") + Path.DirectorySeparatorChar,
-                (string)typeof(TabularEditor.ScriptEngine).GetField(field, profileFields)!.GetValue(null)!);
+                (string)upstream.GetType("TabularEditor.ScriptEngine", true)!.GetField(field, profileFields)!.GetValue(null)!);
         Assert.Equal(Path.Combine(temp.Root, "profile", "BPARules.json"),
-            typeof(TabularEditor.BestPracticeAnalyzer.BestPracticeCollection).GetField("LocalUserRulesFile", profileFields)!.GetValue(null));
+            upstream.GetType("TabularEditor.BestPracticeAnalyzer.BestPracticeCollection", true)!.GetField("LocalUserRulesFile", profileFields)!.GetValue(null));
         Assert.Throws<InvalidOperationException>(() => editor.ShowLegacyCommands(false));
         Assert.True(editor.LegacyCommandsVisible);
         editor.Open(path);
