@@ -35,7 +35,7 @@ public sealed class BoundaryTests
     }
     [Fact] public void ExistingSpecialistAndDesktopArgumentsAreUnchanged()
     {
-        using var fixture = new Fixture(); var exe = fixture.File("tool.exe"); var query = fixture.File("file with spaces.dax"); var bridge = new DaxStudioBridge(exe);
+        using var fixture = new Fixture(); var exe = fixture.File("DaxStudio.exe"); var query = fixture.File("file with spaces.dax"); var bridge = new DaxStudioBridge(exe);
         Assert.Equal(new[] { "--server", "localhost:51234", "--database", "Model \"name\"", "--file", query }, bridge.CreateLaunchRequest("localhost:51234", "Model \"name\"", query).Arguments);
         var context = new ToolContext(ProjectDirectory: fixture.Root, ProjectFile: fixture.File("project.pbip"), ReportFile: fixture.File("definition.pbir"));
         ExternalToolStatus Status(string id) => new(CompanionTools.Catalog.Single(t => t.Id == id), exe, "1");
