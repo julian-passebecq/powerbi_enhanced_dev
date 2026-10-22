@@ -46,7 +46,7 @@ public sealed class Te2ModelEditor : IDisposable
                 ("CustomActionsJsonPath", "CustomActions.json"), ("MacrosJsonPath", "MacroActions.json"),
                 ("MacrosErrorLogPath", "MacroCompilationErrors.log") })
                 SetProfilePath(typeof(ScriptEngine), entry.Item1, System.IO.Path.Combine(isolatedProfileDirectory, entry.Item2));
-            SetProfilePath(typeof(TabularEditor.BestPracticeAnalyzer.BestPracticeRule), "LocalUserRulesFile",
+            SetProfilePath(typeof(TabularEditor.BestPracticeAnalyzer.BestPracticeCollection), "LocalUserRulesFile",
                 System.IO.Path.Combine(isolatedProfileDirectory, "BPARules.json"));
         }
         Application.EnableVisualStyles();

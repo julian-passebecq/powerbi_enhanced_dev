@@ -22,7 +22,7 @@ public sealed class ModelEditorBoundaryTests
             Assert.StartsWith(Path.Combine(temp.Root, "profile") + Path.DirectorySeparatorChar,
                 (string)typeof(TabularEditor.ScriptEngine).GetField(field, profileFields)!.GetValue(null)!);
         Assert.Equal(Path.Combine(temp.Root, "profile", "BPARules.json"),
-            typeof(TabularEditor.BestPracticeAnalyzer.BestPracticeRule).GetField("LocalUserRulesFile", profileFields)!.GetValue(null));
+            typeof(TabularEditor.BestPracticeAnalyzer.BestPracticeCollection).GetField("LocalUserRulesFile", profileFields)!.GetValue(null));
         Assert.Throws<InvalidOperationException>(() => editor.ShowLegacyCommands(false));
         Assert.True(editor.LegacyCommandsVisible);
         editor.Open(path);
