@@ -1,9 +1,10 @@
 param(
     [Parameter(Mandatory)][string]$Executable,
-    [string]$ModelPath = (Join-Path $PSScriptRoot '../examples/pass1-demo.bim'),
+    [string]$ModelPath,
     [Parameter(Mandatory)][string]$OutputDirectory
 )
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($ModelPath)) { $ModelPath = Join-Path $PSScriptRoot '../examples/pass1-demo.bim' }
 $root = [IO.Path]::GetFullPath($OutputDirectory)
 if (Test-Path -LiteralPath $root) { throw "CLI smoke output already exists: $root" }
 New-Item -ItemType Directory -Path $root | Out-Null
