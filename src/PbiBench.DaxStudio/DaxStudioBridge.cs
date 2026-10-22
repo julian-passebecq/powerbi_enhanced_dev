@@ -81,9 +81,13 @@ public sealed class DaxStudioBridge
 
     private static void ValidateLabel(string? value, string parameter)
     {
+        if (value is null) return;
+        // Validate the exact bytes forwarded as an argument, including surrounding whitespace.
+        if (value.Length > 512 || value.Any(char.IsControl))
+            throw new ArgumentException("Use a plain server or database label, without connection strings or command options.", parameter);
         if (string.IsNullOrWhiteSpace(value)) return;
-        var text = value!.Trim();
-        if (text.Length > 512 || text.Any(char.IsControl) || text.IndexOfAny(new[] { '=', ';' }) >= 0 ||
+        var text = value.Trim();
+        if (text.IndexOfAny(new[] { '=', ';' }) >= 0 ||
             text[0] == '-' || text[0] == '/' || text[0] == '@')
             throw new ArgumentException("Use a plain server or database label, without connection strings or command options.", parameter);
     }

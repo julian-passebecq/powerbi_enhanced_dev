@@ -91,6 +91,11 @@ public sealed class DaxStudioTests
     [InlineData("--reset", "Sales")]
     [InlineData("localhost:12345", "@options.txt")]
     [InlineData("localhost\n12345", "Sales")]
+    [InlineData("\nlocalhost:12345", "Sales")]
+    [InlineData("localhost:12345\r", "Sales")]
+    [InlineData("localhost:12345", "\nSales")]
+    [InlineData("localhost:12345", "Sales\r")]
+    [InlineData("\t", "Sales")]
     public async Task UnsafeLabelsNeverReachProcessOrScratchFile(string server, string database)
     {
         using var temp = new TemporaryDirectory();
@@ -101,6 +106,24 @@ public sealed class DaxStudioTests
         Assert.DoesNotContain("synthetic-secret", error.Message);
         Assert.Null(process.Started);
         Assert.Empty(Directory.GetFiles(temp.Root, "*.dax"));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public Task OverlongPaddedLabelsNeverReachProcessOrScratchFile(bool server)
+    {
+        var label = new string(' ', 300) + "localhost:12345" + new string(' ', 300);
+        return UnsafeLabelsNeverReachProcessOrScratchFile(server ? label : "localhost:12345", server ? "Sales" : label);
+    }
+
+    [Fact]
+    public void PermittedBoundaryLabelsKeepTheirExactArgumentBytes()
+    {
+        using var temp = new TemporaryDirectory();
+        var bridge = new DaxStudioBridge(temp.Write("DaxStudio.exe", ""), processAdapter: new FakeProcessAdapter());
+        var label = " " + new string('a', 510) + " ";
+        Assert.Equal(new[] { "--server", label, "--database", " Sales " }, bridge.CreateLaunchRequest(label, " Sales ", null).Arguments);
     }
 
     [Theory]
