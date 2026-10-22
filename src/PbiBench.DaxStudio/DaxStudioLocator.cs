@@ -11,7 +11,12 @@ public static class DaxStudioLocator
     private static string? Find(string executable, string? configuredPath, string? siblingDirectory)
     {
         // An explicit invalid setting must never silently launch a different install.
-        if (!string.IsNullOrWhiteSpace(configuredPath)) return ExecutableDiscovery.ExistingExecutable(configuredPath!);
+        if (!string.IsNullOrWhiteSpace(configuredPath))
+        {
+            var configured = ExecutableDiscovery.ExistingExecutable(configuredPath!);
+            return configured != null && string.Equals(Path.GetFileName(configured), executable,
+                StringComparison.OrdinalIgnoreCase) ? configured : null;
+        }
         var directories = new List<string?>
         {
             siblingDirectory,

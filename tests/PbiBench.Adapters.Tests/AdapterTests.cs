@@ -80,6 +80,27 @@ public sealed class DaxStudioTests
         Assert.Equal(executable, DaxStudioLocator.Discover(executable));
         Assert.Null(DaxStudioLocator.Discover(Path.Combine(temp.Root, "does-not-exist.exe")));
         Assert.Null(DaxStudioLocator.Discover(temp.Write("script.cmd", "")));
+        Assert.Null(DaxStudioLocator.Discover(temp.Write("wrong-tool.exe", "")));
+        Assert.Null(DaxStudioLocator.DiscoverCommandLine(executable));
+        Assert.Equal(temp.Write("dscmd.exe", ""), DaxStudioLocator.DiscoverCommandLine(Path.Combine(temp.Root, "dscmd.exe")));
+    }
+
+    [Theory]
+    [InlineData("Data Source=localhost;Password=synthetic-secret", "Sales")]
+    [InlineData("localhost:12345", "Sales;Password=synthetic-secret")]
+    [InlineData("--reset", "Sales")]
+    [InlineData("localhost:12345", "@options.txt")]
+    [InlineData("localhost\n12345", "Sales")]
+    public async Task UnsafeLabelsNeverReachProcessOrScratchFile(string server, string database)
+    {
+        using var temp = new TemporaryDirectory();
+        var process = new FakeProcessAdapter();
+        var bridge = new DaxStudioBridge(temp.Write("DaxStudio.exe", ""), processAdapter: process);
+        var error = await Assert.ThrowsAsync<ArgumentException>(() =>
+            bridge.OpenQueryAsync("EVALUATE Sales", server, database, temp.Root));
+        Assert.DoesNotContain("synthetic-secret", error.Message);
+        Assert.Null(process.Started);
+        Assert.Empty(Directory.GetFiles(temp.Root, "*.dax"));
     }
 
     [Theory]

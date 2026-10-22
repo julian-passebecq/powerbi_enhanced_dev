@@ -20,6 +20,8 @@ public sealed class DaxStudioBridge
     // Official GUI arguments: https://daxstudio.org/docs/features/startup-parameters/
     public ProcessLaunchRequest CreateLaunchRequest(string? server, string? database, string? queryFile)
     {
+        ValidateLabel(server, nameof(server));
+        if (!string.IsNullOrWhiteSpace(server)) ValidateLabel(database, nameof(database));
         var executable = DaxStudioLocator.Discover(_daxStudioExe)
             ?? throw new FileNotFoundException("DAX Studio was not found. Install DAX Studio or configure the full path to DaxStudio.exe in PbiBench.", _daxStudioExe);
         var args = new List<string>();
@@ -75,5 +77,14 @@ public sealed class DaxStudioBridge
         var executable = DaxStudioLocator.DiscoverCommandLine(_dscmdExe, _daxStudioExe)
             ?? throw new FileNotFoundException("dscmd.exe was not found. Configure its path or install the DAX Studio command-line tool.", _dscmdExe);
         return _process.RunAsync(new ProcessLaunchRequest(executable, arguments), ct);
+    }
+
+    private static void ValidateLabel(string? value, string parameter)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return;
+        var text = value!.Trim();
+        if (text.Length > 512 || text.Any(char.IsControl) || text.IndexOfAny(new[] { '=', ';' }) >= 0 ||
+            text[0] == '-' || text[0] == '/' || text[0] == '@')
+            throw new ArgumentException("Use a plain server or database label, without connection strings or command options.", parameter);
     }
 }

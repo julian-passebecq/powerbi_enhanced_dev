@@ -5,6 +5,8 @@
     <ProjectReference Include="../PbiBench.Workspace/PbiBench.Workspace.csproj" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.84.2" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.6" />
+    <!-- Override SqlClient's transitive vulnerable versions on both targets (October 2026 servicing). -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.21" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
