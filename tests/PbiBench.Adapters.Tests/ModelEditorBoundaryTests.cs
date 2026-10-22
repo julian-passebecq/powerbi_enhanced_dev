@@ -17,6 +17,12 @@ public sealed class ModelEditorBoundaryTests
         var path = Path.Combine(temp.Root, "model.bim");
         File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "examples", "pass1-demo.bim"), path);
         using var editor = new Te2ModelEditor(() => true, Path.Combine(temp.Root, "profile"));
+        const BindingFlags profileFields = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+        foreach (var field in new[] { "WrapperDllPath", "NewtonsoftJsonDllPath", "CustomActionsJsonPath", "MacrosJsonPath", "MacrosErrorLogPath" })
+            Assert.StartsWith(Path.Combine(temp.Root, "profile") + Path.DirectorySeparatorChar,
+                (string)typeof(TabularEditor.ScriptEngine).GetField(field, profileFields)!.GetValue(null)!);
+        Assert.Equal(Path.Combine(temp.Root, "profile", "BPARules.json"),
+            typeof(TabularEditor.BestPracticeAnalyzer.BestPracticeRule).GetField("LocalUserRulesFile", profileFields)!.GetValue(null));
         Assert.Throws<InvalidOperationException>(() => editor.ShowLegacyCommands(false));
         Assert.True(editor.LegacyCommandsVisible);
         editor.Open(path);

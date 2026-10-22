@@ -41,6 +41,13 @@ public sealed class Te2ModelEditor : IDisposable
             System.IO.Directory.CreateDirectory(isolatedProfileDirectory);
             SetProfilePath(typeof(TabularEditor.UIServices.Preferences), "PREFERENCES_PATH", System.IO.Path.Combine(isolatedProfileDirectory, "Preferences.json"));
             SetProfilePath(typeof(TabularEditor.UIServices.RecentFiles), "RECENTFILES_PATH", System.IO.Path.Combine(isolatedProfileDirectory, "RecentFiles.json"));
+            foreach (var entry in new[] {
+                ("WrapperDllPath", "TOMWrapper14.dll"), ("NewtonsoftJsonDllPath", "newtonsoft.json.dll"),
+                ("CustomActionsJsonPath", "CustomActions.json"), ("MacrosJsonPath", "MacroActions.json"),
+                ("MacrosErrorLogPath", "MacroCompilationErrors.log") })
+                SetProfilePath(typeof(ScriptEngine), entry.Item1, System.IO.Path.Combine(isolatedProfileDirectory, entry.Item2));
+            SetProfilePath(typeof(TabularEditor.BestPracticeAnalyzer.BestPracticeRule), "LocalUserRulesFile",
+                System.IO.Path.Combine(isolatedProfileDirectory, "BPARules.json"));
         }
         Application.EnableVisualStyles();
         ScriptEngine.InitScriptEngine(new List<Assembly>());
@@ -286,7 +293,7 @@ public sealed class Te2ModelEditor : IDisposable
     {
         const BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
         type.GetField(fieldName, flags)!.SetValue(null, path);
-        type.GetField("_current", flags)!.SetValue(null, null);
+        type.GetField("_current", flags)?.SetValue(null, null);
     }
 
     private sealed class HostedEditorForm : FormMain
