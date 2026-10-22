@@ -3,6 +3,16 @@ param(
     [switch]$Offline
 )
 $ErrorActionPreference = 'Stop'
+function Test-ReversePatch([string]$Repository, [string]$PatchPath) {
+    # A clean pinned checkout is expected to fail the reverse check. Windows PowerShell
+    # turns native stderr into terminating errors under Stop, before LASTEXITCODE is read.
+    $priorPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & git -C $Repository apply --reverse --check $PatchPath 2>$null
+        return $LASTEXITCODE -eq 0
+    } finally { $ErrorActionPreference = $priorPreference }
+}
 $commit = '75f10e331b8de0dda5c213180b9b8867b4a38191'
 $target = [IO.Path]::GetFullPath($Destination)
 $offlineMarker = Join-Path $target '.pbibench-bundled-source'
@@ -46,8 +56,7 @@ foreach ($notice in @('LICENSE', 'license-FastColoredTextbox.txt', 'license-Fast
     if (-not (Test-Path -LiteralPath (Join-Path $target $notice))) { throw "Missing required notice: $notice" }
 }
 $patch = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../vendor/patches/te2-2.28.0-remote-write-review.patch'))
-& git -C $target apply --reverse --check $patch 2>$null
-if ($LASTEXITCODE -ne 0) {
+if (-not (Test-ReversePatch $target $patch)) {
     & git -C $target apply --check $patch
     if ($LASTEXITCODE -ne 0) { throw 'Integration patch conflicts with existing changes; nothing was overwritten.' }
     & git -C $target apply $patch
@@ -55,8 +64,7 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host 'Applied minimal PbiBench remote-write review patch.'
 } else { Write-Host 'PbiBench integration patch already applied.' }
 $functionPatch = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../vendor/patches/te2-2.28.0-function-undo-order.patch'))
-& git -C $target apply --reverse --check $functionPatch 2>$null
-if ($LASTEXITCODE -ne 0) {
+if (-not (Test-ReversePatch $target $functionPatch)) {
     & git -C $target apply --check $functionPatch
     if ($LASTEXITCODE -ne 0) { throw 'Function Undo order patch conflicts with existing changes; nothing was overwritten.' }
     & git -C $target apply $functionPatch
