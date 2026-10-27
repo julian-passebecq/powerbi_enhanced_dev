@@ -6,7 +6,12 @@
     <PackageReference Include="Microsoft.Identity.Client" Version="4.84.2" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.6" />
   </ItemGroup>
+  <!-- Patched PKCS versions for GHSA-2fmv-rv2c-59x7 and GHSA-846f-f764-76mx. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.21" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.2" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Data" />
