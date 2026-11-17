@@ -4,7 +4,8 @@ param(
     [switch]$SkipUpstreamTests,
     [switch]$SkipSmoke,
     [switch]$InstallSdk,
-    [switch]$Offline
+    [switch]$Offline,
+    [switch]$Te2Only
 )
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -43,8 +44,10 @@ try {
     # Upstream consumes a hardcoded obj/Debug/DAXLexer.cs even in Release builds.
     & $msbuild (Join-Path $vendor 'AntlrGrammars/AntlrGrammars.csproj') /t:Build /p:Configuration=Debug /p:ImportDirectoryBuildProps=false /p:ImportDirectoryBuildTargets=false /nologo /v:quiet
     if ($LASTEXITCODE -ne 0) { throw 'TE2 grammar generation failed.' }
-    & $msbuild (Join-Path $vendor 'TabularEditor.sln') /t:Build "/p:Configuration=$Configuration" /p:ImportDirectoryBuildProps=false /p:ImportDirectoryBuildTargets=false /nologo /v:quiet "/flp:logfile=$logs/te2-build.log;verbosity=normal"
+    $te2Build = if ($Te2Only) { 'TabularEditor/TabularEditor.csproj' } else { 'TabularEditor.sln' }
+    & $msbuild (Join-Path $vendor $te2Build) /t:Build "/p:Configuration=$Configuration" /p:ImportDirectoryBuildProps=false /p:ImportDirectoryBuildTargets=false /nologo /v:quiet "/flp:logfile=$logs/te2-build.log;verbosity=normal"
     if ($LASTEXITCODE -ne 0) { throw "TE2 build failed. See $logs/te2-build.log" }
+    if ($Te2Only) { return }
     & $dotnet build (Join-Path $repo 'PbiBench.slnx') -c $Configuration --nologo
     if ($LASTEXITCODE -ne 0) { throw 'PbiBench build failed.' }
     if (-not $SkipTests) {

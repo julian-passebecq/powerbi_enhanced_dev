@@ -9,4 +9,10 @@
     <Reference Include="Microsoft.AnalysisServices.Tabular"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/Microsoft.AnalysisServices.Tabular.dll</HintPath></Reference>
     <Reference Include="Microsoft.AnalysisServices.Core"><HintPath>../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/Microsoft.AnalysisServices.Core.dll</HintPath></Reference>
   </ItemGroup>
+  <!-- TE2's patched source is built by full-framework MSBuild, not the .NET SDK.
+       Semantic is the shared dependency of every TE2 consumer in the solution. -->
+  <Target Name="BuildTe2Dependency" BeforeTargets="ResolveAssemblyReferences"
+          Condition="'$(DesignTimeBuild)' != 'true' and (!Exists('$(MSBuildThisFileDirectory)../../vendor/TabularEditor2-2.28.0/TabularEditor/bin/$(Configuration)/TabularEditor.exe') or !Exists('$(MSBuildThisFileDirectory)../../vendor/TabularEditor2-2.28.0/TOMWrapper/bin/$(Configuration)/TOMWrapper.dll'))">
+    <Exec Command="pwsh.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)../../scripts/build-pass1.ps1&quot; -Configuration &quot;$(Configuration)&quot; -Te2Only" />
+  </Target>
 </Project>

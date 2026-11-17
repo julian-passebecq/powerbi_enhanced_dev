@@ -26,6 +26,15 @@ From the repository root in PowerShell:
 ./scripts/build-pass1.ps1 -Configuration Release -InstallSdk
 ```
 
+`dotnet test PbiBench.slnx` also works from a clean Windows checkout with PowerShell 7 and these
+prerequisites: the Semantic project first invokes the existing build script's
+`-Te2Only` mode when the TE2 output is absent. This restores and compiles the
+commit-pinned, patched TE2 source before resolving its assembly references.
+The `TabularEditor` namespace comes from that source build, not an installed
+Tabular Editor or a machine-local DLL. No TE2 binary is committed. For offline
+use, provision it first with `./scripts/build-pass1.ps1 -Offline -Te2Only`;
+the required NuGet packages must already be cached.
+
 `-InstallSdk` permits the script to install the .NET 10 SDK under your user's `LocalAppData`. The script provisions pinned TE2 source, restores packages, builds, runs product tests and an offline upstream regression subset, then runs a GUI smoke test. Logs and generated test evidence go to `artifacts/build`. Online provisioning verifies TE2 commit `75f10e331b8de0dda5c213180b9b8867b4a38191`.
 
 ```powershell
