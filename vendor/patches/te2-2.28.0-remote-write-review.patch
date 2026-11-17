@@ -171,10 +171,3 @@ index 95de9c8..4043698 100644
      <Compile Include="DeserializerTests.cs" />
      <Compile Include="FixUpTests.cs" />
      <Compile Include="FluentPropertyGridTest.cs" />
-@@ -307,4 +308,4 @@
-   <Target Name="AfterBuild">
-   </Target>
-   -->
--</Project>
-\ No newline at end of file
-+</Project>
